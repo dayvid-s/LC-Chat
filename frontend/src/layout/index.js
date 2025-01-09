@@ -161,9 +161,10 @@ const useStyles = makeStyles((theme) => ({
     // color: theme.barraSuperior.secondary.main,
   },
   logo: {
-    width: "80%",
-    height: "auto",
+    marginLeft: "auto",
+    width: "auto",
     maxWidth: 180,
+    maxHeight: 120,
     [theme.breakpoints.down("sm")]: {
       width: "auto",
       height: "80%",
