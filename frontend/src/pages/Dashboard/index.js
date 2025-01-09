@@ -1,48 +1,36 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
-import Paper from "@material-ui/core/Paper";
 import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import Grid from "@material-ui/core/Grid";
 import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import Paper from "@material-ui/core/Paper";
 import Select from "@material-ui/core/Select";
 import TextField from "@material-ui/core/TextField";
-import FormHelperText from "@material-ui/core/FormHelperText";
 import Typography from "@material-ui/core/Typography";
 
 // ICONS
-import SpeedIcon from "@material-ui/icons/Speed";
-import Icon from "@material-ui/icons/";
-import AssignmentIcon from "@material-ui/icons/Assignment";
-import PersonIcon from "@material-ui/icons/Person";
-import TodayIcon from '@material-ui/icons/Today';
-import CallIcon from "@material-ui/icons/Call";
-import RecordVoiceOverIcon from "@material-ui/icons/RecordVoiceOver";
-import AddIcon from "@material-ui/icons/Add";
-import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
-import CheckCircleIcon from "@material-ui/icons/CheckCircle";
-import ForumIcon from "@material-ui/icons/Forum";
-import FilterListIcon from "@material-ui/icons/FilterList";
-import ClearIcon from "@material-ui/icons/Clear";
-import SendIcon from '@material-ui/icons/Send';
-import MessageIcon from '@material-ui/icons/Message';
 import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
+import AddIcon from "@material-ui/icons/Add";
+import CallIcon from "@material-ui/icons/Call";
+import CheckCircleIcon from "@material-ui/icons/CheckCircle";
+import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import TimerIcon from '@material-ui/icons/Timer';
 
+import { blue, grey } from "@material-ui/core/colors";
 import { makeStyles } from "@material-ui/core/styles";
-import { grey, blue } from "@material-ui/core/colors";
 import { toast } from "react-toastify";
 
-import Chart from "./Chart";
 import ButtonWithSpinner from "../../components/ButtonWithSpinner";
+import Chart from "./Chart";
 
-import CardCounter from "../../components/Dashboard/CardCounter";
-import TableAttendantsStatus from "../../components/Dashboard/TableAttendantsStatus";
 import { isArray } from "lodash";
+import TableAttendantsStatus from "../../components/Dashboard/TableAttendantsStatus";
 
-import useDashboard from "../../hooks/useDashboard";
 import useCompanies from "../../hooks/useCompanies";
+import useDashboard from "../../hooks/useDashboard";
 
 import { isEmpty } from "lodash";
 import moment from "moment";
@@ -91,7 +79,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card2: {
@@ -100,7 +88,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card3: {
@@ -109,7 +97,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card4: {
@@ -118,7 +106,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card5: {
@@ -127,7 +115,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card6: {
@@ -136,7 +124,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card7: {
@@ -145,7 +133,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card8: {
@@ -154,7 +142,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
   card9: {
@@ -163,7 +151,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
-    backgroundColor: "#6D30EF",
+    backgroundColor: "#3B82F6",
     color: "#eee",
   },
 }));
@@ -339,7 +327,7 @@ const Dashboard = () => {
     <div>
       <Container maxWidth="lg" className={classes.container}>
         <Grid container spacing={3} justifyContent="flex-end">
-          
+
           {/* GRID DO VENCIMENTO */}
           {/* <Grid item xs={12} sm={6} md={3}>
             <CardCounter

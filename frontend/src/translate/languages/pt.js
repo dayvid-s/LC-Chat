@@ -24,7 +24,7 @@ const messages = {
           password: "Senha",
         },
         buttons: {
-          submit: "Entrar",
+          submit: "Fazer Login",
           register: "Registre-se, agora mesmo!",
         },
       },
@@ -188,7 +188,7 @@ const messages = {
           typebotKeywordRestart: "Palavra para reiniciar o fluxo",
           typebotRestartMessage: "Mensagem ao reiniciar a conversa",
           typebotUnknownMessage: "Mensagem de opção inválida",
-          typebotDelayMessage: "Intervalo (ms) entre mensagens",   
+          typebotDelayMessage: "Intervalo (ms) entre mensagens",
         },
         buttons: {
           okAdd: "Adicionar",

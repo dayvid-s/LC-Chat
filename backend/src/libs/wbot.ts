@@ -1,28 +1,26 @@
 import * as Sentry from "@sentry/node";
 import makeWASocket, {
-  WASocket,
   Browsers,
+  CacheStore,
   DisconnectReason,
   fetchLatestBaileysVersion,
+  isJidBroadcast,
   makeCacheableSignalKeyStore,
   makeInMemoryStore,
-  isJidBroadcast,
-  CacheStore
+  WASocket
 } from "@whiskeysockets/baileys";
-import makeWALegacySocket from "@whiskeysockets/baileys";
-import P from "pino";
 
-import Whatsapp from "../models/Whatsapp";
-import { logger } from "../utils/logger";
-import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
-import authState from "../helpers/authState";
 import { Boom } from "@hapi/boom";
+import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
+import NodeCache from 'node-cache';
 import AppError from "../errors/AppError";
+import authState from "../helpers/authState";
+import Whatsapp from "../models/Whatsapp";
+import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
+import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
+import { logger } from "../utils/logger";
 import { getIO } from "./socket";
 import { Store } from "./store";
-import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
-import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
-import NodeCache from 'node-cache';
 
 const loggerBaileys = MAIN_LOGGER.child({});
 loggerBaileys.level = "error";
@@ -104,7 +102,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
           },
-          version: [2,2413,1],
+          version: [2, 3000, 1015901307],
           // defaultQueryTimeoutMs: 60000,
           // retryRequestDelayMs: 250,
           // keepAliveIntervalMs: 1000 * 60 * 10 * 3,

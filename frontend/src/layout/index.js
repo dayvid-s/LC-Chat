@@ -1,46 +1,44 @@
-import React, { useState, useContext, useEffect } from "react";
-import clsx from "clsx";
-import moment from "moment";
 import {
-  makeStyles,
-  Drawer,
   AppBar,
-  Toolbar,
-  List,
-  Typography,
   Divider,
-  MenuItem,
+  Drawer,
   IconButton,
+  List,
+  makeStyles,
   Menu,
-  useTheme,
+  MenuItem,
+  Toolbar,
+  Typography,
   useMediaQuery,
+  useTheme,
 } from "@material-ui/core";
+import clsx from "clsx";
+import React, { useContext, useEffect, useState } from "react";
 
-import MenuIcon from "@material-ui/icons/Menu";
-import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import CachedIcon from "@material-ui/icons/Cached";
+import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import MenuIcon from "@material-ui/icons/Menu";
 
-import MainListItems from "./MainListItems";
+import AnnouncementsPopover from "../components/AnnouncementsPopover";
+import BackdropLoading from "../components/BackdropLoading";
 import NotificationsPopOver from "../components/NotificationsPopOver";
 import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import { AuthContext } from "../context/Auth/AuthContext";
-import BackdropLoading from "../components/BackdropLoading";
-import DarkMode from "../components/DarkMode";
-import { i18n } from "../translate/i18n";
 import toastError from "../errors/toastError";
-import AnnouncementsPopover from "../components/AnnouncementsPopover";
+import { i18n } from "../translate/i18n";
+import MainListItems from "./MainListItems";
 
 import logo from "../assets/logo.png";
-import { socketConnection } from "../services/socket";
 import ChatPopover from "../pages/Chat/ChatPopover";
+import { socketConnection } from "../services/socket";
 
 import { useDate } from "../hooks/useDate";
 
-import ColorModeContext from "../layout/themeContext";
 import Brightness4Icon from '@material-ui/icons/Brightness4';
 import Brightness7Icon from '@material-ui/icons/Brightness7';
+import ColorModeContext from "../layout/themeContext";
 
 const drawerWidth = 240;
 
@@ -54,11 +52,11 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.fancyBackground,
     '& .MuiButton-outlinedPrimary': {
       color: theme.mode === 'light' ? '#FFF' : '#FFF',
-	  backgroundColor: theme.mode === 'light' ? '#6D30EF' : '#1c1c1c',
+      backgroundColor: theme.mode === 'light' ? '#3B82F6' : '#1c1c1c',
       //border: theme.mode === 'light' ? '1px solid rgba(0 124 102)' : '1px solid rgba(255, 255, 255, 0.5)',
     },
     '& .MuiTab-textColorPrimary.Mui-selected': {
-      color: theme.mode === 'light' ? '#6D30EF' : '#FFF',
+      color: theme.mode === 'light' ? '#3B82F6' : '#FFF',
     }
   },
   avatar: {
