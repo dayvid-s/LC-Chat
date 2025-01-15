@@ -10,8 +10,12 @@ import {
 @Table
 class Saler extends Model<Saler> {
   @PrimaryKey
-  @Column
-  id: number;
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  id!: number;
+
 
   @Column
   name: string;
@@ -66,7 +70,7 @@ class Saler extends Model<Saler> {
 
   @Column({
     type: DataType.BIGINT,
-    defaultValue: "Desconhecido"
+    defaultValue: 0
   })
   productionInMonth: number;
 

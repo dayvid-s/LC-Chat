@@ -16,13 +16,18 @@ class SalerService {
 
 
 
-  static async createMany(salers: any[]): Promise<any> {
-    try {
-      const createdSalers = await Saler.bulkCreate(salers);
-      return createdSalers;
-    } catch (error) {
-      throw new Error("Erro ao criar salers: " + error.message);
+  static async createMany(salers: { data: any[] }): Promise<any[]> {
+    const createdSalers = [];
+    for (const saler of salers.data) {
+      const existingSaler = await Saler.findOne({ where: { id: saler.id } });
+      if (existingSaler) {
+        await existingSaler.update(saler);
+      } else {
+        const created = await Saler.create(saler);
+        createdSalers.push(created);
+      }
     }
+    return createdSalers;
   }
 
 

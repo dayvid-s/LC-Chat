@@ -6,8 +6,8 @@ module.exports = {
       queryInterface.createTable("Salers", {
         id: {
           type: DataTypes.INTEGER,
+          unique: true,
           primaryKey: true,
-          autoIncrement: true,
           allowNull: false,
         },
         name: {

@@ -38,15 +38,24 @@ class SalerController {
     try {
       const salers = req.body;
 
-      const createdSalers = await SalerService.createMany(salers);
+
+      if (!salers || !Array.isArray(salers)) {
+        // @ts-expect-error asdasds
+        return res.status(400).json({
+          message: "O parâmetro 'salers' é obrigatório e deve ser um array.",
+        });
+      }
+
+      const createdSalers = await SalerService.createMany({ data: salers });
 
       res.status(201).json({
-        message: "Salers criados com sucesso",
+        message: "Vendedores processados com sucesso.",
         data: createdSalers,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erro ao criar vendedores:", error.message);
       res.status(500).json({
-        message: "Erro ao criar salers",
+        message: "Erro interno ao processar os vendedores.",
         error: error.message,
       });
     }

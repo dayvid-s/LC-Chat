@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 
-import CheckSettingsHelper from "../helpers/CheckSettings";
 import AppError from "../errors/AppError";
+import CheckSettingsHelper from "../helpers/CheckSettings";
 
 import CreateUserService from "../services/UserServices/CreateUserService";
-import ListUsersService from "../services/UserServices/ListUsersService";
-import UpdateUserService from "../services/UserServices/UpdateUserService";
-import ShowUserService from "../services/UserServices/ShowUserService";
 import DeleteUserService from "../services/UserServices/DeleteUserService";
+import ListUsersService from "../services/UserServices/ListUsersService";
+import ShowUserService from "../services/UserServices/ShowUserService";
 import SimpleListService from "../services/UserServices/SimpleListService";
+import UpdateUserService from "../services/UserServices/UpdateUserService";
 
 type IndexQuery = {
   searchParam: string;
