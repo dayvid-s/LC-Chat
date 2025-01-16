@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 
 import { toast } from "react-toastify";
-import api from "../../services/api";
 import toastError from "../../errors/toastError";
+import api from "../../services/api";
 
 import {
   Box,
@@ -13,11 +13,11 @@ import {
 } from "@material-ui/core";
 import { useHistory } from "react-router-dom";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import MessagesList from "../MessagesList";
 import { ReplyMessageProvider } from "../../context/ReplyingMessage/ReplyingMessageContext";
+import { socketConnection } from "../../services/socket";
+import MessagesList from "../MessagesList";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
-import { socketConnection } from "../../services/socket";
 
 const drawerWidth = 320;
 
@@ -74,8 +74,8 @@ export default function TicketMessagesDialog({ open, handleClose, ticketId }) {
       delayDebounceFn = setTimeout(() => {
         const fetchTicket = async () => {
           try {
-            const { data } = await api.get("/tickets/" + ticketId);
             const { queueId } = data;
+            const { data } = await api.get("/tickets/" + ticketId);
             const { queues, profile } = user;
 
             const queueAllowed = queues.find((q) => q.id === queueId);
@@ -84,7 +84,6 @@ export default function TicketMessagesDialog({ open, handleClose, ticketId }) {
               history.push("/tickets");
               return;
             }
-
             setContact(data.contact);
             setTicket(data);
             setLoading(false);

@@ -1,11 +1,11 @@
-import Ticket from "../../models/Ticket";
 import AppError from "../../errors/AppError";
 import Contact from "../../models/Contact";
-import User from "../../models/User";
 import Queue from "../../models/Queue";
+import Saler from "../../models/Saler";
 import Tag from "../../models/Tag";
+import Ticket from "../../models/Ticket";
+import User from "../../models/User";
 import Whatsapp from "../../models/Whatsapp";
-import Prompt from "../../models/Prompt";
 
 const ShowTicketService = async (
   id: string | number,
@@ -17,7 +17,29 @@ const ShowTicketService = async (
         model: Contact,
         as: "contact",
         attributes: ["id", "name", "number", "email", "profilePicUrl"],
-        include: ["extraInfo"]
+        include: [
+          {
+            model: Saler,
+            as: "saler",
+            attributes: [
+              "id",
+              "name",
+              "cpf",
+              "branch",
+              "situation",
+              "commercialAssistent",
+              "commercialGroup",
+              "freeBelt",
+              "email",
+              "city",
+              "birthdate",
+              "productionInMonth",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          "extraInfo"
+        ],
       },
       {
         model: User,

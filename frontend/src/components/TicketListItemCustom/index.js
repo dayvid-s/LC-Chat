@@ -406,6 +406,7 @@ const TicketListItemCustom = ({ ticket }) => {
 
           primary={
             <span className={classes.contactNameWrapper}>
+
               <Typography
                 noWrap
                 component="span"
@@ -413,9 +414,12 @@ const TicketListItemCustom = ({ ticket }) => {
                 color="textPrimary"
               >
 
-                {ticket.contact?.saler
-                  ? `CÓD - ${ticket.contact.saler.id} ` : ''
-                }  {ticket.contact.name}
+                <strong>
+                  {ticket.contact?.saler
+                    ? `( CÓD - ${ticket?.contact?.saler?.id} ) ` : ''
+                  }
+                </strong>
+                {ticket.contact.name}
                 {profile === "admin" && (
                   <Tooltip title="Espiar Conversa">
                     <VisibilityIcon
