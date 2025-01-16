@@ -1,41 +1,36 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 
-import { useHistory, useParams } from "react-router-dom";
-import { parseISO, format, isSameDay } from "date-fns";
 import clsx from "clsx";
+import { format, isSameDay, parseISO } from "date-fns";
+import { useHistory, useParams } from "react-router-dom";
 
-import { makeStyles } from "@material-ui/core/styles";
-import { green, grey, red, blue } from "@material-ui/core/colors";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemAvatar from "@material-ui/core/ListItemAvatar";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
-import Divider from "@material-ui/core/Divider";
 import Badge from "@material-ui/core/Badge";
 import Box from "@material-ui/core/Box";
+import { blue, green, grey } from "@material-ui/core/colors";
+import Divider from "@material-ui/core/Divider";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemAvatar from "@material-ui/core/ListItemAvatar";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import ListItemText from "@material-ui/core/ListItemText";
+import { makeStyles } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
 
 import { i18n } from "../../translate/i18n";
 
-import api from "../../services/api";
-import ButtonWithSpinner from "../ButtonWithSpinner";
-import MarkdownWrapper from "../MarkdownWrapper";
 import { Tooltip } from "@material-ui/core";
+import { v4 as uuidv4 } from "uuid";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import toastError from "../../errors/toastError";
-import { v4 as uuidv4 } from "uuid";
+import api from "../../services/api";
+import ButtonWithSpinner from "../ButtonWithSpinner";
+import MarkdownWrapper from "../MarkdownWrapper";
 
-import RoomIcon from '@material-ui/icons/Room';
-import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import AndroidIcon from "@material-ui/icons/Android";
 import VisibilityIcon from "@material-ui/icons/Visibility";
-import TicketMessagesDialog from "../TicketMessagesDialog";
-import DoneIcon from '@material-ui/icons/Done';
-import ClearOutlinedIcon from '@material-ui/icons/ClearOutlined';
-import contrastColor from "../../helpers/contrastColor";
 import ContactTag from "../ContactTag";
+import TicketMessagesDialog from "../TicketMessagesDialog";
 
 const useStyles = makeStyles((theme) => ({
   ticket: {
@@ -183,8 +178,10 @@ const useStyles = makeStyles((theme) => ({
 
   }
 }));
-  {/*PLW DESIGN INSERIDO O dentro do const handleChangeTab*/}
-  const TicketListItemCustom = ({ ticket }) => {
+{/*PLW DESIGN INSERIDO O dentro do const handleChangeTab*/ }
+const TicketListItemCustom = ({ ticket }) => {
+
+  // console.log(ticket)
   const classes = useStyles();
   const history = useHistory();
   const [loading, setLoading] = useState(false);
@@ -220,7 +217,7 @@ const useStyles = makeStyles((theme) => ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  {/*CÓDIGO NOVO SAUDAÇÃO*/}
+  {/*CÓDIGO NOVO SAUDAÇÃO*/ }
   const handleCloseTicket = async (id) => {
     setTag(ticket?.tags);
     setLoading(true);
@@ -261,62 +258,62 @@ const useStyles = makeStyles((theme) => ({
     history.push(`/tickets/${ticket.uuid}`);
   };
 
-    const handleAcepptTicket = async (id) => {
-        setLoading(true);
-        try {
-            await api.put(`/tickets/${id}`, {
-                status: "open",
-                userId: user?.id,
-            });
-            
-            let settingIndex;
+  const handleAcepptTicket = async (id) => {
+    setLoading(true);
+    try {
+      await api.put(`/tickets/${id}`, {
+        status: "open",
+        userId: user?.id,
+      });
 
-            try {
-                const { data } = await api.get("/settings/");
-                
-                settingIndex = data.filter((s) => s.key === "sendGreetingAccepted");
-                
-            } catch (err) {
-                toastError(err);
-                   
-            }
-            
-            if (settingIndex[0].value === "enabled" && !ticket.isGroup) {
-                handleSendMessage(ticket.id);
-                
-            }
+      let settingIndex;
 
-        } catch (err) {
-            setLoading(false);
-            
-            toastError(err);
-        }
-        if (isMounted.current) {
-            setLoading(false);
-        }
+      try {
+        const { data } = await api.get("/settings/");
 
-        // handleChangeTab(null, "tickets");
-        // handleChangeTab(null, "open");
-        history.push(`/tickets/${ticket.uuid}`);
+        settingIndex = data.filter((s) => s.key === "sendGreetingAccepted");
+
+      } catch (err) {
+        toastError(err);
+
+      }
+
+      if (settingIndex[0].value === "enabled" && !ticket.isGroup) {
+        handleSendMessage(ticket.id);
+
+      }
+
+    } catch (err) {
+      setLoading(false);
+
+      toastError(err);
+    }
+    if (isMounted.current) {
+      setLoading(false);
+    }
+
+    // handleChangeTab(null, "tickets");
+    // handleChangeTab(null, "open");
+    history.push(`/tickets/${ticket.uuid}`);
+  };
+
+  const handleSendMessage = async (id) => {
+
+    const msg = `{{ms}} *{{name}}*, meu nome é *${user?.name}* e agora vou prosseguir com seu atendimento!`;
+    const message = {
+      read: 1,
+      fromMe: true,
+      mediaUrl: "",
+      body: `*Mensagem Automática:*\n${msg.trim()}`,
     };
-	
-	    const handleSendMessage = async (id) => {
-        
-        const msg = `{{ms}} *{{name}}*, meu nome é *${user?.name}* e agora vou prosseguir com seu atendimento!`;
-        const message = {
-            read: 1,
-            fromMe: true,
-            mediaUrl: "",
-            body: `*Mensagem Automática:*\n${msg.trim()}`,
-        };
-        try {
-            await api.post(`/messages/${id}`, message);
-        } catch (err) {
-            toastError(err);
-            
-        }
-    };
-	{/*CÓDIGO NOVO SAUDAÇÃO*/}
+    try {
+      await api.post(`/messages/${id}`, message);
+    } catch (err) {
+      toastError(err);
+
+    }
+  };
+  {/*CÓDIGO NOVO SAUDAÇÃO*/ }
 
   const handleSelectTicket = (ticket) => {
     const code = uuidv4();
@@ -415,7 +412,10 @@ const useStyles = makeStyles((theme) => ({
                 variant="body2"
                 color="textPrimary"
               >
-                {ticket.contact.name}
+
+                {ticket.contact?.saler
+                  ? `CÓD - ${ticket.contact.saler.id} ` : ''
+                }  {ticket.contact.name}
                 {profile === "admin" && (
                   <Tooltip title="Espiar Conversa">
                     <VisibilityIcon
@@ -505,7 +505,7 @@ const useStyles = makeStyles((theme) => ({
               className={classes.acceptButton}
               size="small"
               loading={loading}
-			  //PLW DESIGN INSERIDO O handleChangeTab
+              //PLW DESIGN INSERIDO O handleChangeTab
               onClick={e => handleAcepptTicket(ticket.id)}
             >
               {i18n.t("ticketsList.buttons.accept")}
