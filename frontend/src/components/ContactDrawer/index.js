@@ -11,7 +11,6 @@ import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import CloseIcon from "@material-ui/icons/Close";
 import CreateIcon from '@material-ui/icons/Create';
-
 import { i18n } from "../../translate/i18n";
 
 import { CardHeader } from "@material-ui/core";
@@ -148,6 +147,38 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
                     <Typography style={{ fontSize: 12 }}>
                       <Link href={`mailto:${contact.email}`}>{contact.email}</Link>
                     </Typography>
+
+
+                    <div>
+
+                      {/* <TagIcon></TagIcon> */}
+
+                      <Typography style={{ fontSize: 12 }}>
+                        <strong>{contact?.saler?.id}</strong>
+                      </Typography>
+                      <Typography style={{ fontSize: 12 }}>
+                        <strong>{contact?.saler?.situation}</strong>
+                      </Typography>
+
+                      <Typography style={{ fontSize: 12 }}>
+                        <strong>{contact?.saler?.commercialGroup}</strong>
+                      </Typography>
+
+
+                      <Typography style={{ fontSize: 12 }}>
+                        <strong>{contact?.saler?.commercialAssistent}</strong>
+                      </Typography>
+                      <Typography style={{ fontSize: 12 }}>
+                        <strong>{contact?.saler?.freeBelt}</strong>
+                      </Typography>
+
+
+                      <Typography style={{ fontSize: 12 }}>
+                        <strong>{contact?.saler?.city}</strong>
+                      </Typography>
+
+                    </div>
+
                   </>
                 }
               />
@@ -163,6 +194,7 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
             </Paper>
             <Paper square variant="outlined" className={classes.contactDetails}>
               <Typography variant="subtitle1" style={{ marginBottom: 10 }}>
+
                 {i18n.t("ticketOptionsMenu.appointmentsModal.title")}
               </Typography>
               <ContactNotes ticket={ticket} />
