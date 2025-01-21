@@ -20,7 +20,7 @@ import {
 } from "@material-ui/core";
 import api from "../../services/api";
 import { isArray } from "lodash";
-import { socketConnection } from "../../services/socket";
+// import { SocketContext } from "../../context/Socket/SocketContext";
 import { useDate } from "../../hooks/useDate";
 import { AuthContext } from "../../context/Auth/AuthContext";
 
@@ -98,7 +98,9 @@ const reducer = (state, action) => {
 export default function ChatPopover() {
   const classes = useStyles();
 
-  const { user } = useContext(AuthContext);
+//   const socketManager = useContext(SocketContext);
+  const { user, socket } = useContext(AuthContext);
+
 
   const [loading, setLoading] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -136,27 +138,33 @@ export default function ChatPopover() {
   }, [searchParam, pageNumber]);
 
   useEffect(() => {
-    const companyId = localStorage.getItem("companyId");
-    const socket = socketConnection({ companyId });
-    
-    socket.on(`company-${companyId}-chat`, (data) => {
-      if (data.action === "new-message") {
-        dispatch({ type: "CHANGE_CHAT", payload: data });
-        const userIds = data.newMessage.chat.users.map(userObj => userObj.userId);
+    if (user.companyId) {
 
-        if (userIds.includes(user.id) && data.newMessage.senderId !== user.id) {
-          soundAlertRef.current();
+      const companyId = user.companyId;
+//    const socket = socketManager.GetSocket();
+
+      const onCompanyChatPopover = (data) => {
+        if (data.action === "new-message") {
+          dispatch({ type: "CHANGE_CHAT", payload: data });
+          if (data.newMessage.senderId !== user.id) {
+
+            soundAlertRef.current();
+          }
+        }
+        if (data.action === "update") {
+          dispatch({ type: "CHANGE_CHAT", payload: data });
         }
       }
-      if (data.action === "update") {
-        dispatch({ type: "CHANGE_CHAT", payload: data });
-      }
-    });
-    return () => {
-      socket.disconnect();
-    };
+
+      socket.on(`company-${companyId}-chat`, onCompanyChatPopover);
+
+      return () => {
+        socket.off(`company-${companyId}-chat`, onCompanyChatPopover);
+      };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
+
 
   useEffect(() => {
     let unreadsCount = 0;
@@ -280,7 +288,7 @@ export default function ChatPopover() {
                 </ListItem>
               ))}
             {isArray(chats) && chats.length === 0 && (
-              <ListItemText primary={i18n.t("Notificação")} />
+              <ListItemText primary={i18n.t("mainDrawer.appBar.notRegister")} />
             )}
           </List>
         </Paper>

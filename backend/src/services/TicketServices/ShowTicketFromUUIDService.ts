@@ -1,50 +1,54 @@
+import Ticket from "../../models/Ticket";
 import AppError from "../../errors/AppError";
 import Contact from "../../models/Contact";
-import Queue from "../../models/Queue";
-import Saler from "../../models/Saler";
-import Tag from "../../models/Tag";
-import Ticket from "../../models/Ticket";
 import User from "../../models/User";
+import Queue from "../../models/Queue";
+import Tag from "../../models/Tag";
 import Whatsapp from "../../models/Whatsapp";
+import Company from "../../models/Company";
+import QueueIntegrations from "../../models/QueueIntegrations";
 
-const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
+const ShowTicketUUIDService = async (uuid: string,
+  companyId: number): Promise<Ticket> => {
   const ticket = await Ticket.findOne({
     where: {
-      uuid
+      uuid,
+      companyId
     },
+    attributes: [
+      "id",
+      "uuid",
+      "queueId",
+      "isGroup",
+      "channel",
+      "status",
+      "contactId",
+      "useIntegration",
+      "lastMessage",
+      "updatedAt",
+      "unreadMessages",
+      "companyId",
+      "whatsappId",
+      "imported",
+      "lgpdAcceptedAt",
+      "amountUsedBotQueues",
+      "useIntegration",
+      "integrationId",
+      "userId",
+      "amountUsedBotQueuesNPS",
+      "lgpdSendMessageAt",
+      "isBot"
+    ],
     include: [
       {
         model: Contact,
         as: "contact",
-        attributes: ["id", "name", "number", "email", "profilePicUrl"],
-        include: [
+        attributes: ["id", "name", "number", "email", "profilePicUrl", "acceptAudioMessage", "active", "disableBot", "urlPicture", "companyId"],
+        include: ["extraInfo", "tags",
           {
-            model: Saler,
-            as: "saler",
-            attributes: [
-              "id",
-              "name",
-              "cpf",
-              "branch",
-              "situation",
-              "commercialAssistent",
-              "commercialGroup",
-              "freeBelt",
-              "email",
-              "city",
-              "birthdate",
-              "productionInMonth",
-              "createdAt",
-              "updatedAt"
-            ]
-          },
-          "extraInfo"
-        ],
-      },
-      {
-        model: User,
-        as: "user",
-        attributes: ["id", "name"]
+            association: "wallets",
+            attributes: ["id", "name"]
+          }]
       },
       {
         model: Queue,
@@ -52,14 +56,29 @@ const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
         attributes: ["id", "name", "color"]
       },
       {
-        model: Whatsapp,
-        as: "whatsapp",
-        attributes: ["name"]
+        model: User,
+        as: "user",
+        attributes: ["id", "name"]
       },
       {
         model: Tag,
         as: "tags",
         attributes: ["id", "name", "color"]
+      },
+      {
+        model: Whatsapp,
+        as: "whatsapp",
+        attributes: ["id", "name", "groupAsTicket", "greetingMediaAttachment", "facebookUserToken", "facebookUserId"]
+      },
+      {
+        model: Company,
+        as: "company",
+        attributes: ["id", "name"]
+      },
+      {
+        model: QueueIntegrations,
+        as: "queueIntegration",
+        attributes: ["id", "name"]
       }
     ]
   });

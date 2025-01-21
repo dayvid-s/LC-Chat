@@ -12,7 +12,6 @@ companyRoutes.post("/companies", isAuth, CompanyController.store);
 companyRoutes.put("/companies/:id", isAuth, CompanyController.update);
 companyRoutes.put("/companies/:id/schedules",isAuth,CompanyController.updateSchedules);
 companyRoutes.delete("/companies/:id", isAuth, CompanyController.remove);
-companyRoutes.post("/companies/cadastro", CompanyController.store);
 
 // Rota para listar o plano da empresa
 companyRoutes.get("/companies/listPlan/:id", isAuth, CompanyController.listPlan);

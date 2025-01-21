@@ -30,7 +30,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { Grid } from "@material-ui/core";
 import { isArray } from "lodash";
-import { socketConnection } from "../../services/socket";
+// import { SocketContext } from "../../context/Socket/SocketContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
 
 
@@ -107,7 +107,9 @@ const Quickemessages = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [searchParam, setSearchParam] = useState("");
   const [quickemessages, dispatch] = useReducer(reducer, []);
-  const { user } = useContext(AuthContext);
+  //   const socketManager = useContext(SocketContext);
+  const { user, socket } = useContext(AuthContext);
+
   const { profile } = user;
 
   useEffect(() => {
@@ -126,27 +128,29 @@ const Quickemessages = () => {
 
   useEffect(() => {
     const companyId = user.companyId;
-    const socket = socketConnection({ companyId, userId: user.id });
+    // const socket = socketManager.GetSocket();
 
-    socket.on(`company${companyId}-quickemessage`, (data) => {
+    const onQuickMessageEvent = (data) => {
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_QUICKMESSAGES", payload: data.record });
       }
       if (data.action === "delete") {
         dispatch({ type: "DELETE_QUICKMESSAGE", payload: +data.id });
       }
-    });
-    return () => {
-      socket.disconnect();
     };
-  }, []);
+    socket.on(`company-${companyId}-quickemessage`, onQuickMessageEvent);
+
+    return () => {
+      socket.off(`company-${companyId}-quickemessage`, onQuickMessageEvent);
+    };
+  }, [socket]);
 
   const fetchQuickemessages = async () => {
     try {
       const companyId = user.companyId;
       //const searchParam = ({ companyId, userId: user.id });
       const { data } = await api.get("/quick-messages", {
-        params: { searchParam, pageNumber, userId: user.id },
+        params: { searchParam, pageNumber },
       });
 
       dispatch({ type: "LOAD_QUICKMESSAGES", payload: data.records });
@@ -277,7 +281,10 @@ const Quickemessages = () => {
 
               <TableCell align="center">
                 {i18n.t("quickMessages.table.mediaName")}
-              </TableCell>        
+              </TableCell>
+              <TableCell align="center">
+                {i18n.t("quickMessages.table.status")}
+              </TableCell>
               <TableCell align="center">
                 {i18n.t("quickMessages.table.actions")}
               </TableCell>
@@ -291,6 +298,13 @@ const Quickemessages = () => {
 
                   <TableCell align="center">
                     {quickemessage.mediaName ?? i18n.t("quickMessages.noAttachment")}
+                  </TableCell>
+                  <TableCell align="center">
+                    {quickemessage.geral === true ? (
+                      <CheckCircleIcon style={{ color: 'green' }} />
+                    ) : (
+                      ''
+                    )}
                   </TableCell>
                   <TableCell align="center">
                     <IconButton

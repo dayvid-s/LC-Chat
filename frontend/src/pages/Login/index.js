@@ -13,7 +13,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { i18n } from "../../translate/i18n";
 
 import backgroundLc from "../../assets/BackgroundLC.png";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/LC_logo_horizontal.png";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 
@@ -49,7 +49,7 @@ const useStyles = makeStyles(theme => ({
     textAlign: "center",
   },
   paper: {
-    backgroundColor: theme.palette.login, //DARK MODE PLW DESIGN//
+    backgroundColor: "#fff", //DARK MODE PLW DESIGN//
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -59,7 +59,7 @@ const useStyles = makeStyles(theme => ({
   },
   avatar: {
     margin: theme.spacing(1),
-    backgroundColor: theme.palette.secondary.main,
+    backgroundColor: theme.palette.secondary,
   },
   form: {
     width: "100%", // Fix IE 11 issue.

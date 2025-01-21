@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useContext, useEffect, useReducer, useState } from "react";
 
 import openSocket from "socket.io-client";
 
@@ -27,6 +27,11 @@ import { DeleteOutline, Edit } from "@material-ui/icons";
 import PromptModal from "../../components/PromptModal";
 import { toast } from "react-toastify";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import usePlans from "../../hooks/usePlans";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import ForbiddenPage from "../../components/ForbiddenPage";
+// import { SocketContext } from "../../context/Socket/SocketContext";
 
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
@@ -94,6 +99,26 @@ const Prompts = () => {
   const [promptModalOpen, setPromptModalOpen] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  //   const socketManager = useContext(SocketContext);
+  const { user, socket } = useContext(AuthContext);
+
+  const { getPlanCompany } = usePlans();
+  const history = useHistory();
+  const companyId = user.companyId;
+
+  useEffect(() => {
+    async function fetchData() {
+      const planConfigs = await getPlanCompany(undefined, companyId);
+      if (!planConfigs.plan.useOpenAi) {
+        toast.error("Esta empresa não possui permissão para acessar essa página! Estamos lhe redirecionando.");
+        setTimeout(() => {
+          history.push(`/`)
+        }, 1000);
+      }
+    }
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -111,9 +136,9 @@ const Prompts = () => {
   }, []);
 
   useEffect(() => {
-    const socket = openSocket(process.env.REACT_APP_BACKEND_URL);
+    // const socket = socketManager.GetSocket();
 
-    socket.on("prompt", (data) => {
+    const onPromptEvent = (data) => {
       if (data.action === "update" || data.action === "create") {
         dispatch({ type: "UPDATE_PROMPTS", payload: data.prompt });
       }
@@ -121,12 +146,13 @@ const Prompts = () => {
       if (data.action === "delete") {
         dispatch({ type: "DELETE_PROMPT", payload: data.promptId });
       }
-    });
-
-    return () => {
-      socket.disconnect();
     };
-  }, []);
+
+    socket.on(`company-${companyId}-prompt`, onPromptEvent);
+    return () => {
+      socket.off(`company-${companyId}-prompt`, onPromptEvent);
+    };
+  }, [socket]);
 
   const handleOpenPromptModal = () => {
     setPromptModalOpen(true);
@@ -177,68 +203,73 @@ const Prompts = () => {
         onClose={handleClosePromptModal}
         promptId={selectedPrompt?.id}
       />
-      <MainHeader>
-        <Title>{i18n.t("prompts.title")}</Title>
-        <MainHeaderButtonsWrapper>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenPromptModal}
-          >
-            {i18n.t("prompts.buttons.add")}
-          </Button>
-        </MainHeaderButtonsWrapper>
-      </MainHeader>
-      <Paper className={classes.mainPaper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell align="left">
-                {i18n.t("prompts.table.name")}
-              </TableCell>
-              <TableCell align="left">
-                {i18n.t("prompts.table.queue")}
-              </TableCell>
-              <TableCell align="left">
-                {i18n.t("prompts.table.max_tokens")}
-              </TableCell> 
-              <TableCell align="center">
-                {i18n.t("prompts.table.actions")}
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <>
-              {prompts.map((prompt) => (
-                <TableRow key={prompt.id}>
-                  <TableCell align="left">{prompt.name}</TableCell>
-                  <TableCell align="left">{prompt.queue.name}</TableCell>
-                  <TableCell align="left">{prompt.maxTokens}</TableCell>
+      {user.profile === "user" ?
+        <ForbiddenPage />
+        :
+        <>
+          <MainHeader>
+            <Title>{i18n.t("prompts.title")}</Title>
+            <MainHeaderButtonsWrapper>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleOpenPromptModal}
+              >
+                {i18n.t("prompts.buttons.add")}
+              </Button>
+            </MainHeaderButtonsWrapper>
+          </MainHeader>
+          <Paper className={classes.mainPaper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="left">
+                    {i18n.t("prompts.table.name")}
+                  </TableCell>
+                  <TableCell align="left">
+                    {i18n.t("prompts.table.queue")}
+                  </TableCell>
+                  <TableCell align="left">
+                    {i18n.t("prompts.table.max_tokens")}
+                  </TableCell>
                   <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEditPrompt(prompt)}
-                    >
-                      <Edit />
-                    </IconButton>
-
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setSelectedPrompt(prompt);
-                        setConfirmModalOpen(true);
-                      }}
-                    >
-                      <DeleteOutline />
-                    </IconButton>
+                    {i18n.t("prompts.table.actions")}
                   </TableCell>
                 </TableRow>
-              ))}
-              {loading && <TableRowSkeleton columns={4} />}
-            </>
-          </TableBody>
-        </Table>
-      </Paper>
+              </TableHead>
+              <TableBody>
+                <>
+                  {prompts.map((prompt) => (
+                    <TableRow key={prompt.id}>
+                      <TableCell align="left">{prompt.name}</TableCell>
+                      <TableCell align="left">{prompt.queue.name}</TableCell>
+                      <TableCell align="left">{prompt.maxTokens}</TableCell>
+                      <TableCell align="center">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleEditPrompt(prompt)}
+                        >
+                          <Edit />
+                        </IconButton>
+
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setSelectedPrompt(prompt);
+                            setConfirmModalOpen(true);
+                          }}
+                        >
+                          <DeleteOutline />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {loading && <TableRowSkeleton columns={4} />}
+                </>
+              </TableBody>
+            </Table>
+          </Paper>
+        </>}
     </MainContainer>
   );
 };

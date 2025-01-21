@@ -1,47 +1,60 @@
 import { Sequelize } from "sequelize-typescript";
-import Announcement from "../models/Announcement";
-import Baileys from "../models/Baileys";
-import BaileysChats from "../models/BaileysChats";
-import Campaign from "../models/Campaign";
-import CampaignSetting from "../models/CampaignSetting";
-import CampaignShipping from "../models/CampaignShipping";
-import Chat from "../models/Chat";
-import ChatMessage from "../models/ChatMessage";
-import ChatUser from "../models/ChatUser";
-import Company from "../models/Company";
+import User from "../models/User";
+import Setting from "../models/Setting";
 import Contact from "../models/Contact";
+import Ticket from "../models/Ticket";
+import Whatsapp from "../models/Whatsapp";
 import ContactCustomField from "../models/ContactCustomField";
+import Message from "../models/Message";
+import Queue from "../models/Queue";
+import WhatsappQueue from "../models/WhatsappQueue";
+import UserQueue from "../models/UserQueue";
+import Company from "../models/Company";
+import Plan from "../models/Plan";
+import TicketNote from "../models/TicketNote";
+import QuickMessage from "../models/QuickMessage";
+import Help from "../models/Help";
+import TicketTraking from "../models/TicketTraking";
+import UserRating from "../models/UserRating";
+import Schedule from "../models/Schedule";
+import Tag from "../models/Tag";
+import TicketTag from "../models/TicketTag";
 import ContactList from "../models/ContactList";
 import ContactListItem from "../models/ContactListItem";
+import Campaign from "../models/Campaign";
+import CampaignSetting from "../models/CampaignSetting";
+import Baileys from "../models/Baileys";
+import CampaignShipping from "../models/CampaignShipping";
+import Announcement from "../models/Announcement";
+import Chat from "../models/Chat";
+import ChatUser from "../models/ChatUser";
+import ChatMessage from "../models/ChatMessage";
+import Chatbot from "../models/Chatbot";
+import DialogChatBots from "../models/DialogChatBots";
+import QueueIntegrations from "../models/QueueIntegrations";
+import Invoices from "../models/Invoices";
+import Subscriptions from "../models/Subscriptions";
+import ApiUsages from "../models/ApiUsages";
 import Files from "../models/Files";
 import FilesOptions from "../models/FilesOptions";
-import Help from "../models/Help";
-import Invoices from "../models/Invoices";
-import Message from "../models/Message";
-import Plan from "../models/Plan";
+import ContactTag from "../models/ContactTag";
+import CompaniesSettings from "../models/CompaniesSettings";
+import LogTicket from "../models/LogTicket";
 import Prompt from "../models/Prompt";
-import Queue from "../models/Queue";
-import QueueIntegrations from "../models/QueueIntegrations";
-import QueueOption from "../models/QueueOption";
-import QuickMessage from "../models/QuickMessage";
-import Saler from "../models/Saler";
-import Schedule from "../models/Schedule";
-import Setting from "../models/Setting";
-import Subscriptions from "../models/Subscriptions";
-import Tag from "../models/Tag";
-import Ticket from "../models/Ticket";
-import TicketNote from "../models/TicketNote";
-import TicketTag from "../models/TicketTag";
-import TicketTraking from "../models/TicketTraking";
-import User from "../models/User";
-import UserQueue from "../models/UserQueue";
-import UserRating from "../models/UserRating";
-import Whatsapp from "../models/Whatsapp";
-import WhatsappQueue from "../models/WhatsappQueue";
+import Partner from "../models/Partner";
+import ContactWallet from "../models/ContactWallet";
+import ScheduledMessages from "../models/ScheduledMessages";
+import ScheduledMessagesEnvio from "../models/ScheduledMessagesEnvio";
+import Versions from "../models/Versions";
+import { FlowDefaultModel } from "../models/FlowDefault";
+import { FlowBuilderModel } from "../models/FlowBuilder";
+import { FlowAudioModel } from "../models/FlowAudio";
+import { FlowCampaignModel } from "../models/FlowCampaign";
+import { FlowImgModel } from "../models/FlowImg";
+import { WebhookModel } from "../models/Webhook";
 
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
-// import dbConfig from "../config/database";
 
 const sequelize = new Sequelize(dbConfig);
 
@@ -49,6 +62,7 @@ const models = [
   Company,
   User,
   Contact,
+  ContactTag,
   Ticket,
   Message,
   Whatsapp,
@@ -63,7 +77,6 @@ const models = [
   Help,
   TicketTraking,
   UserRating,
-  QueueOption,
   Schedule,
   Tag,
   TicketTag,
@@ -77,14 +90,28 @@ const models = [
   Chat,
   ChatUser,
   ChatMessage,
+  Chatbot,
+  DialogChatBots,
+  QueueIntegrations,
   Invoices,
   Subscriptions,
-  BaileysChats,
+  ApiUsages,
   Files,
   FilesOptions,
+  CompaniesSettings,
+  LogTicket,
   Prompt,
-  QueueIntegrations,
-  Saler
+  Partner,
+  ContactWallet,
+  ScheduledMessages,
+  ScheduledMessagesEnvio,
+  Versions,
+  FlowDefaultModel,
+  FlowBuilderModel,
+  FlowAudioModel,
+  FlowCampaignModel,
+  FlowImgModel,
+  WebhookModel
 ];
 
 sequelize.addModels(models);
