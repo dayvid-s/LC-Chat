@@ -1,26 +1,27 @@
 import {
-  Table,
+  AllowNull,
+  AutoIncrement,
+  BelongsTo,
+  BelongsToMany,
   Column,
   CreatedAt,
-  UpdatedAt,
+  Default,
+  ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
-  AutoIncrement,
-  AllowNull,
+  Table,
   Unique,
-  Default,
-  HasMany,
-  ForeignKey,
-  BelongsTo,
-  BelongsToMany
+  UpdatedAt
 } from "sequelize-typescript";
-import ContactCustomField from "./ContactCustomField";
-import Ticket from "./Ticket";
 import Company from "./Company";
-import Schedule from "./Schedule";
+import ContactCustomField from "./ContactCustomField";
 import ContactTag from "./ContactTag";
-import Tag from "./Tag";
 import ContactWallet from "./ContactWallet";
+import Saler from "./Saler";
+import Schedule from "./Schedule";
+import Tag from "./Tag";
+import Ticket from "./Ticket";
 import User from "./User";
 import Whatsapp from "./Whatsapp";
 
@@ -112,9 +113,9 @@ class Contact extends Model<Contact> {
   @Column
   get urlPicture(): string | null {
     if (this.getDataValue("urlPicture")) {
-      
-      return this.getDataValue("urlPicture") === 'nopicture.png' ?   `${process.env.FRONTEND_URL}/nopicture.png` :
-      `${process.env.BACKEND_URL}${process.env.PROXY_PORT ?`:${process.env.PROXY_PORT}`:""}/public/company${this.companyId}/contacts/${this.getDataValue("urlPicture")}` 
+
+      return this.getDataValue("urlPicture") === 'nopicture.png' ? `${process.env.FRONTEND_URL}/nopicture.png` :
+        `${process.env.BACKEND_URL}${process.env.PROXY_PORT ? `:${process.env.PROXY_PORT}` : ""}/public/company${this.companyId}/contacts/${this.getDataValue("urlPicture")}`
 
     }
     return null;
@@ -132,6 +133,15 @@ class Contact extends Model<Contact> {
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
+
+
+  @ForeignKey(() => Saler)
+  @Column
+  salerId: number;
+
+
+  @BelongsTo(() => Saler)
+  saler: Saler;
 }
 
 export default Contact;

@@ -1,55 +1,57 @@
 import { Sequelize } from "sequelize-typescript";
-import User from "../models/User";
-import Setting from "../models/Setting";
-import Contact from "../models/Contact";
-import Ticket from "../models/Ticket";
-import Whatsapp from "../models/Whatsapp";
-import ContactCustomField from "../models/ContactCustomField";
-import Message from "../models/Message";
-import Queue from "../models/Queue";
-import WhatsappQueue from "../models/WhatsappQueue";
-import UserQueue from "../models/UserQueue";
-import Company from "../models/Company";
-import Plan from "../models/Plan";
-import TicketNote from "../models/TicketNote";
-import QuickMessage from "../models/QuickMessage";
-import Help from "../models/Help";
-import TicketTraking from "../models/TicketTraking";
-import UserRating from "../models/UserRating";
-import Schedule from "../models/Schedule";
-import Tag from "../models/Tag";
-import TicketTag from "../models/TicketTag";
-import ContactList from "../models/ContactList";
-import ContactListItem from "../models/ContactListItem";
+import Announcement from "../models/Announcement";
+import ApiUsages from "../models/ApiUsages";
+import Baileys from "../models/Baileys";
 import Campaign from "../models/Campaign";
 import CampaignSetting from "../models/CampaignSetting";
-import Baileys from "../models/Baileys";
 import CampaignShipping from "../models/CampaignShipping";
-import Announcement from "../models/Announcement";
 import Chat from "../models/Chat";
-import ChatUser from "../models/ChatUser";
 import ChatMessage from "../models/ChatMessage";
+import ChatUser from "../models/ChatUser";
 import Chatbot from "../models/Chatbot";
+import CompaniesSettings from "../models/CompaniesSettings";
+import Company from "../models/Company";
+import Contact from "../models/Contact";
+import ContactCustomField from "../models/ContactCustomField";
+import ContactList from "../models/ContactList";
+import ContactListItem from "../models/ContactListItem";
+import ContactTag from "../models/ContactTag";
+import ContactWallet from "../models/ContactWallet";
 import DialogChatBots from "../models/DialogChatBots";
-import QueueIntegrations from "../models/QueueIntegrations";
-import Invoices from "../models/Invoices";
-import Subscriptions from "../models/Subscriptions";
-import ApiUsages from "../models/ApiUsages";
 import Files from "../models/Files";
 import FilesOptions from "../models/FilesOptions";
-import ContactTag from "../models/ContactTag";
-import CompaniesSettings from "../models/CompaniesSettings";
+import Help from "../models/Help";
+import Invoices from "../models/Invoices";
 import LogTicket from "../models/LogTicket";
-import Prompt from "../models/Prompt";
+import Message from "../models/Message";
 import Partner from "../models/Partner";
-import ContactWallet from "../models/ContactWallet";
+import Plan from "../models/Plan";
+import Prompt from "../models/Prompt";
+import Queue from "../models/Queue";
+import QueueIntegrations from "../models/QueueIntegrations";
+import QuickMessage from "../models/QuickMessage";
+import Saler from "../models/Saler";
+import Schedule from "../models/Schedule";
 import ScheduledMessages from "../models/ScheduledMessages";
 import ScheduledMessagesEnvio from "../models/ScheduledMessagesEnvio";
+import Setting from "../models/Setting";
+import Subscriptions from "../models/Subscriptions";
+import Tag from "../models/Tag";
+import Ticket from "../models/Ticket";
+import TicketNote from "../models/TicketNote";
+import TicketTag from "../models/TicketTag";
+import TicketTraking from "../models/TicketTraking";
+import User from "../models/User";
+import UserQueue from "../models/UserQueue";
+import UserRating from "../models/UserRating";
 import Versions from "../models/Versions";
-import { FlowDefaultModel } from "../models/FlowDefault";
-import { FlowBuilderModel } from "../models/FlowBuilder";
+import Whatsapp from "../models/Whatsapp";
+import WhatsappQueue from "../models/WhatsappQueue";
+
 import { FlowAudioModel } from "../models/FlowAudio";
+import { FlowBuilderModel } from "../models/FlowBuilder";
 import { FlowCampaignModel } from "../models/FlowCampaign";
+import { FlowDefaultModel } from "../models/FlowDefault";
 import { FlowImgModel } from "../models/FlowImg";
 import { WebhookModel } from "../models/Webhook";
 
@@ -111,7 +113,8 @@ const models = [
   FlowAudioModel,
   FlowCampaignModel,
   FlowImgModel,
-  WebhookModel
+  WebhookModel,
+  Saler
 ];
 
 sequelize.addModels(models);
