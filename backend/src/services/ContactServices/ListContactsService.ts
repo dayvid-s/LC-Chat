@@ -1,14 +1,10 @@
-import { Sequelize, fn, col, where, Op, Filterable } from "sequelize";
+import { col, Filterable, fn, Op, where } from "sequelize";
 import Contact from "../../models/Contact";
-import Ticket from "../../models/Ticket";
 import ContactTag from "../../models/ContactTag";
 
 import { intersection } from "lodash";
-import Tag from "../../models/Tag";
 import removeAccents from "remove-accents";
-import Whatsapp from "../../models/Whatsapp";
-import User from "../../models/User";
-import ShowUserService from "../UserServices/ShowUserService";
+import Tag from "../../models/Tag";
 
 interface Request {
   searchParam?: string;
@@ -104,16 +100,15 @@ const ListContactsService = async ({
 
   const { count, rows: contacts } = await Contact.findAndCountAll({
     where: whereCondition,
-    attributes: ["id", "name", "number", "email", "isGroup", "urlPicture", "active", "companyId", "channel"],
+    attributes: ["id", "name", "number", "email", "isGroup", "urlPicture", "active", "companyId", "channel", "salerId"],
     limit,
     include: [
       // {
-      //   model: Ticket,
       //   as: "tickets",
       //   attributes: ["id", "status", "createdAt", "updatedAt"],
       //   limit: 1,
       //   order: [["updatedAt", "DESC"]]
-      // },   
+      // },
       {
         model: Tag,
         as: "tags",

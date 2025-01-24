@@ -1,37 +1,34 @@
-import * as Yup from "yup";
 import { Request, Response } from "express";
-import { getIO } from "../libs/socket";
 import { head } from "lodash";
+import * as Yup from "yup";
+import { getIO } from "../libs/socket";
 
-import ListContactsService from "../services/ContactServices/ListContactsService";
 import CreateContactService from "../services/ContactServices/CreateContactService";
-import ShowContactService from "../services/ContactServices/ShowContactService";
-import UpdateContactService from "../services/ContactServices/UpdateContactService";
 import DeleteContactService from "../services/ContactServices/DeleteContactService";
 import GetContactService from "../services/ContactServices/GetContactService";
+import ListContactsService from "../services/ContactServices/ListContactsService";
+import ShowContactService from "../services/ContactServices/ShowContactService";
+import UpdateContactService from "../services/ContactServices/UpdateContactService";
 
-import CheckContactNumber from "../services/WbotServices/CheckNumber";
-import CheckIsValidContact from "../services/WbotServices/CheckIsValidContact";
-import GetProfilePicUrl from "../services/WbotServices/GetProfilePicUrl";
 import AppError from "../errors/AppError";
+import ContactCustomField from "../models/ContactCustomField";
+import BlockUnblockContactService from "../services/ContactServices/BlockUnblockContactService";
+import CreateOrUpdateContactServiceForImport from "../services/ContactServices/CreateOrUpdateContactServiceForImport";
+import { ImportContactsService } from "../services/ContactServices/ImportContactsService";
+import NumberSimpleListService from "../services/ContactServices/NumberSimpleListService";
 import SimpleListService, {
   SearchContactParams
 } from "../services/ContactServices/SimpleListService";
-import ContactCustomField from "../models/ContactCustomField";
 import ToggleAcceptAudioContactService from "../services/ContactServices/ToggleAcceptAudioContactService";
-import BlockUnblockContactService from "../services/ContactServices/BlockUnblockContactService";
-import { ImportContactsService } from "../services/ContactServices/ImportContactsService";
-import NumberSimpleListService from "../services/ContactServices/NumberSimpleListService";
-import CreateOrUpdateContactServiceForImport from "../services/ContactServices/CreateOrUpdateContactServiceForImport";
 import UpdateContactWalletsService from "../services/ContactServices/UpdateContactWalletsService";
+import CheckContactNumber from "../services/WbotServices/CheckNumber";
+import GetProfilePicUrl from "../services/WbotServices/GetProfilePicUrl";
 
-import FindContactTags from "../services/ContactServices/FindContactTags";
-import { log } from "console";
-import ToggleDisableBotContactService from "../services/ContactServices/ToggleDisableBotContactService";
-import GetDefaultWhatsApp from "../helpers/GetDefaultWhatsApp";
 import Contact from "../models/Contact";
-import Tag from "../models/Tag";
 import ContactTag from "../models/ContactTag";
+import Tag from "../models/Tag";
+import FindContactTags from "../services/ContactServices/FindContactTags";
+import ToggleDisableBotContactService from "../services/ContactServices/ToggleDisableBotContactService";
 import logger from "../utils/logger";
 
 type IndexQuery = {
@@ -53,6 +50,7 @@ interface ExtraInfo extends ContactCustomField {
 interface ContactData {
   name: string;
   number: string;
+  salerId: string;
   email?: string;
   extraInfo?: ExtraInfo[];
   disableBot?: boolean;
@@ -159,6 +157,7 @@ export const getContact = async (
   const contact = await GetContactService({
     name,
     number,
+
     companyId
   });
 
@@ -259,6 +258,7 @@ export const update = async (
     const validNumber = await CheckContactNumber(contactData.number, companyId, isGroup);
     const number = validNumber;
     contactData.number = number;
+    contactData.salerId = contactData.salerId
   }
 
   const contact = await UpdateContactService({

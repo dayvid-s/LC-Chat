@@ -1,12 +1,13 @@
-import Ticket from "../../models/Ticket";
 import AppError from "../../errors/AppError";
-import Contact from "../../models/Contact";
-import User from "../../models/User";
-import Queue from "../../models/Queue";
-import Tag from "../../models/Tag";
-import Whatsapp from "../../models/Whatsapp";
 import Company from "../../models/Company";
+import Contact from "../../models/Contact";
+import Queue from "../../models/Queue";
 import QueueIntegrations from "../../models/QueueIntegrations";
+import Saler from "../../models/Saler";
+import Tag from "../../models/Tag";
+import Ticket from "../../models/Ticket";
+import User from "../../models/User";
+import Whatsapp from "../../models/Whatsapp";
 
 const ShowTicketUUIDService = async (uuid: string,
   companyId: number): Promise<Ticket> => {
@@ -44,7 +45,29 @@ const ShowTicketUUIDService = async (uuid: string,
         model: Contact,
         as: "contact",
         attributes: ["id", "name", "number", "email", "profilePicUrl", "acceptAudioMessage", "active", "disableBot", "urlPicture", "companyId"],
-        include: ["extraInfo", "tags",
+        include: [
+          {
+            model: Saler,
+            as: "saler",
+            attributes: [
+              "id",
+              "name",
+              "cpf",
+              "branch",
+              "phoneNumberOne",
+              "phoneNumberTwo",
+              "situation",
+              "commercialAssistent",
+              "commercialGroup",
+              "freeBelt",
+              "email",
+              "city",
+              "birthdate",
+              "productionInMonth",
+              "createdAt",
+              "updatedAt"
+            ]
+          }, "extraInfo", "tags",
           {
             association: "wallets",
             attributes: ["id", "name"]

@@ -22,10 +22,16 @@ class Saler extends Model<Saler> {
   @Column
   cpf: string;
 
-  @Column
+  @Column({
+    type: DataType.STRING,
+    defaultValue: "Desconhecido"
+  })
   phoneNumberOne: string;
 
-  @Column
+  @Column({
+    type: DataType.STRING,
+    defaultValue: "Desconhecido"
+  })
   phoneNumberTwo: string;
 
   @Column

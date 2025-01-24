@@ -1,20 +1,20 @@
-import { Op, fn, where, col, Filterable, Includeable, literal } from "sequelize";
-import { startOfDay, endOfDay, parseISO } from "date-fns";
+import { col, Filterable, fn, Includeable, literal, Op, where } from "sequelize";
 
-import Ticket from "../../models/Ticket";
 import Contact from "../../models/Contact";
 import Message from "../../models/Message";
 import Queue from "../../models/Queue";
+import Tag from "../../models/Tag";
+import Ticket from "../../models/Ticket";
 import User from "../../models/User";
 import ShowUserService from "../UserServices/ShowUserService";
-import Tag from "../../models/Tag";
 
 import { intersection } from "lodash";
-import Whatsapp from "../../models/Whatsapp";
 import ContactTag from "../../models/ContactTag";
+import Whatsapp from "../../models/Whatsapp";
 
 import removeAccents from "remove-accents";
 
+import Saler from "../../models/Saler";
 import FindCompanySettingOneService from "../CompaniesSettings/FindCompanySettingOneService";
 
 interface Request {
@@ -78,7 +78,7 @@ const ListTicketsService = async ({
   const showGroups = user.allowGroup === true;
   const showPendingNotification = await FindCompanySettingOneService({ companyId, column: "showNotificationPending" });
   const showNotificationPendingValue = showPendingNotification[0].showNotificationPending;
-    let whereCondition: Filterable["where"];
+  let whereCondition: Filterable["where"];
 
   whereCondition = {
     [Op.or]: [{ userId }, { status: "pending" }],
@@ -93,8 +93,33 @@ const ListTicketsService = async ({
     {
       model: Contact,
       as: "contact",
-      attributes: ["id", "name", "number", "email", "profilePicUrl", "acceptAudioMessage", "active", "urlPicture", "companyId"],
-      include: ["extraInfo", "tags"]
+
+      attributes: ["id", "name", "number", "email", "profilePicUrl"],
+      include: [
+        {
+          model: Saler,
+          as: "saler",
+          attributes: [
+            "id",
+            "name",
+            "cpf",
+            "branch",
+            "situation",
+            "commercialAssistent",
+            "commercialGroup",
+            "freeBelt",
+            "email",
+            "city",
+            "birthdate",
+            "productionInMonth",
+            "phoneNumberOne",
+            "phoneNumberTwo",
+            "createdAt",
+            "updatedAt",
+          ]
+
+        }
+        , "extraInfo", "tags"]
     },
     {
       model: Queue,
