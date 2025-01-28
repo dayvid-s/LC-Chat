@@ -2,6 +2,7 @@ import express from "express";
 import isAuth from "../middleware/isAuth";
 
 import * as HelpController from "../controllers/HelpController";
+import isSuper from "../middleware/isSuper";
 
 const routes = express.Router();
 
@@ -11,10 +12,10 @@ routes.get("/helps", isAuth, HelpController.index);
 
 routes.get("/helps/:id", isAuth, HelpController.show);
 
-routes.post("/helps", isAuth, HelpController.store);
+routes.post("/helps", isAuth, isSuper, HelpController.store);
 
-routes.put("/helps/:id", isAuth, HelpController.update);
+routes.put("/helps/:id", isAuth, isSuper, HelpController.update);
 
-routes.delete("/helps/:id", isAuth, HelpController.remove);
+routes.delete("/helps/:id", isAuth, isSuper, HelpController.remove);
 
 export default routes;

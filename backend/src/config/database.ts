@@ -1,39 +1,22 @@
-require("../bootstrap");
-
-
-// são paulo timezone
-
+import "../bootstrap";
 
 module.exports = {
   define: {
     charset: "utf8mb4",
     collate: "utf8mb4_bin"
-    // freezeTableName: true
-  },
-  options: { requestTimeout: 600000, encrypt: true },
-  retry: {
-    match: [
-      /SequelizeConnectionError/,
-      /SequelizeConnectionRefusedError/,
-      /SequelizeHostNotFoundError/,
-      /SequelizeHostNotReachableError/,
-      /SequelizeInvalidConnectionError/,
-      /SequelizeConnectionTimedOutError/
-    ],
-    max: 5
-  },
-  pool: {
-    max: parseInt(process.env.DB_POOL_MAX) || 50,
-    min: parseInt(process.env.DB_POOL_MIN) || 5,
-    acquire: parseInt(process.env.DB_POOL_ACQUIRE) || 10000,
-    idle: parseInt(process.env.DB_POOL_IDLE) || 10000
   },
   dialect: process.env.DB_DIALECT || "postgres",
-  timezone: 'America/Sao_Paulo',
-  host: process.env.DB_HOST || "localhost",
-  port: process.env.DB_PORT || "5432",
+  timezone: "-03:00",
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306,
   database: process.env.DB_NAME,
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
-  logging: false
+  logging: process.env.DB_DEBUG === "true",
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 50000,
+    idle: 20000,
+  },
 };

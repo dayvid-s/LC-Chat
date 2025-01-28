@@ -40,20 +40,10 @@ const ListService = async ({
     //   }
     // ]
   };
-
   whereCondition = {
-    ...whereCondition,
-    companyId,
-    [Op.or]: [
-      {
-        visao: true // Se "visao" é verdadeiro, todas as mensagens são visíveis
-      },
-      {
-        userId // Se "visao" é falso, apenas as mensagens do usuário atual são visíveis
-      }
-    ]
-  };
-
+  ...whereCondition,
+  companyId
+  }
   const limit = 20;
   const offset = limit * (+pageNumber - 1);
 

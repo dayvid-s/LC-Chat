@@ -12,28 +12,14 @@ interface UserData {
   profile?: string;
   companyId?: number;
   queueIds?: number[];
-  startWork?: string;
-  endWork?: string;
-  farewellMessage?: string;
   whatsappId?: number;
-  allTicket?: string;
-  defaultTheme?: string;
-  defaultMenu?: string;
-  allowGroup?: boolean;
-  allHistoric?: string;
-  allUserChat?: string;
-  userClosePendingTicket?: string;
-  showDashboard?: string;
-  defaultTicketsManagerWidth?: number;
-  allowRealTime?: string;
-  allowConnections?: string;
-  profileImage?: string;
+  wpp?: string;
+
 }
 
 interface Request {
   userData: UserData;
   userId: string | number;
-  companyId: number;
   requestUserId: number;
 }
 
@@ -47,50 +33,24 @@ interface Response {
 const UpdateUserService = async ({
   userData,
   userId,
-  companyId,
   requestUserId
 }: Request): Promise<Response | undefined> => {
-  const user = await ShowUserService(userId, companyId);
+  const user = await ShowUserService(userId, requestUserId);
 
   const requestUser = await User.findByPk(requestUserId);
 
-  if (requestUser.super === false && userData.companyId !== companyId) {
-    throw new AppError("O usuário não pertence à esta empresa");
+  if (requestUser.super === false && userData.companyId !== requestUser.companyId) {
+    throw new AppError("ERR_FORBIDDEN", 403);
   }
 
   const schema = Yup.object().shape({
     name: Yup.string().min(2),
-    allHistoric: Yup.string(),
     email: Yup.string().email(),
     profile: Yup.string(),
     password: Yup.string()
   });
 
-  const oldUserEmail = user.email;
-  
-  const {
-    email,
-    password,
-    profile,
-    name,
-    queueIds = [],
-    startWork,
-    endWork,
-    farewellMessage,
-    whatsappId,
-    allTicket,
-    defaultTheme,
-    defaultMenu,
-    allowGroup,
-    allHistoric,
-    allUserChat,
-    userClosePendingTicket,
-    showDashboard,
-    allowConnections,
-    defaultTicketsManagerWidth = 550,
-    allowRealTime,
-    profileImage
-  } = userData;
+  const { email, password, profile, name, queueIds = [], whatsappId, wpp } = userData;
 
   try {
     await schema.validate({ email, password, profile, name });
@@ -98,28 +58,21 @@ const UpdateUserService = async ({
     throw new AppError(err.message);
   }
 
-  await user.update({
-    email,
-    password,
-    profile,
-    name,
-    startWork,
-    endWork,
-    farewellMessage,
-    whatsappId: whatsappId || null,
-    allTicket,
-    defaultTheme,
-    defaultMenu,
-    allowGroup,
-    allHistoric,
-    allUserChat,
-    userClosePendingTicket,
-    showDashboard,
-    defaultTicketsManagerWidth,
-    allowRealTime,
-    profileImage,
-    allowConnections
-  });
+  if (requestUser.profile === "admin") {
+    await user.update({
+      email,
+      password,
+      profile,
+      name
+    });
+    await user.$set("queues", queueIds);
+  } else {
+    await user.update({
+      email,
+      password,
+      name
+    });
+  }
 
   await user.$set("queues", queueIds);
 
@@ -127,13 +80,6 @@ const UpdateUserService = async ({
 
   const company = await Company.findByPk(user.companyId);
 
-  if (company.email === oldUserEmail) {
-    await company.update({
-      email,
-      password
-    })
-  }
-  
   const serializedUser = {
     id: user.id,
     name: user.name,
@@ -142,20 +88,7 @@ const UpdateUserService = async ({
     companyId: user.companyId,
     company,
     queues: user.queues,
-    startWork: user.startWork,
-    endWork: user.endWork,
-    greetingMessage: user.farewellMessage,
-    allTicket: user.allTicket,
-    defaultMenu: user.defaultMenu,
-    defaultTheme: user.defaultTheme,
-    allowGroup: user.allowGroup,
-    allHistoric: user.allHistoric,
-    userClosePendingTicket: user.userClosePendingTicket,
-    showDashboard: user.showDashboard,
-    defaultTicketsManagerWidth: user.defaultTicketsManagerWidth,
-    allowRealTime: user.allowRealTime,
-    allowConnections: user.allowConnections,
-    profileImage: user.profileImage
+    wpp: user.wpp,
   };
 
   return serializedUser;

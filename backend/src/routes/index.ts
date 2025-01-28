@@ -1,58 +1,40 @@
 import { Router } from "express";
 
-import announcementRoutes from "./announcementRoutes";
-import apiCompanyRoutes from "./api/apiCompanyRoutes";
-import apiContactRoutes from "./api/apiContactRoutes";
-import apiMessageRoutes from "./api/apiMessageRoutes";
-import apiRoutes from "./apiRoutes";
+import userRoutes from "./userRoutes";
 import authRoutes from "./authRoutes";
+import settingRoutes from "./settingRoutes";
+import contactRoutes from "./contactRoutes";
+import ticketRoutes from "./ticketRoutes";
+import whatsappRoutes from "./whatsappRoutes";
+import messageRoutes from "./messageRoutes";
+import whatsappSessionRoutes from "./whatsappSessionRoutes";
+import queueRoutes from "./queueRoutes";
+import companyRoutes from "./companyRoutes";
+import planRoutes from "./planRoutes";
+import ticketNoteRoutes from "./ticketNoteRoutes";
+import quickMessageRoutes from "./quickMessageRoutes";
+import helpRoutes from "./helpRoutes";
+import dashboardRoutes from "./dashboardRoutes";
+import queueOptionRoutes from "./queueOptionRoutes";
+import scheduleRoutes from "./scheduleRoutes";
+import tagRoutes from "./tagRoutes";
+import contactListRoutes from "./contactListRoutes";
+import contactListItemRoutes from "./contactListItemRoutes";
 import campaignRoutes from "./campaignRoutes";
 import campaignSettingRoutes from "./campaignSettingRoutes";
-import chatBotRoutes from "./chatBotRoutes";
+import announcementRoutes from "./announcementRoutes";
 import chatRoutes from "./chatRoutes";
-import companyRoutes from "./companyRoutes";
-import companySettingsRoutes from "./companySettingsRoutes";
-import contactListItemRoutes from "./contactListItemRoutes";
-import contactListRoutes from "./contactListRoutes";
-import contactRoutes from "./contactRoutes";
-import dashboardRoutes from "./dashboardRoutes";
-import filesRoutes from "./filesRoutes";
-import helpRoutes from "./helpRoutes";
 import invoiceRoutes from "./invoicesRoutes";
-import messageRoutes from "./messageRoutes";
-import planRoutes from "./planRoutes";
-import queueIntegrationRoutes from "./queueIntegrationRoutes";
-import queueOptionRoutes from "./queueOptionRoutes";
-import queueRoutes from "./queueRoutes";
-import quickMessageRoutes from "./quickMessageRoutes";
-import scheduleRoutes from "./scheduleRoutes";
-import settingRoutes from "./settingRoutes";
-import subScriptionRoutes from "./subScriptionRoutes";
-import tagRoutes from "./tagRoutes";
-import ticketNoteRoutes from "./ticketNoteRoutes";
-import ticketRoutes from "./ticketRoutes";
+import subscriptionRoutes from "./subScriptionRoutes";
 import ticketTagRoutes from "./ticketTagRoutes";
-import userRoutes from "./userRoutes";
-import versionRouter from "./versionRoutes";
-import webHookRoutes from "./webHookRoutes";
-import whatsappRoutes from "./whatsappRoutes";
-import whatsappSessionRoutes from "./whatsappSessionRoutes";
-
-import scheduleMessageRoutes from "./ScheduledMessagesRoutes";
-import flowBuilder from "./flowBuilderRoutes";
-import flowCampaignRoutes from "./flowCampaignRoutes";
-import flowDefaultRoutes from "./flowDefaultRoutes";
+import filesRoutes from "./filesRoutes";
 import promptRoutes from "./promptRouter";
-import salerRoutes from "./salerRoute";
-import statisticsRoutes from "./statisticsRoutes";
-import webHook from "./webHookRoutes";
-
-
+import queueIntegrationRoutes from "./queueIntegrationRoutes";
+import passwordRoutes from "./passwordRoutes";
 const routes = Router();
 
 routes.use(userRoutes);
 routes.use("/auth", authRoutes);
-routes.use("/api/messages", apiRoutes);
 routes.use(settingRoutes);
 routes.use(contactRoutes);
 routes.use(ticketRoutes);
@@ -67,6 +49,7 @@ routes.use(ticketNoteRoutes);
 routes.use(quickMessageRoutes);
 routes.use(helpRoutes);
 routes.use(dashboardRoutes);
+routes.use(queueOptionRoutes);
 routes.use(scheduleRoutes);
 routes.use(tagRoutes);
 routes.use(contactListRoutes);
@@ -75,30 +58,12 @@ routes.use(campaignRoutes);
 routes.use(campaignSettingRoutes);
 routes.use(announcementRoutes);
 routes.use(chatRoutes);
-routes.use(chatBotRoutes);
-routes.use("/webhook", webHookRoutes);
-routes.use(subScriptionRoutes);
+routes.use(subscriptionRoutes);
 routes.use(invoiceRoutes);
-routes.use(versionRouter);
-routes.use(filesRoutes);
-routes.use(queueOptionRoutes);
-routes.use(queueIntegrationRoutes);
 routes.use(ticketTagRoutes);
-routes.use(salerRoutes);
-
-routes.use("/api", apiCompanyRoutes);
-routes.use("/api", apiContactRoutes);
-routes.use("/api", apiMessageRoutes);
-
-routes.use(flowDefaultRoutes);
-routes.use(webHook)
-routes.use(flowBuilder)
-routes.use(flowCampaignRoutes)
-
-
+routes.use(filesRoutes);
 routes.use(promptRoutes);
-routes.use(statisticsRoutes);
-routes.use(companySettingsRoutes);
-routes.use(scheduleMessageRoutes);
+routes.use(queueIntegrationRoutes);
+routes.use(passwordRoutes);
 
 export default routes;

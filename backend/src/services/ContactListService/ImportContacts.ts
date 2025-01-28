@@ -3,7 +3,7 @@ import XLSX from "xlsx";
 import { has } from "lodash";
 import ContactListItem from "../../models/ContactListItem";
 import CheckContactNumber from "../WbotServices/CheckNumber";
-import logger from "../../utils/logger";
+import { logger } from "../../utils/logger";
 // import CheckContactNumber from "../WbotServices/CheckNumber";
 
 export async function ImportContacts(

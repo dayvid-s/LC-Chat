@@ -1,41 +1,53 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 
-import clsx from "clsx";
-import { format, isSameDay, parseISO } from "date-fns";
 import { useHistory, useParams } from "react-router-dom";
+import { parseISO, format, isSameDay } from "date-fns";
+import clsx from "clsx";
 
-import { green, grey } from "@material-ui/core/colors";
-import { makeStyles, useTheme } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
+import { green, grey, red, blue } from "@material-ui/core/colors";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListItemAvatar from "@material-ui/core/ListItemAvatar";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import Typography from "@material-ui/core/Typography";
+import Avatar from "@material-ui/core/Avatar";
+import Divider from "@material-ui/core/Divider";
+import Badge from "@material-ui/core/Badge";
+import Box from "@material-ui/core/Box";
+import { getInitials } from "../../helpers/getInitials";
+import { generateColor } from "../../helpers/colorGenerator";
+
 import { i18n } from "../../translate/i18n";
 
-import { Tooltip } from "@material-ui/core";
-import { v4 as uuidv4 } from "uuid";
-import { AuthContext } from "../../context/Auth/AuthContext";
-import { TicketsContext } from "../../context/Tickets/TicketsContext";
-import toastError from "../../errors/toastError";
 import api from "../../services/api";
 import ButtonWithSpinner from "../ButtonWithSpinner";
 import MarkdownWrapper from "../MarkdownWrapper";
+import { Chip, IconButton, Tooltip } from "@material-ui/core";
+import { AuthContext } from "../../context/Auth/AuthContext";
+import { TicketsContext } from "../../context/Tickets/TicketsContext";
+import toastError from "../../errors/toastError";
+import { v4 as uuidv4 } from "uuid";
 
-import { Avatar, Badge, ListItem, ListItemAvatar, ListItemSecondaryAction, ListItemText, Typography } from "@material-ui/core";
-import { Done, HighlightOff, Replay, SwapHoriz } from "@material-ui/icons";
-import GroupIcon from '@material-ui/icons/Group';
-import { isNil } from "lodash";
-import { toast } from "react-toastify";
-import useCompanySettings from "../../hooks/useSettings/companySettings";
-import AcceptTicketWithouSelectQueue from "../AcceptTicketWithoutQueueModal";
-import ConnectionIcon from "../ConnectionIcon";
+import AndroidIcon from "@material-ui/icons/Android";
+import FaceIcon from "@material-ui/icons/Face";
+import CheckIcon from '@material-ui/icons/Check';
+import HighlightOffIcon from '@material-ui/icons/HighlightOff';
+import ReplayIcon from '@material-ui/icons/Replay';
+import SyncAltIcon from '@material-ui/icons/SyncAlt';
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import TicketMessagesDialog from "../TicketMessagesDialog";
 import ContactTag from "../ContactTag";
-import ShowTicketOpen from "../ShowTicketOpenModal";
 import TransferTicketModalCustom from "../TransferTicketModalCustom";
 
 const useStyles = makeStyles((theme) => ({
   ticket: {
-    position: "relative"
+    position: "relative",
   },
 
   pendingTicket: {
     cursor: "unset",
+    borderBottom: '1px solid #ccc'
   },
   queueTag: {
     background: "#FCFCFC",
@@ -43,10 +55,10 @@ const useStyles = makeStyles((theme) => ({
     marginRight: 1,
     padding: 1,
     fontWeight: 'bold',
-    // paddingLeft: 5,
-    // paddingRight: 5,
+    paddingLeft: 5,
+    paddingRight: 5,
     borderRadius: 3,
-    fontSize: "0.5em",
+    fontSize: "0.8em",
     whiteSpace: "nowrap"
   },
   noTicketsDiv: {
@@ -58,13 +70,12 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "center",
   },
   newMessagesCount: {
-    justifySelf: "flex-end",
-    textAlign: "right",
-    position: "relative",
-    top: 0,
-    color: "green",
-    fontWeight: "bold",
-    marginRight: "10px",
+    position: "absolute",
+    alignSelf: "center",
+    marginRight: 8,
+    marginLeft: "auto",
+    top: "10px",
+    left: "20px",
     borderRadius: 0,
   },
   noTicketsText: {
@@ -79,11 +90,11 @@ const useStyles = makeStyles((theme) => ({
     marginRight: 1,
     padding: 1,
     fontWeight: 'bold',
-    // paddingLeft: 5,
-    // paddingRight: 5,
+    paddingLeft: 5,
+    paddingRight: 5,
     borderRadius: 3,
-    fontSize: "0.6em",
-    // whiteSpace: "nowrap"
+    fontSize: "0.8em",
+    whiteSpace: "nowrap"
   },
   noTicketsTitle: {
     textAlign: "center",
@@ -96,27 +107,13 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     justifyContent: "space-between",
     marginLeft: "5px",
-    fontWeight: "bold",
-    color: theme.mode === 'light' ? "black" : "white",
   },
 
   lastMessageTime: {
     justifySelf: "flex-end",
     textAlign: "right",
     position: "relative",
-    top: -30,
-    marginRight: "1px",
-    color: theme.mode === 'light' ? "black" : grey[400],
-  },
-
-  lastMessageTimeUnread: {
-    justifySelf: "flex-end",
-    textAlign: "right",
-    position: "relative",
-    top: -30,
-    color: "green",
-    fontWeight: "bold",
-    marginRight: "1px",
+    top: -0
   },
 
   closedBadge: {
@@ -129,15 +126,8 @@ const useStyles = makeStyles((theme) => ({
   contactLastMessage: {
     paddingRight: "0%",
     marginLeft: "5px",
-    color: theme.mode === 'light' ? "black" : grey[400],
   },
 
-  contactLastMessageUnread: {
-    paddingRight: 20,
-    fontWeight: "bold",
-    color: theme.mode === 'light' ? "black" : grey[400],
-    width: "50%"
-  },
 
   badgeStyle: {
     color: "white",
@@ -146,12 +136,19 @@ const useStyles = makeStyles((theme) => ({
 
   acceptButton: {
     position: "absolute",
-    right: "1px",
+    right: "108px",
   },
+
+
+  acceptButton: {
+    position: "absolute",
+    left: "50%",
+  },
+
 
   ticketQueueColor: {
     flex: "none",
-    // width: "8px",
+    width: "8px",
     height: "100%",
     position: "absolute",
     top: "0%",
@@ -164,13 +161,12 @@ const useStyles = makeStyles((theme) => ({
   },
   secondaryContentSecond: {
     display: 'flex',
-    // marginBottom: 2,
-    // marginLeft: "5px",
+    // marginTop: 5,
+    //marginLeft: "5px",
     alignItems: "flex-start",
-    flexWrap: "nowrap",
+    flexWrap: "wrap",
     flexDirection: "row",
     alignContent: "flex-start",
-    // height: "10px"
   },
   ticketInfo1: {
     position: "relative",
@@ -189,107 +185,65 @@ const useStyles = makeStyles((theme) => ({
       transform: "scale(1) translate(0%, -40%)",
     },
   },
-  connectionIcon: {
-    marginRight: theme.spacing(1)
+  presence: {
+    color: theme?.mode === 'light' ? "green" : "lightgreen",
+    fontWeight: "bold",
   }
 }));
-
-const TicketListItemCustom = ({ setTabOpen, ticket }) => {
+{/*PLW DESIGN INSERIDO O dentro do const handleChangeTab*/ }
+const TicketListItemCustom = ({ ticket }) => {
   const classes = useStyles();
-  const theme = useTheme();
   const history = useHistory();
   const [loading, setLoading] = useState(false);
-  const [acceptTicketWithouSelectQueueOpen, setAcceptTicketWithouSelectQueueOpen] = useState(false);
-  const [transferTicketModalOpen, setTransferTicketModalOpen] = useState(false);
+  const [ticketUser, setTicketUser] = useState(null);
+  const [ticketQueueName, setTicketQueueName] = useState(null);
+  const [ticketQueueColor, setTicketQueueColor] = useState(null);
+  const [tag, setTag] = useState([]);
+  const [whatsAppName, setWhatsAppName] = useState(null);
 
-  const [openAlert, setOpenAlert] = useState(false);
-  const [userTicketOpen, setUserTicketOpen] = useState("");
-  const [queueTicketOpen, setQueueTicketOpen] = useState("");
-
+  const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
   const { user } = useContext(AuthContext);
+  const { profile } = user;
+  const [transferTicketModalOpen, setTransferTicketModalOpen] = useState(false);
 
-  const { get: getSetting } = useCompanySettings();
+  const presenceMessage = { composing: "Digitando...", recording: "Gravando..." };
 
-  useEffect(() => {
-    console.log("======== TicketListItemCustom ===========")
-    console.log(ticket)
-    console.log("=========================================")
-  }, [ticket])
 
   useEffect(() => {
+    if (ticket.userId && ticket.user) {
+      setTicketUser(ticket.user?.name?.toUpperCase());
+    }
+    setTicketQueueName(ticket.queue?.name?.toUpperCase());
+    setTicketQueueColor(ticket.queue?.color);
+
+    if (ticket.whatsappId && ticket.whatsapp) {
+      setWhatsAppName(ticket.whatsapp.name?.toUpperCase());
+    }
+
+    setTag(ticket?.tags);
+
     return () => {
       isMounted.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleOpenAcceptTicketWithouSelectQueue = useCallback(() => {
-    // console.log(ticket)
-    setAcceptTicketWithouSelectQueueOpen(true);
-  }, []);
-
+  {/*CÓDIGO NOVO SAUDAÇÃO*/ }
   const handleCloseTicket = async (id) => {
-    const setting = await getSetting(
-      {
-        "column": "requiredTag"
-      }
-    );
-
-    if (setting.requiredTag === "enabled") {
-      //verificar se tem uma tag   
-      try {
-        const contactTags = await api.get(`/contactTags/${ticket.contact.id}`);
-        if (!contactTags.data.tags) {
-          toast.warning(i18n.t("messagesList.header.buttons.requiredTag"))
-        } else {
-          await api.put(`/tickets/${id}`, {
-            status: "closed",
-            userId: user?.id || null,
-          });
-
-          if (isMounted.current) {
-            setLoading(false);
-          }
-
-          history.push(`/tickets/`);
-        }
-      } catch (err) {
-        setLoading(false);
-        toastError(err);
-      }
-    } else {
-      setLoading(true);
-      try {
-        await api.put(`/tickets/${id}`, {
-          status: "closed",
-          userId: user?.id || null,
-        });
-
-      } catch (err) {
-        setLoading(false);
-        toastError(err);
-      }
-      if (isMounted.current) {
-        setLoading(false);
-      }
-
-      history.push(`/tickets/`);
-    }
-
-  };
-
-  const handleCloseIgnoreTicket = async (id) => {
+    setTag(ticket?.tags);
     setLoading(true);
     try {
       await api.put(`/tickets/${id}`, {
         status: "closed",
-        userId: user?.id || null,
-        sendFarewellMessage: false,
-        amountUsedBotQueues: 0
+        userId: user?.id,
+        queueId: ticket?.queue?.id,
+        useIntegration: false,
+        promptId: null,
+        integrationId: null
       });
-
     } catch (err) {
       setLoading(false);
       toastError(err);
@@ -297,122 +251,83 @@ const TicketListItemCustom = ({ setTabOpen, ticket }) => {
     if (isMounted.current) {
       setLoading(false);
     }
-
     history.push(`/tickets/`);
   };
 
-  const truncate = (str, len) => {
-    if (!isNil(str)) {
-      if (str.length > len) {
-        return str.substring(0, len) + "...";
-      }
-      return str;
+  const handleReopenTicket = async (id) => {
+    setLoading(true);
+    try {
+      await api.put(`/tickets/${id}`, {
+        status: "open",
+        userId: user?.id,
+        queueId: ticket?.queue?.id
+      });
+    } catch (err) {
+      setLoading(false);
+      toastError(err);
     }
-  };
-
-  const handleCloseTransferTicketModal = useCallback(() => {
-    if (isMounted.current) {
-      setTransferTicketModalOpen(false);
-    }
-  }, []);
-
-  const handleOpenTransferModal = () => {
-    setLoading(true)
-    setTransferTicketModalOpen(true);
     if (isMounted.current) {
       setLoading(false);
     }
-    handleSelectTicket(ticket);
-    // history.push('/tickets');
-    // setTimeout(() => {
     history.push(`/tickets/${ticket.uuid}`);
-    // }, 0);
-  }
+  };
 
   const handleAcepptTicket = async (id) => {
     setLoading(true);
     try {
-      const otherTicket = await api.put(`/tickets/${id}`, ({
-        status: ticket.isGroup && ticket.channel === 'whatsapp' ? "group" : "open",
+      await api.put(`/tickets/${id}`, {
+        status: "open",
         userId: user?.id,
-      }));
+      });
 
-      if (otherTicket.data.id !== ticket.id) {
-        if (otherTicket.data.userId !== user?.id) {
-          setOpenAlert(true);
-          setUserTicketOpen(otherTicket.data.user.name);
-          setQueueTicketOpen(otherTicket.data.queue.name);
-        } else {
-          setLoading(false);
-          setTabOpen(ticket.isGroup ? "group" : "open");
-          handleSelectTicket(otherTicket.data);
-          // history.push('/tickets');
-          // setTimeout(() => {
-          history.push(`/tickets/${otherTicket.uuid}`);
-          // }, 0);
-        }
-      } else {
-        let setting;
+      let settingIndex;
 
-        try {
-          setting = await getSetting({
-            "column": "sendGreetingAccepted"
-          });
-        } catch (err) {
-          toastError(err);
-        }
+      try {
+        const { data } = await api.get("/settings/");
 
-        if (setting.sendGreetingAccepted === "enabled" && (!ticket.isGroup || ticket.whatsapp?.groupAsTicket === "enabled")) {
-          handleSendMessage(ticket.id);
-        }
-        if (isMounted.current) {
-          setLoading(false);
-        }
+        settingIndex = data.filter((s) => s.key === "sendGreetingAccepted");
 
-        setTabOpen(ticket.isGroup ? "group" : "open");
-        handleSelectTicket(ticket);
-        // history.push('/tickets');
-        // setTimeout(() => {
-        history.push(`/tickets/${ticket.uuid}`);
-        // }, 0);
+      } catch (err) {
+        toastError(err);
+
       }
+
+      if (settingIndex[0].value === "enabled" && !ticket.isGroup) {
+        handleSendMessage(ticket.id);
+
+      }
+
     } catch (err) {
       setLoading(false);
+
       toastError(err);
     }
-  };
+    if (isMounted.current) {
+      setLoading(false);
+    }
 
+    // handleChangeTab(null, "tickets");
+    // handleChangeTab(null, "open");
+    history.push(`/tickets/${ticket.uuid}`);
+  };
 
   const handleSendMessage = async (id) => {
 
-    let setting;
-
-    try {
-      setting = await getSetting({
-        "column": "greetingAcceptedMessage"
-      })
-    } catch (err) {
-      toastError(err);
-    }
-
-    const msg = `${setting.greetingAcceptedMessage}`; //`{{ms}} *{{name}}*, ${i18n.t("mainDrawer.appBar.user.myName")} *${user?.name}* ${i18n.t("mainDrawer.appBar.user.continuity")}.`;
+    const msg = `{{ms}} *{{name}}*, meu nome é *${user?.name}* e agora vou prosseguir com seu atendimento!`;
     const message = {
       read: 1,
       fromMe: true,
       mediaUrl: "",
-      body: `${msg.trim()}`,
+      body: `*Mensagem Automática:*\n${msg.trim()}`,
     };
     try {
       await api.post(`/messages/${id}`, message);
     } catch (err) {
       toastError(err);
+
     }
   };
-
-  const handleCloseAlert = useCallback(() => {
-    setOpenAlert(false);
-    setLoading(false);
-  }, []);
+  {/*CÓDIGO NOVO SAUDAÇÃO*/ }
 
   const handleSelectTicket = (ticket) => {
     const code = uuidv4();
@@ -420,143 +335,186 @@ const TicketListItemCustom = ({ setTabOpen, ticket }) => {
     setCurrentTicket({ id, uuid, code });
   };
 
+
+  const renderTicketInfo = () => {
+    if (ticketUser) {
+
+      return (
+        <>
+          {/* {ticket.chatbot && (
+            <Tooltip title="Chatbotdsa">
+              <AndroidIcon
+                fontSize="small"
+                style={{ color: grey[700], marginRight: 5 }}
+              />
+            </Tooltip>
+          )} */}
+
+          {/* </span> */}
+        </>
+      );
+    } else {
+      return (
+        <>
+          {/* {ticket.chatbot && (
+            <Tooltip title="Chatbotfds3e">
+              <AndroidIcon
+                fontSize="small"
+                style={{ color: grey[700], marginRight: 5 }}
+              />
+            </Tooltip>
+          )} */}
+        </>
+      );
+    }
+  };
+
+  const handleOpenTransferModal = () => {
+    setTransferTicketModalOpen(true);
+  }
+
+  const handleCloseTransferTicketModal = () => {
+    if (isMounted.current) {
+      setTransferTicketModalOpen(false);
+    }
+  };
+
+
   return (
     <React.Fragment key={ticket.id}>
-      {openAlert && (
-        <ShowTicketOpen
-          isOpen={openAlert}
-          handleClose={handleCloseAlert}
-          user={userTicketOpen}
-          queue={queueTicketOpen}
-        />
-      )}
-      {acceptTicketWithouSelectQueueOpen && (
-        <AcceptTicketWithouSelectQueue
-          modalOpen={acceptTicketWithouSelectQueueOpen}
-          onClose={(e) => setAcceptTicketWithouSelectQueueOpen(false)}
-          ticketId={ticket.id}
-          ticket={ticket}
-        />
-      )}
-      {transferTicketModalOpen && (
-        <TransferTicketModalCustom
-          modalOpen={transferTicketModalOpen}
-          onClose={handleCloseTransferTicketModal}
-          ticketid={ticket.id}
-          ticket={ticket}
-        />
-      )}
-      {/* <TicketMessagesDialog
-                open={openTicketMessageDialog}
-                handleClose={() => setOpenTicketMessageDialog(false)}
-                ticketId={ticket.id}
-            /> */}
-      <ListItem
-        button
-        dense
+
+      <TransferTicketModalCustom
+        modalOpen={transferTicketModalOpen}
+        onClose={handleCloseTransferTicketModal}
+        ticketid={ticket.id}
+      />
+
+      {/* Modal de espiar conversa */}
+      <TicketMessagesDialog
+        open={openTicketMessageDialog}
+        handleClose={() => setOpenTicketMessageDialog(false)}
+        ticketId={ticket.id}
+      />
+
+      <ListItem dense button
         onClick={(e) => {
-          console.log('e', e)
-          const isCheckboxClicked = (e.target.tagName.toLowerCase() === 'input' && e.target.type === 'checkbox')
-            || (e.target.tagName.toLowerCase() === 'svg' && e.target.type === undefined)
-            || (e.target.tagName.toLowerCase() === 'path' && e.target.type === undefined);
-          // Se o clique foi no Checkbox, não execute handleSelectTicket
-
-          if (isCheckboxClicked) return;
-
+          if (ticket.status === "pending") return;
           handleSelectTicket(ticket);
         }}
-        selected={ticketId && ticketId === ticket.uuid}
+        selected={ticketId && +ticketId === ticket.id}
         className={clsx(classes.ticket, {
           [classes.pendingTicket]: ticket.status === "pending",
         })}
       >
-        <ListItemAvatar
-          style={{ marginLeft: "-15px" }}
+        <Tooltip arrow placement="right" title={ticket.queue?.name?.toUpperCase() || "SEM FILA"} >
+          <span style={{ backgroundColor: ticket.queue?.color || "#7C7C7C" }} className={classes.ticketQueueColor}></span>
+        </Tooltip>
+
+        <Typography
+          style={{ position: "absolute", right: "10px", top: "9px" }}
+          component="span"
+          variant="body2"
+          color="textSecondary"
         >
+
+          {isSameDay(parseISO(ticket.updatedAt), new Date()) ? (
+            <>{format(parseISO(ticket.updatedAt), "HH:mm")}</>
+          ) : (
+            <>{format(parseISO(ticket.updatedAt), "dd/MM/yyyy")}</>
+          )}
+        </Typography>
+
+
+        <ListItemAvatar >
+
           <Avatar
             style={{
-              width: "50px",
-              height: "50px",
+              width: "55px",
+              height: "55px",
               borderRadius: "50%",
+              backgroundColor: generateColor(ticket?.contact?.number),
+              color: "white", fontWeight: "bold"
             }}
-            src={`${ticket?.contact?.urlPicture}`}
+            src={ticket?.contact?.profilePicUrl}>
+            {getInitials(ticket?.contact?.name || "")}
+          </Avatar>
 
-          />
         </ListItemAvatar>
+
         <ListItemText
           disableTypography
+
           primary={
             <span className={classes.contactNameWrapper}>
               <Typography
                 noWrap
                 component="span"
                 variant="body2"
-              // color="textPrimary"
+                color="textPrimary"
               >
-                {ticket.isGroup && ticket.channel === "whatsapp" && <GroupIcon fontSize="small" style={{ color: grey[700], marginBottom: '-1px', marginLeft: '5px' }} />} &nbsp;
-                {ticket.channel && <ConnectionIcon width="20" height="20" className={classes.connectionIcon} connectionType={ticket.channel} />} &nbsp;
-                {ticket.contact?.saler
-                  ? `CÓD - ${ticket.contact.saler.id} - ` : ''
-                }
-                {truncate(ticket.contact?.name, 60)}
-                {/* {profile === "admin"  && ( */}
-                {/* <Tooltip title="Espiar Conversa">
-                                        <VisibilityIcon
-                                            onClick={() => setOpenTicketMessageDialog(true)}
-                                            fontSize="small"
-                                            style={{
-                                                color: blue[700],
-                                                cursor: "pointer",
-                                                marginLeft: 10,
-                                                verticalAlign: "middle"
-                                            }}
-                                        />
-                                    </Tooltip> */}
-                {/* )} */}
+                {ticket.contact.name}
+
+                <Tooltip title="Espiar Conversa">
+                  <VisibilityIcon
+                    onClick={() => setOpenTicketMessageDialog(true)}
+                    fontSize="small"
+                    style={{
+                      color: blue[700],
+                      cursor: "pointer",
+                      marginLeft: 10,
+                      verticalAlign: "middle"
+                    }}
+                  />
+                </Tooltip>
+
               </Typography>
-              {/* <ListItemSecondaryAction>
-                                <Box className={classes.ticketInfo1}>{renderTicketInfo()}</Box>
-                            </ListItemSecondaryAction> */}
+              <ListItemSecondaryAction>
+                <Box className={classes.ticketInfo1}>{renderTicketInfo()}</Box>
+              </ListItemSecondaryAction>
             </span>
+
           }
           secondary={
             <span className={classes.contactNameWrapper}>
 
               <Typography
-                className={Number(ticket.unreadMessages) > 0 ? classes.contactLastMessageUnread : classes.contactLastMessage}
+                className={classes.contactLastMessage}
                 noWrap
                 component="span"
                 variant="body2"
-              // color="textSecondary"
-              // style={console.log('ticket.lastMessage', ticket.lastMessage)}
+                color="textSecondary"
               >
-                {ticket.lastMessage ? (
-                  <>
-                    {ticket.lastMessage.includes('data:image/png;base64') ?
-                      <MarkdownWrapper>Localização</MarkdownWrapper> :
-                      <> {ticket.lastMessage.includes('BEGIN:VCARD') ?
-                        <MarkdownWrapper>Contato</MarkdownWrapper> :
-                        <MarkdownWrapper>{truncate(ticket.lastMessage, 40)}</MarkdownWrapper>}
-                      </>
-                    }
-                  </>
+                {["composing", "recording"].includes(ticket?.presence) ? (
+                  <span className={classes.presence}>
+                    {presenceMessage[ticket.presence]}
+                  </span>
                 ) : (
-                  <br />
+                  <>
+                    {ticket.lastMessage.includes('data:image/png;base64') ? <MarkdownWrapper> Localização</MarkdownWrapper> : <MarkdownWrapper>{ticket.lastMessage}</MarkdownWrapper>}
+                  </>
                 )}
-                <span className={classes.secondaryContentSecond} >
-                  {ticket?.whatsapp ? <Badge className={classes.connectionTag} style={{ backgroundColor: ticket.channel === "whatsapp" ? "#25D366" : ticket.channel === "facebook" ? "#4267B2" : "#E1306C" }}>{ticket.whatsapp?.name.toUpperCase()}</Badge> : <br></br>}
-                  {<Badge style={{ backgroundColor: ticket.queue?.color || "#7c7c7c" }} className={classes.connectionTag}>{ticket.queueId ? ticket.queue?.name.toUpperCase() : ticket.status === "lgpd" ? "LGPD" : "SEM FILA"}</Badge>}
-                  {ticket?.user && (<Badge style={{ backgroundColor: "#000000" }} className={classes.connectionTag}>{ticket.user?.name.toUpperCase()}</Badge>)}
+
+                <span style={{ marginTop: 4, }} className={classes.secondaryContentSecond} >
+                  {ticket?.whatsapp?.name ? <Badge className={classes.connectionTag}>{ticket?.whatsapp?.name?.toUpperCase()}</Badge> : <br></br>}
+                  <Badge style={{ backgroundColor: ticket.queue?.color || "#7c7c7c" }} className={classes.connectionTag}>{ticket.queue?.name?.toUpperCase() || "SEM FILA"}</Badge>
                 </span>
-                <span className={classes.secondaryContentSecond} >
-                  {
-                    ticket.tags?.map((tag) => {
-                      return (
-                        <ContactTag tag={tag} key={`ticket-contact-tag-${ticket.id}-${tag.id}`} />
-                      );
-                    })
-                  }
+
+                {/* <span style={{ marginTop: 2, fontSize: 5 }} className={classes.secondaryContentSecond} >
+                  {ticket?.whatsapp?.name ? <Badge className={classes.connectionTag}>{ticket?.whatsapp?.name?.toUpperCase()}</Badge> : <br></br>}
+                </span> */}
+
+                <span style={{ marginTop: 4, fontSize: 5 }} className={classes.secondaryContentSecond} >
+                  {ticketUser ? <Chip size="small" icon={<FaceIcon />} label={ticketUser} variant="outlined" /> : <br></br>}
                 </span>
+
+                <span style={{ paddingTop: "2px" }} className={classes.secondaryContentSecond} >
+                  {tag?.map((tag) => {
+                    return (
+                      <ContactTag tag={tag} key={`ticket-contact-tag-${ticket.id}-${tag.id}`} />
+                    );
+                  })}
+                </span>
+
               </Typography>
 
               <Badge
@@ -570,157 +528,101 @@ const TicketListItemCustom = ({ setTabOpen, ticket }) => {
           }
 
         />
-        <ListItemSecondaryAction>
-          {ticket.lastMessage && (
-            <>
 
-              <Typography
-                className={Number(ticket.unreadMessages) > 0 ? classes.lastMessageTimeUnread : classes.lastMessageTime}
-                component="span"
-                variant="body2"
-              // color="textSecondary"
-              >
+        <span className={classes.secondaryContentSecond} >
 
-                {isSameDay(parseISO(ticket.updatedAt), new Date()) ? (
-                  <>{format(parseISO(ticket.updatedAt), "HH:mm")}</>
-                ) : (
-                  <>{format(parseISO(ticket.updatedAt), "dd/MM/yyyy")}</>
-                )}
-              </Typography>
+          <Box sx={{ display: 'flex' }}>
 
-              <br />
+            {ticket.status === "pending" && (
+              <Tooltip arrow title="Aceitar ticket">
+                <IconButton style={{ color: "#008000" }} onClick={e => handleAcepptTicket(ticket.id)} size="small">
+                  <CheckIcon />
+                </IconButton>
+              </Tooltip>
+            )}
 
-            </>
-          )}
+            {(ticket.status === "open") && (
+              <>
+                {/* <Tooltip arrow title="Resolver ticket">
+                  <IconButton onClick={e => handleCloseTicket(ticket.id)} style={{ color: "#008000" }} color="primary" size="small">
+                    <CheckIcon />
+                  </IconButton>
+                </Tooltip> */}
 
-        </ListItemSecondaryAction>
-        <ListItemSecondaryAction>
-          <span className={classes.secondaryContentSecond}>
-            {(ticket.status === "pending" && (ticket.queueId === null || ticket.queueId === undefined)) && (
-              <ButtonWithSpinner
-                //color="primary"
-                style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', color: theme.mode === "light" ? "#0872B9" : "#FFF", padding: '0px', borderRadius: "50%", right: '51px', fontSize: '0.6rem', bottom: '-30px', minWidth: '2em', width: 'auto' }}
-                variant="contained"
-                className={classes.acceptButton}
-                size="small"
-                loading={loading}
-                onClick={e => handleOpenAcceptTicketWithouSelectQueue()}
-              >
-                <Tooltip title={`${i18n.t("ticketsList.buttons.accept")}`}>
-                  <Done />
+                <Tooltip arrow title="Transferir ticket">
+                  <IconButton onClick={handleOpenTransferModal} style={{ color: "#10175b" }} size="small">
+                    <SyncAltIcon />
+                  </IconButton>
                 </Tooltip>
-              </ButtonWithSpinner>
+              </>
             )}
-          </span>
-          <span className={classes.secondaryContentSecond} >
-            {(ticket.status === "pending" && ticket.queueId !== null) && (
-              <ButtonWithSpinner
-                //color="primary"
-                style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', color: theme.mode === "light" ? "#0872B9" : "#FFF", padding: '0px', borderRadius: "50%", right: '51px', fontSize: '0.6rem', bottom: '-30px', minWidth: '2em', width: 'auto' }}
-                variant="contained"
-                className={classes.acceptButton}
-                size="small"
-                loading={loading}
-                onClick={e => handleAcepptTicket(ticket.id)}
-              >
-                <Tooltip title={`${i18n.t("ticketsList.buttons.accept")}`}>
-                  <Done />
-                </Tooltip>
-              </ButtonWithSpinner>
-            )}
-          </span>
-          <span className={classes.secondaryContentSecond1} >
-            {(ticket.status === "pending" || ticket.status === "open" || ticket.status === "group") && (
-              <ButtonWithSpinner
-                //color="primary"
-                style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', color: theme.mode === "light" ? "#0872B9" : "#FFF", padding: '0px', borderRadius: "50%", right: '26px', position: 'absolute', fontSize: '0.6rem', bottom: '-30px', minWidth: '2em', width: 'auto' }}
-                variant="contained"
-                className={classes.acceptButton}
-                size="small"
-                loading={loading}
-                onClick={handleOpenTransferModal}
-              >
-                {/* {i18n.t("ticketsList.buttons.transfer")} */}
-                <Tooltip title={`${i18n.t("ticketsList.buttons.transfer")}`}>
-                  <SwapHoriz />
-                </Tooltip>
-              </ButtonWithSpinner>
-            )}
-          </span>
-          <span className={classes.secondaryContentSecond} >
-            {(ticket.status === "open" || ticket.status === "group") && (
-              <ButtonWithSpinner
-                //color="primary"
-                style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', color: theme.mode === "light" ? "#0872B9" : "#FFF", padding: '0px', bottom: '0px', borderRadius: "50%", right: '1px', fontSize: '0.6rem', bottom: '-30px', minWidth: '2em', width: 'auto' }}
-                variant="contained"
-                className={classes.acceptButton}
-                size="small"
-                loading={loading}
-                onClick={e => handleCloseTicket(ticket.id)}
-              >
-                <Tooltip title={`${i18n.t("ticketsList.buttons.closed")}`}>
-                  <HighlightOff />
-                  {/*  */}
-                </Tooltip>
-              </ButtonWithSpinner>
-            )}
-          </span>
-          <span className={classes.secondaryContentSecond} >
-            {((ticket.status === "pending" || ticket.status === "lgpd") && (user.userClosePendingTicket === "enabled" || user.profile === "admin")) && (
-              <ButtonWithSpinner
-                //color="primary"
-                style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', color: theme.mode === "light" ? "#0872B9" : "#FFF", padding: '0px', bottom: '0px', borderRadius: "50%", right: '1px', fontSize: '0.6rem', bottom: '-30px', minWidth: '2em', width: 'auto' }}
-                variant="contained"
-                className={classes.acceptButton}
-                size="small"
-                loading={loading}
-                onClick={e => handleCloseIgnoreTicket(ticket.id)}
-              >
-                <Tooltip title={`${i18n.t("ticketsList.buttons.ignore")}`}>
-                  <HighlightOff />
-                </Tooltip>
-              </ButtonWithSpinner>
-            )}
-          </span>
-          <span className={classes.secondaryContentSecond} >
-            {(ticket.status === "closed" && (ticket.queueId === null || ticket.queueId === undefined)) && (
-              <ButtonWithSpinner
-                //color="primary"
-                style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', color: theme.mode === "light" ? "#0872B9" : "#FFF", padding: '0px', bottom: '0px', borderRadius: "50%", right: '1px', fontSize: '0.6rem', bottom: '-30px', minWidth: '2em', width: 'auto' }}
-                variant="contained"
-                className={classes.acceptButton}
-                size="small"
-                loading={loading}
-                onClick={e => handleOpenAcceptTicketWithouSelectQueue()}
-              >
-                <Tooltip title={`${i18n.t("ticketsList.buttons.reopen")}`}>
-                  <Replay />
-                </Tooltip>
-              </ButtonWithSpinner>
 
+            {(ticket.status === "closed") && (
+              <Tooltip arrow title="Reabrir ticket">
+                <IconButton style={{ color: "#008000" }} onClick={e => handleReopenTicket(ticket.id)} size="small">
+                  <ReplayIcon />
+                </IconButton>
+              </Tooltip>
             )}
-          </span>
-          <span className={classes.secondaryContentSecond} >
-            {(ticket.status === "closed" && ticket.queueId !== null) && (
-              <ButtonWithSpinner
-                //color="primary"
-                style={{ backgroundColor: 'transparent', boxShadow: 'none', border: 'none', color: theme.mode === "light" ? "#0872B9" : "#FFF", padding: '0px', bottom: '0px', borderRadius: "50%", right: '1px', fontSize: '0.6rem', bottom: '-30px', minWidth: '2em', width: 'auto' }}
-                variant="contained"
-                className={classes.acceptButton}
-                size="small"
-                loading={loading}
-                onClick={e => handleAcepptTicket(ticket.id)}
-              >
-                <Tooltip title={`${i18n.t("ticketsList.buttons.reopen")}`}>
-                  <Replay />
-                </Tooltip>
-              </ButtonWithSpinner>
 
+            {(ticket.status !== "closed") && (
+              <Tooltip arrow title="Finalizar ticket">
+                <IconButton style={{ color: "#f50057" }} onClick={e => handleCloseTicket(ticket.id)} size="small">
+                  <HighlightOffIcon />
+                </IconButton>
+              </Tooltip>
             )}
-          </span>
-        </ListItemSecondaryAction>
+          </Box>
+
+          {/* {ticket.status === "pending" && (
+            <ButtonWithSpinner
+              //color="primary"
+              style={{ backgroundColor: 'green', color: 'white', padding: '0px', bottom: '17px', borderRadius: '0px', left: '8px', fontSize: '0.6rem' }}
+              variant="contained"
+              className={classes.acceptButton}
+              size="small"
+              loading={loading}
+              onClick={e => handleAcepptTicket(ticket.id)}
+            >
+              {i18n.t("ticketsList.buttons.accept")}
+            </ButtonWithSpinner>
+
+          )} */}
+
+          {/* {(ticket.status !== "closed") && (
+            <ButtonWithSpinner
+              //color="primary"
+              style={{ backgroundColor: 'red', color: 'white', padding: '0px', bottom: '0px', borderRadius: '0px', left: '8px', fontSize: '0.6rem' }}
+              variant="contained"
+              className={classes.acceptButton}
+              size="small"
+              loading={loading}
+              onClick={e => handleCloseTicket(ticket.id)}
+            >
+              {i18n.t("ticketsList.buttons.closed")}
+            </ButtonWithSpinner>
+
+          )} */}
+
+          {/* {(ticket.status === "closed") && (
+            <ButtonWithSpinner
+              //color="primary"
+              style={{ backgroundColor: 'red', color: 'white', padding: '0px', bottom: '0px', borderRadius: '0px', left: '8px', fontSize: '0.6rem' }}
+              variant="contained"
+              className={classes.acceptButton}
+              size="small"
+              loading={loading}
+              onClick={e => handleReopenTicket(ticket.id)}
+            >
+              {i18n.t("ticketsList.buttons.reopen")}
+            </ButtonWithSpinner>
+
+          )} */}
+        </span>
+
       </ListItem>
-      {/* <Divider variant="inset" component="li" /> */}
+
+      <Divider variant="inset" component="li" />
     </React.Fragment>
   );
 };

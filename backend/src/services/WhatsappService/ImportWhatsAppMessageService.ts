@@ -33,8 +33,7 @@ export const closeTicketsImported = async (whatsappId) => {
   let whatsApp = await Whatsapp.findByPk(whatsappId);
   whatsApp.update({ statusImportMessages: null })
   const io = getIO();
-  io.of(whatsApp.companyId.toString())
-    .emit(`importMessages-${whatsApp.companyId}`, {
+  io.to(`company-${whatsApp.companyId}-mainchannel`).emit(`importMessages-${whatsApp.companyId}`, {
       action: "refresh",
     });
 
@@ -105,8 +104,7 @@ Mensagem ${i + 1} de ${qtd}
 
         if (i % 2 === 0) {
           const timestampMsg = Math.floor(msg.messageTimestamp["low"] * 1000)
-          io.of(whatsApp.companyId.toString())
-            .emit(`importMessages-${whatsApp.companyId}`, {
+          io.to(`company-${whatsApp.companyId}-mainchannel`).emit(`importMessages-${whatsApp.companyId}`, {
               action: "update",
               status: { this: i + 1, all: qtd, date: moment(timestampMsg).format("DD/MM/YY HH:mm:ss") }
             });
@@ -128,8 +126,7 @@ Mensagem ${i + 1} de ${qtd}
 
 
 
-          io.of(whatsApp.companyId.toString())
-            .emit(`importMessages-${whatsApp.companyId}`, {
+          io.to(`company-${whatsApp.companyId}-mainchannel`).emit(`importMessages-${whatsApp.companyId}`, {
               action: "refresh",
             });
         }

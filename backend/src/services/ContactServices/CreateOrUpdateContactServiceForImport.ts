@@ -31,16 +31,15 @@ const CreateOrUpdateContactServiceForImport = async ({
   const io = getIO();
   let contact: Contact | null;
 
-  contact = await Contact.findOne({ where: { number , companyId } });
+  contact = await Contact.findOne({ where: { number, companyId } });
 
   if (contact) {
     if (contact.companyId === null)
-      await contact.update({ name ,profilePicUrl, companyId })
+      contact.update({ name, profilePicUrl, companyId })
     else
-      await contact.update({ name , profilePicUrl });
+      contact.update({ name, profilePicUrl });
 
-      io.of(String(companyId))
-  .emit(`company-${companyId}-contact`, {
+    io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
       action: "update",
       contact
     });
@@ -56,8 +55,7 @@ const CreateOrUpdateContactServiceForImport = async ({
       extraInfo
     });
 
-    io.of(String(companyId))
-  .emit(`company-${companyId}-contact`, {
+    io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
       action: "create",
       contact
     });

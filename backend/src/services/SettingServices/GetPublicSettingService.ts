@@ -5,28 +5,29 @@ interface Request {
 }
 
 const publicSettingsKeys = [
-  "allowSignup",
   "primaryColorLight",
   "primaryColorDark",
   "appLogoLight",
   "appLogoDark",
   "appLogoFavicon",
-  "appName"
+  "appName",
+  "chatlistLight",
+  "chatlistDark",
+  "boxRightLight",
+  "boxRightDark",
+  "boxLeftLight",
+  "boxLeftDark",
+  "allowSignup"
 ]
 
 const GetPublicSettingService = async ({
   key
 }: Request): Promise<string | undefined> => {
-  
-
-  console.log("|======== GetPublicSettingService ========|")
-  console.log("key", key)
-  console.log("|=========================================|")
 
   if (!publicSettingsKeys.includes(key)) {
     return null;
   }
-  
+
   const setting = await Setting.findOne({
     where: {
       companyId: 1,

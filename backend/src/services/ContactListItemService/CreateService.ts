@@ -1,7 +1,7 @@
 import * as Yup from "yup";
 import AppError from "../../errors/AppError";
 import ContactListItem from "../../models/ContactListItem";
-import logger from "../../utils/logger";
+import { logger } from "../../utils/logger";
 import CheckContactNumber from "../WbotServices/CheckNumber";
 
 interface Data {

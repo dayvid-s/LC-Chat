@@ -50,8 +50,7 @@ const EditWhatsAppMessage = async ({
     await message.update({ body, isEdited: true });
 
     await ticket.update({ lastMessage: body });
-    await ticket.reload();
-    
+
     return { ticket: message.ticket, message: message };
   } catch (err) {
     console.log(err);

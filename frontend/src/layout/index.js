@@ -1,63 +1,53 @@
+import React, { useState, useContext, useEffect } from "react";
 import clsx from "clsx";
-import React, { useContext, useEffect, useMemo, useState } from "react";
-// import moment from "moment";
-
-// import { isNill } from "lodash";
-// import SoftPhone from "react-softphone";
-// import { WebSocketInterface } from "jssip";
-
+import moment from "moment";
 import {
-  AppBar,
-  Avatar,
-  // FormControl,
-  Badge,
-  Chip,
-  Divider,
-  Drawer,
-  IconButton,
-  List,
   makeStyles,
-  Menu,
-  MenuItem,
+  Drawer,
+  AppBar,
   Toolbar,
+  List,
   Typography,
-  useMediaQuery,
+  Divider,
+  MenuItem,
+  IconButton,
+  Menu,
   useTheme,
-  withStyles,
+  useMediaQuery,
+  Tooltip,
 } from "@material-ui/core";
 
-import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import MenuIcon from "@material-ui/icons/Menu";
-// import AccountCircle from "@material-ui/icons/AccountCircle";
+import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import AccountCircle from "@material-ui/icons/AccountCircle";
+import EventAvailableIcon from '@material-ui/icons/EventAvailable';
 import CachedIcon from "@material-ui/icons/Cached";
-// import whatsappIcon from "../assets/nopicture.png";
 
-import BackdropLoading from "../components/BackdropLoading";
+import MainListItems from "./MainListItems";
 import NotificationsPopOver from "../components/NotificationsPopOver";
 import NotificationsVolume from "../components/NotificationsVolume";
 import UserModal from "../components/UserModal";
 import { AuthContext } from "../context/Auth/AuthContext";
-import MainListItems from "./MainListItems";
-// import DarkMode from "../components/DarkMode";
-import AnnouncementsPopover from "../components/AnnouncementsPopover";
-import toastError from "../errors/toastError";
+import BackdropLoading from "../components/BackdropLoading";
+import DarkMode from "../components/DarkMode";
 import { i18n } from "../translate/i18n";
+import { messages } from "../translate/languages";
+import toastError from "../errors/toastError";
+import AnnouncementsPopover from "../components/AnnouncementsPopover";
+import LanguageIcon from '@material-ui/icons/Language';
 
+import logo from "../assets/logo.png";
+import { SocketContext } from "../context/Socket/SocketContext";
 import ChatPopover from "../pages/Chat/ChatPopover";
 
 import { useDate } from "../hooks/useDate";
-// import UserLanguageSelector from "../components/UserLanguageSelector";
 
-import Brightness4Icon from "@material-ui/icons/Brightness4";
-import Brightness7Icon from "@material-ui/icons/Brightness7";
-import VersionControl from "../components/VersionControl";
-import { getBackendUrl } from "../config";
-import useSettings from "../hooks/useSettings";
-import ColorModeContext from "./themeContext";
-
-// import { SocketContext } from "../context/Socket/SocketContext";
-
-const backendUrl = getBackendUrl();
+import ColorModeContext from "../layout/themeContext";
+import Brightness4Icon from '@material-ui/icons/Brightness4';
+import Brightness7Icon from '@material-ui/icons/Brightness7';
+import { WhatsApp } from "@material-ui/icons";
+import useCompanies from "../hooks/useCompanies";
+import NestedMenuItem from "material-ui-nested-menu-item";
 
 const drawerWidth = 240;
 
@@ -69,20 +59,13 @@ const useStyles = makeStyles((theme) => ({
       height: "calc(100vh - 56px)",
     },
     backgroundColor: theme.palette.fancyBackground,
-    "& .MuiButton-outlinedPrimary": {
-      color: theme.palette.primary,
-      border:
-        theme.mode === "light"
-          ? "1px solid rgba(0 124 102)"
-          : "1px solid rgba(255, 255, 255, 0.5)",
+    '& .MuiButton-outlinedPrimary': {
+      color: theme.mode === 'light' ? '#00BFFF' : '#FFF',
+      border: theme.mode === 'light' ? '1px solid rgba(0 124 102)' : '1px solid rgba(255, 255, 255, 0.5)',
     },
-    "& .MuiTab-textColorPrimary.Mui-selected": {
-      color: theme.palette.primary,
-    },
-  },
-  chip: {
-    background: "red",
-    color: "white",
+    '& .MuiTab-textColorPrimary.Mui-selected': {
+      color: theme.mode === 'light' ? '#00BFFF' : '#FFF',
+    }
   },
   avatar: {
     width: "100%",
@@ -95,14 +78,12 @@ const useStyles = makeStyles((theme) => ({
   toolbarIcon: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
-    // backgroundColor: "#FFF",
-    backgroundSize: "cover",
+    justifyContent: "flex-end",
     padding: "0 8px",
     minHeight: "48px",
     [theme.breakpoints.down("sm")]: {
-      height: "48px",
-    },
+      height: "48px"
+    }
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
@@ -119,12 +100,12 @@ const useStyles = makeStyles((theme) => ({
       duration: theme.transitions.duration.enteringScreen,
     }),
     [theme.breakpoints.down("sm")]: {
-      display: "none",
-    },
+      display: "none"
+    }
   },
-  // menuButton: {
-  //   marginRight: 36,
-  // },
+  menuButton: {
+    marginRight: 36,
+  },
   menuButtonHidden: {
     display: "none",
   },
@@ -134,21 +115,25 @@ const useStyles = makeStyles((theme) => ({
     color: "white",
   },
   drawerPaper: {
+    background: theme.palette.drawerBackground,
+    color: theme.palette.drawerText,
     position: "relative",
     whiteSpace: "nowrap",
-    // overflowX: "hidden",
     width: drawerWidth,
     transition: theme.transitions.create("width", {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
-    overflowX: "hidden",
-    overflowY: "hidden",
+    [theme.breakpoints.down("sm")]: {
+      width: "100%"
+    },
+    ...theme.scrollbarStylesSoft
   },
-
+  iconDrawer: {
+    color: theme.palette.drawerIcons,
+  },
   drawerPaperClose: {
     overflowX: "hidden",
-    overflowY: "hidden",
     transition: theme.transitions.create("width", {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
@@ -157,113 +142,54 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up("sm")]: {
       width: theme.spacing(9),
     },
+    [theme.breakpoints.down("sm")]: {
+      width: "100%"
+    }
   },
-
   appBarSpacer: {
     minHeight: "48px",
   },
   content: {
     flex: 1,
     overflow: "auto",
+
   },
   container: {
     paddingTop: theme.spacing(4),
     paddingBottom: theme.spacing(4),
   },
-  // paper: {
-  //     padding: theme.spacing(2),
-  //     display: "flex",
-  //     overflow: "auto",
-  //     flexDirection: "column",
-  //   },
+  paper: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column"
+  },
   containerWithScroll: {
     flex: 1,
-    // padding: theme.spacing(1),
-    overflowY: "scroll", // Use "auto" para mostrar a barra de rolagem apenas quando necessário
-    overflowX: "hidden", // Oculta a barra de rolagem horizontal
+    padding: theme.spacing(1),
+    overflowY: "scroll",
     ...theme.scrollbarStyles,
-    borderRadius: "8px",
-    border: "2px solid transparent",
-    "&::-webkit-scrollbar": {
-      display: "none",
-    },
-    "-ms-overflow-style": "none",
-    "scrollbar-width": "none",
   },
   NotificationsPopOver: {
     // color: theme.barraSuperior.secondary.main,
   },
   logo: {
-    marginLeft: "auto",
+    // width: "80%",
+    height: "auto",
+    maxHeight: 43,
     maxWidth: 180,
-    maxHeight: 120,
     [theme.breakpoints.down("sm")]: {
       width: "auto",
-      height: "100%",
+      height: "80%",
       maxWidth: 180,
     },
-    logo: theme.logo,
-    content: "url(" + (theme.mode === "light" ? theme.calculatedLogoLight() : theme.calculatedLogoDark()) + ")"
-  },
-  hideLogo: {
-    display: "none",
-  },
-  avatar2: {
-    width: theme.spacing(4),
-    height: theme.spacing(4),
-    cursor: "pointer",
-    borderRadius: "50%",
-    border: "2px solid #ccc",
-  },
-  updateDiv: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
+    logo: theme.logo
   },
 }));
 
-const StyledBadge = withStyles((theme) => ({
-  badge: {
-    backgroundColor: "#44b700",
-    color: "#44b700",
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-    "&::after": {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      borderRadius: "50%",
-      animation: "$ripple 1.2s infinite ease-in-out",
-      border: "1px solid currentColor",
-      content: '""',
-    },
-  },
-  "@keyframes ripple": {
-    "0%": {
-      transform: "scale(.8)",
-      opacity: 1,
-    },
-    "100%": {
-      transform: "scale(2.4)",
-      opacity: 0,
-    },
-  },
-}))(Badge);
-
-const SmallAvatar = withStyles((theme) => ({
-  root: {
-    width: 22,
-    height: 22,
-    border: `2px solid ${theme.palette.background.paper}`,
-  },
-}))(Avatar);
-
 const LoggedInLayout = ({ children, themeToggle }) => {
   const classes = useStyles();
-  const [userToken, setUserToken] = useState("disabled");
-  const [loadingUserToken, setLoadingUserToken] = useState(false);
+  const { finding } = useCompanies();
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -271,61 +197,74 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerVariant, setDrawerVariant] = useState("permanent");
   // const [dueDate, setDueDate] = useState("");
-  //   const socketManager = useContext(SocketContext);
-  const { user, socket } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
 
   const theme = useTheme();
   const { colorMode } = useContext(ColorModeContext);
   const greaterThenSm = useMediaQuery(theme.breakpoints.up("sm"));
 
   const [volume, setVolume] = useState(localStorage.getItem("volume") || 1);
+  const [companyDueDate, setCompanyDueDate] = useState();
 
   const { dateToClient } = useDate();
-  const [profileUrl, setProfileUrl] = useState(null);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const mainListItems = useMemo(
-    () => <MainListItems drawerOpen={drawerOpen} collapsed={!drawerOpen} />,
-    [user, drawerOpen]
-  );
 
-  const settings = useSettings();
+  //################### CODIGOS DE TESTE #########################################
+  // useEffect(() => {
+  //   navigator.getBattery().then((battery) => {
+  //     console.log(`Battery Charging: ${battery.charging}`);
+  //     console.log(`Battery Level: ${battery.level * 100}%`);
+  //     console.log(`Charging Time: ${battery.chargingTime}`);
+  //     console.log(`Discharging Time: ${battery.dischargingTime}`);
+  //   })
+  // }, []);
+
+  // useEffect(() => {
+  //   const geoLocation = navigator.geolocation
+
+  //   geoLocation.getCurrentPosition((position) => {
+  //     let lat = position.coords.latitude;
+  //     let long = position.coords.longitude;
+
+  //     console.log('latitude: ', lat)
+  //     console.log('longitude: ', long)
+  //   })
+  // }, []);
+
+  // useEffect(() => {
+  //   const nucleos = window.navigator.hardwareConcurrency;
+
+  //   console.log('Nucleos: ', nucleos)
+  // }, []);
+
+  // useEffect(() => {
+  //   console.log('userAgent', navigator.userAgent)
+  //   if (
+  //     navigator.userAgent.match(/Android/i)
+  //     || navigator.userAgent.match(/webOS/i)
+  //     || navigator.userAgent.match(/iPhone/i)
+  //     || navigator.userAgent.match(/iPad/i)
+  //     || navigator.userAgent.match(/iPod/i)
+  //     || navigator.userAgent.match(/BlackBerry/i)
+  //     || navigator.userAgent.match(/Windows Phone/i)
+  //   ) {
+  //     console.log('é mobile ', true) //celular
+  //   }
+  //   else {
+  //     console.log('não é mobile: ', false) //nao é celular
+  //   }
+  // }, []);
+  //##############################################################################
+
+  const socketManager = useContext(SocketContext);
 
   useEffect(() => {
-    const getSetting = async () => {
-      const response = await settings.get("wtV");
-
-
-      if (response) {
-
-        setUserToken("disabled");
-
-      } else {
-        setUserToken("disabled");
-      }
-    };
-
-    getSetting();
-  });
-
-
-
-  useEffect(() => {
-    // if (localStorage.getItem("public-token") === null) {
-    //   handleLogout()
-    // }
-
     if (document.body.offsetWidth > 600) {
-      if (user.defaultMenu === "closed") {
-        setDrawerOpen(false);
-      } else {
-        setDrawerOpen(true);
-      }
+      setDrawerOpen(true);
     }
-    if (user.defaultTheme === "dark" && theme.mode === "light") {
-      colorMode.toggleColorMode();
-    }
-  }, [user.defaultMenu, document.body.offsetWidth]);
+  }, []);
 
   useEffect(() => {
     if (document.body.offsetWidth < 600) {
@@ -336,73 +275,85 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   }, [drawerOpen]);
 
   useEffect(() => {
+    const companyId = localStorage.getItem("companyId");
+    const userId = localStorage.getItem("userId");
 
-    const companyId = user.companyId;
-    const userId = user.id;
-    if (companyId) {
-      //    const socket = socketManager.GetSocket();
 
-      const ImageUrl = user.profileImage;
-      if (ImageUrl !== undefined && ImageUrl !== null)
-        setProfileUrl(
-          `${backendUrl}/public/company${companyId}/user/${ImageUrl}`
-        );
-      else setProfileUrl(`${process.env.FRONTEND_URL}/nopicture.png`);
+    getDueDate(companyId);
 
-      const onCompanyAuthLayout = (data) => {
-        if (data.user.id === +userId) {
-          toastError("Sua conta foi acessada em outro computador.");
-          setTimeout(() => {
-            localStorage.clear();
-            window.location.reload();
-          }, 1000);
-        }
+    const socket = socketManager.getSocket(companyId);
+
+    socket.on(`company-${companyId}-auth`, (data) => {
+      if (data.user.id === +userId) {
+        toastError("Sua conta foi acessada em outro computador.");
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.reload();
+        }, 1000);
       }
+    });
 
-      socket.on(`company-${companyId}-auth`, onCompanyAuthLayout);
-
+    socket.emit("userStatus");
+    const interval = setInterval(() => {
       socket.emit("userStatus");
-      const interval = setInterval(() => {
-        socket.emit("userStatus");
-      }, 1000 * 60 * 5);
+    }, 1000 * 60 * 5);
 
-      return () => {
-        socket.off(`company-${companyId}-auth`, onCompanyAuthLayout);
-        clearInterval(interval);
-      };
-    }
+    return () => {
+      socket.disconnect();
+      clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket]);
+  }, [socketManager]);
 
-  const handleMenu = (event) => {
+  const getDueDate = async (companyId) => {
+    const companiesList = await finding(companyId);
+    setCompanyDueDate(moment(companiesList.dueDate).format("DD/MM/yyyy"));
+  };
+
+  const handleProfileMenu = (event) => {
     setAnchorEl(event.currentTarget);
     setMenuOpen(true);
   };
 
-  const handleCloseMenu = () => {
+  const handleLanguageMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+    setLanguageOpen(true);
+  };
+
+  const handleCloseProfileMenu = () => {
     setAnchorEl(null);
     setMenuOpen(false);
   };
 
+  const handleCloseLanguageMenu = () => {
+    setAnchorEl(null);
+    setLanguageOpen(false);
+  };
+
   const handleOpenUserModal = () => {
     setUserModalOpen(true);
-    handleCloseMenu();
+    handleCloseProfileMenu();
   };
 
   const handleClickLogout = () => {
-    handleCloseMenu();
+    handleCloseProfileMenu();
     handleLogout();
   };
 
+  const handleChooseLanguage = (language) => {
+    localStorage.setItem("language", language);
+    window.location.reload(false);
+  }
+
   const drawerClose = () => {
-    if (document.body.offsetWidth < 600 || user.defaultMenu === "closed") {
+    if (document.body.offsetWidth < 600) {
       setDrawerOpen(false);
     }
   };
 
   const handleRefreshPage = () => {
     window.location.reload(false);
-  };
+  }
 
   const handleMenuItemClick = () => {
     const { innerWidth: width } = window;
@@ -411,9 +362,20 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     }
   };
 
+  const openInNewTab = url => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const toggleColorMode = () => {
+    colorMode.toggleColorMode();
+    setMenuOpen(false);
+  }
+
   if (loading) {
     return <BackdropLoading />;
   }
+
+
 
   return (
     <div className={classes.root}>
@@ -429,19 +391,24 @@ const LoggedInLayout = ({ children, themeToggle }) => {
         open={drawerOpen}
       >
         <div className={classes.toolbarIcon}>
-          <img className={drawerOpen ? classes.logo : classes.hideLogo}
-            alt="logo" />
-          <IconButton onClick={() => setDrawerOpen(!drawerOpen)}>
+          {/* <img src={logo} className={classes.logo} alt="logo" /> */}
+          <IconButton className={classes.iconDrawer} onClick={() => setDrawerOpen(!drawerOpen)}>
             <ChevronLeftIcon />
           </IconButton>
         </div>
+
+        <Divider />
         <List className={classes.containerWithScroll}>
-          {/* {mainListItems} */}
-          <MainListItems collapsed={!drawerOpen} />
+          <MainListItems drawerClose={drawerClose} collapsed={!drawerOpen} />
         </List>
         <Divider />
       </Drawer>
 
+      <UserModal
+        open={userModalOpen}
+        onClose={() => setUserModalOpen(false)}
+        userId={user?.id}
+      />
       <AppBar
         position="absolute"
         className={clsx(classes.appBar, drawerOpen && classes.appBarShift)}
@@ -452,9 +419,11 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             edge="start"
             variant="contained"
             aria-label="open drawer"
-            style={{ color: "white" }}
             onClick={() => setDrawerOpen(!drawerOpen)}
-            className={clsx(drawerOpen && classes.menuButtonHidden)}
+            className={clsx(
+              classes.menuButton,
+              drawerOpen && classes.menuButtonHidden
+            )}
           >
             <MenuIcon />
           </IconButton>
@@ -466,67 +435,33 @@ const LoggedInLayout = ({ children, themeToggle }) => {
             noWrap
             className={classes.title}
           >
-            {/* {greaterThenSm && user?.profile === "admin" && getDateAndDifDays(user?.company?.dueDate).difData < 7 ? ( */}
-            {greaterThenSm &&
-              user?.profile === "admin" &&
-              user?.company?.dueDate ? (
-              <>
-                {i18n.t("mainDrawer.appBar.user.message")} <b>{user.name}</b>,{" "}
-                {i18n.t("mainDrawer.appBar.user.messageEnd")}{" "}
-                <b>{user?.company?.name}</b>! (
-                {i18n.t("mainDrawer.appBar.user.active")}{" "}
-                {dateToClient(user?.company?.dueDate)})
-              </>
-            ) : (
-              <>
-                {i18n.t("mainDrawer.appBar.user.message")} <b>{user.name}</b>,{" "}
-                {i18n.t("mainDrawer.appBar.user.messageEnd")}{" "}
-                <b>{user?.company?.name}</b>!
-              </>
-            )}
+            <img style={{}} src={logo} className={classes.logo} alt="logo" />
           </Typography>
 
-          {userToken === "enabled" && user?.companyId === 1 && (
-            <Chip
-              className={classes.chip}
-              label={i18n.t("mainDrawer.appBar.user.token")}
-            />
-          )}
-          <VersionControl />
 
-          {/* DESABILITADO POIS TEM BUGS */}
-          {/* <UserLanguageSelector /> */}
-          {/* <SoftPhone
-            callVolume={33} //Set Default callVolume
-            ringVolume={44} //Set Default ringVolume
-            connectOnStart={false} //Auto connect to sip
-            notifications={false} //Show Browser Notification of an incoming call
-            config={config} //Voip config
-            setConnectOnStartToLocalStorage={setConnectOnStartToLocalStorage} // Callback function
-            setNotifications={setNotifications} // Callback function
-            setCallVolume={setCallVolume} // Callback function
-            setRingVolume={setRingVolume} // Callback function
-            timelocale={'UTC-3'} //Set time local for call history
+          {/* <Typography variant="caption" style={{ color: "white", marginRight: 15, fontWeight: "bold" }}>Sua assinatura: {companyDueDate}</Typography> */}
+
+          <Tooltip arrow title={<Typography variant="caption" style={{ color: "white", marginRight: 15, fontWeight: "bold" }}>Sua assinatura: {companyDueDate}</Typography>}>
+            <EventAvailableIcon style={{ color: "white", marginRight: 15, }} />
+          </Tooltip>
+
+
+          {/* <IconButton edge="start" onClick={toggleColorMode}>
+            {theme.mode === 'dark' ? <Brightness7Icon style={{ color: "white" }} /> : <Brightness4Icon style={{ color: "white" }} />}
+          </IconButton> */}
+
+          {/* <NotificationsVolume
+            setVolume={setVolume}
+            volume={volume}
           /> */}
-          <IconButton edge="start" onClick={colorMode.toggleColorMode}>
-            {theme.mode === "dark" ? (
-              <Brightness7Icon style={{ color: "white" }} />
-            ) : (
-              <Brightness4Icon style={{ color: "white" }} />
-            )}
-          </IconButton>
 
-          <NotificationsVolume setVolume={setVolume} volume={volume} />
-
-          <IconButton
+          {/* <IconButton
             onClick={handleRefreshPage}
             aria-label={i18n.t("mainDrawer.appBar.refresh")}
             color="inherit"
           >
             <CachedIcon style={{ color: "white" }} />
-          </IconButton>
-
-          {/* <DarkMode themeToggle={themeToggle} /> */}
+          </IconButton> */}
 
           {user.id && <NotificationsPopOver volume={volume} />}
 
@@ -534,30 +469,66 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
           <ChatPopover />
 
-          <div>
-            <StyledBadge
-              overlap="circular"
+          {/* <div>
+            <IconButton
+              aria-label="current language"
+              aria-controls="menu-language"
+              aria-haspopup="true"
+              onClick={handleLanguageMenu}
+              variant="contained"
+              style={{ color: "white" }}
+            >
+              <LanguageIcon key={currentLanguage} />
+            </IconButton>
+
+            <IconButton 
+              edge="start" 
+              aria-label="WhatsApp-Contact"
+              aria-haspopup="true"
+              variant="contained"
+              onClick={() => openInNewTab(`https://wa.me/${process.env.REACT_APP_NUMBER_SUPPORT}`)}
+            >
+              <WhatsApp style={{ color: "white" }} />
+            </IconButton> 
+
+            <Menu
+              id="language-appbar"
+              anchorEl={anchorEl}
+              getContentAnchorEl={null}
               anchorOrigin={{
                 vertical: "bottom",
                 horizontal: "right",
               }}
-              variant="dot"
-              onClick={handleMenu}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={languageOpen}
+              onClose={handleCloseLanguageMenu}
             >
-              <Avatar
-                alt="Multi100"
-                className={classes.avatar2}
-                src={profileUrl}
-              />
-            </StyledBadge>
+              {
+                Object.keys(messages).map((m) => (
+                  <MenuItem key={m} onClick={() => handleChooseLanguage(m)}>
+                    {messages[m].translations.mainDrawer.appBar.i18n.language}
+                  </MenuItem>
+                ))
+              }
+            </Menu>
+          </div> */}
 
-            <UserModal
-              open={userModalOpen}
-              onClose={() => setUserModalOpen(false)}
-              onImageUpdate={(newProfileUrl) => setProfileUrl(newProfileUrl)}
-              userId={user?.id}
-            />
+          <div>
 
+            <IconButton
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleProfileMenu}
+              variant="contained"
+              style={{ color: "white" }}
+            >
+              <AccountCircle />
+            </IconButton>
+            <Typography variant="caption" style={{ color: "white", marginRight: 10, fontWeight: "bold" }}>{user.name}</Typography>
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
@@ -571,14 +542,24 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 horizontal: "right",
               }}
               open={menuOpen}
-              onClose={handleCloseMenu}
+              onClose={handleCloseProfileMenu}
             >
-              <MenuItem onClick={handleOpenUserModal}>
-                {i18n.t("mainDrawer.appBar.user.profile")}
-              </MenuItem>
-              <MenuItem onClick={handleClickLogout}>
-                {i18n.t("mainDrawer.appBar.user.logout")}
-              </MenuItem>
+              <MenuItem onClick={handleOpenUserModal}>{i18n.t("mainDrawer.appBar.user.profile")} </MenuItem>
+              <MenuItem onClick={toggleColorMode}> {theme.mode === 'dark' ? i18n.t("mainDrawer.appBar.styleLight") : i18n.t("mainDrawer.appBar.styleDark")}  </MenuItem>
+              <NestedMenuItem
+                label={i18n.t("mainDrawer.appBar.user.language")}
+                parentMenuOpen={menuOpen}
+              >
+                {
+                  Object.keys(messages).map((m) => (
+                    <MenuItem onClick={() => handleChooseLanguage(m)}>
+                      {messages[m].translations.mainDrawer.appBar.i18n.language}
+                    </MenuItem>
+                  ))
+                }
+              </NestedMenuItem>
+              {/* <MenuItem > {i18n.t("mainDrawer.appBar.language")} </MenuItem> */}
+              <MenuItem onClick={handleClickLogout}> {i18n.t("mainDrawer.appBar.user.logout")} </MenuItem>
             </Menu>
           </div>
         </Toolbar>

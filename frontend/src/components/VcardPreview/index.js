@@ -9,13 +9,11 @@ import Grid from "@material-ui/core/Grid";
 
 import { AuthContext } from "../../context/Auth/AuthContext";
 
-import { Button, Divider, useTheme, } from "@material-ui/core";
+import { Button, Divider, } from "@material-ui/core";
 import { isNil } from 'lodash';
-import ShowTicketOpen from '../ShowTicketOpenModal';
-import { grey } from '@material-ui/core/colors';
 
 const VcardPreview = ({ contact, numbers, queueId, whatsappId }) => {
-    const theme = useTheme();
+
     const history = useHistory();
     const { user } = useContext(AuthContext);
 
@@ -120,19 +118,7 @@ const VcardPreview = ({ contact, numbers, queueId, whatsappId }) => {
 
             history.push(`/tickets/${ticket.uuid}`);
         } catch (err) {
-            const ticket = JSON.parse(err.response.data.error);
-
-            if (ticket.userId !== user?.id) {
-                setOpenAlert(true);
-                setUserTicketOpen(ticket.user.name);
-                setQueueTicketOpen(ticket.queue.name);
-            } else {
-                setOpenAlert(false);
-                setUserTicketOpen("");
-                setQueueTicketOpen("");
-
-                history.push(`/tickets/${ticket.uuid}`);
-            }
+           toastError(err)
         }
     }
 
@@ -141,23 +127,12 @@ const VcardPreview = ({ contact, numbers, queueId, whatsappId }) => {
             <div style={{
                 minWidth: "250px",
             }}>
-                <ShowTicketOpen
-                    isOpen={openAlert}
-                    handleClose={handleCloseAlert}
-                    user={userTicketOpen}
-                    queue={queueTicketOpen}
-                />
                 <Grid container spacing={1}>
                     <Grid item xs={2}>
                         <Avatar src={`${selectedContact?.urlPicture}`} />
                     </Grid>
                     <Grid item xs={9}>
-                        <Typography
-                            style={{ marginTop: "12px", marginLeft: "10px" }}
-                            color="primary"
-                            variant="subtitle1"
-                            gutterBottom
-                        >
+                        <Typography style={{ marginTop: "12px", marginLeft: "10px" }} variant="subtitle1" color="primary" gutterBottom>
                             {selectedContact.name}
                         </Typography>
                     </Grid>

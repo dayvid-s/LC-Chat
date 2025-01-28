@@ -1,30 +1,18 @@
 import AppError from "../../errors/AppError";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
-import ContactWallet from "../../models/ContactWallet";
 
 interface ExtraInfo {
   id?: number;
   name: string;
   value: string;
 }
-interface Wallet {
-  walletId: number | string;
-  contactId: number | string;
-  companyId: number | string;
-}
-
 interface ContactData {
   email?: string;
   number?: string;
   name?: string;
-  salerId: string;
-  acceptAudioMessage?: boolean;
-  active?: boolean;
   extraInfo?: ExtraInfo[];
   disableBot?: boolean;
-  remoteJid?: string;
-  wallets?: null | number[] | string[];
 }
 
 interface Request {
@@ -38,16 +26,12 @@ const UpdateContactService = async ({
   contactId,
   companyId
 }: Request): Promise<Contact> => {
-  const { email, name, number, extraInfo, salerId, acceptAudioMessage, active, disableBot, remoteJid, wallets } = contactData;
+  const { email, name, number, extraInfo, disableBot } = contactData;
 
   const contact = await Contact.findOne({
     where: { id: contactId },
-    attributes: ["id", "name", "number", "channel", "email", "companyId", "acceptAudioMessage", "active", "profilePicUrl", "remoteJid", "urlPicture", "salerId"],
-    include: ["extraInfo", "tags",
-      {
-        association: "wallets",
-        attributes: ["id", "name"]
-      }]
+    attributes: ["id", "name", "number", "email", "companyId", "profilePicUrl"],
+    include: ["extraInfo"]
   });
 
   if (contact?.companyId !== companyId) {
@@ -76,45 +60,16 @@ const UpdateContactService = async ({
     );
   }
 
-  if (wallets) {
-    await ContactWallet.destroy({
-      where: {
-        companyId,
-        contactId
-      }
-    });
-
-    const contactWallets: Wallet[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    wallets.forEach((wallet: any) => {
-      contactWallets.push({
-        walletId: !wallet.id ? wallet : wallet.id,
-        contactId,
-        companyId
-      });
-    });
-
-    await ContactWallet.bulkCreate(contactWallets);
-  }
-
   await contact.update({
     name,
     number,
     email,
-    salerId,
-    acceptAudioMessage,
-    active,
-    disableBot,
-    remoteJid
+    disableBot
   });
 
   await contact.reload({
-    attributes: ["id", "name", "number", "channel", "email", "companyId", "acceptAudioMessage", "active", "profilePicUrl", "remoteJid", "urlPicture", "salerId"],
-    include: ["extraInfo", "tags",
-      {
-        association: "wallets",
-        attributes: ["id", "name"]
-      }]
+    attributes: ["id", "name", "number", "email", "profilePicUrl"],
+    include: ["extraInfo"]
   });
 
   return contact;
