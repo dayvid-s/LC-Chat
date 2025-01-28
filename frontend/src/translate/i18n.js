@@ -6,7 +6,6 @@ import { messages } from "./languages";
 i18n.use(LanguageDetector).init({
 	debug: false,
 	defaultNS: ["translations"],
-	lng: localStorage.getItem("language") ?? "pt",
 	fallbackLng: "pt",
 	ns: ["translations"],
 	resources: messages,

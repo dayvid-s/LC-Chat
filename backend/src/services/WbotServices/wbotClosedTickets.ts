@@ -1,4 +1,4 @@
-import { Filterable, Op } from "sequelize";
+import { Op } from "sequelize";
 import Ticket from "../../models/Ticket"
 import Whatsapp from "../../models/Whatsapp"
 import { getIO } from "../../libs/socket"
@@ -8,117 +8,111 @@ import moment from "moment";
 import ShowTicketService from "../TicketServices/ShowTicketService";
 import { verifyMessage } from "./wbotMessageListener";
 import TicketTraking from "../../models/TicketTraking";
-import Company from "../../models/Company";
-import { logger } from "../../utils/logger";
-import { isNil } from "lodash";
-import { sub } from "date-fns";
-import Contact from "../../models/Contact";
-
-const closeTicket = async (ticket: any, body: string) => {
-  await ticket.update({
-    status: "closed",
-    lastMessage: body,
-    unreadMessages: 0,
-    amountUsedBotQueues: 0
-  });
-};
-
-const handleOpenTickets = async (companyId: number, whatsapp: Whatsapp) => {
-  const currentTime = new Date();
-  const brazilTimeZoneOffset = -3 * 60; // Fuso horário do Brasil é UTC-3
-  const currentTimeBrazil = new Date(currentTime.getTime() + brazilTimeZoneOffset * 60000); // Adiciona o offset ao tempo atual
-
-  let expiresTime = Number(whatsapp.expiresTicket || 0);
-
-  if (!isNil(expiresTime) && expiresTime > 0) {
-
-    let whereCondition: Filterable["where"];
-
-    whereCondition = {
-      status: "open",
-      companyId,
-      whatsappId: whatsapp.id,
-      updatedAt: {
-        [Op.lt]: +sub(new Date(), {
-          minutes: Number(expiresTime)
-        })
-      },
-      imported: null,
-      fromMe: true
-    }
-
-    const ticketsToClose = await Ticket.findAll({
-      where: whereCondition,
-      include: [
-        {
-          model: Contact,
-          as: "contact",
-          attributes: ["id", "name", "number", "email", "profilePicUrl"]
-
-        },
-      ]
-    });
-
-
-    if (ticketsToClose && ticketsToClose.length > 0) {
-      logger.info(`Encontrou ${ticketsToClose.length} atendimentos para encerrar na empresa ${companyId} - na conexão ${whatsapp.name}!`);
-
-      for (const ticket of ticketsToClose) {
-        await ticket.reload();
-        const ticketTraking = await TicketTraking.findOne({
-          where: { ticketId: ticket.id, finishedAt: null }
-        });
-
-        let bodyExpiresMessageInactive = "";
-
-        if (!isNil(whatsapp.expiresInactiveMessage) && whatsapp.expiresInactiveMessage !== "") {
-          bodyExpiresMessageInactive = formatBody(`\u200e${whatsapp.expiresInactiveMessage}`, ticket.contact);
-          const sentMessage = await SendWhatsAppMessage({ body: bodyExpiresMessageInactive, ticket: ticket });
-          // await verifyMessage(sentMessage, ticket, ticket.contact);
-        }
-
-        // Como o campo sendInactiveMessage foi atualizado, podemos garantir que a mensagem foi enviada
-        await closeTicket(ticket, bodyExpiresMessageInactive);
-
-        await ticketTraking.update({
-          finishedAt: new Date(),
-          closedAt: new Date(),
-          whatsappId: ticket.whatsappId,
-          userId: ticket.userId,
-        });
-
-        getIO().emit(`company-${companyId}-ticket`, {
-          action: "delete",
-          ticketId: ticket.id
-        });
-      }
-    }
-  }
-};
 
 export const ClosedAllOpenTickets = async (companyId: number): Promise<void> => {
+
+  // @ts-ignore: Unreachable code error
+  const closeTicket = async (ticket: any, currentStatus: any, body: any) => {
+    if (currentStatus === 'nps') {
+
+      await ticket.update({
+        status: "closed",
+        //userId: ticket.userId || null,
+        lastMessage: body,
+        unreadMessages: 0,
+        amountUseBotQueues: 0
+      });
+
+    } else if (currentStatus === 'open') {
+
+      await ticket.update({
+        status: "closed",
+        //  userId: ticket.userId || null,
+        lastMessage: body,
+        unreadMessages: 0,
+        amountUseBotQueues: 0
+      });
+
+    } else {
+
+      await ticket.update({
+        status: "closed",
+        //userId: ticket.userId || null,
+        unreadMessages: 0
+      });
+    }
+  };
+
+  const io = getIO();
   try {
-    const whatsapps = await Whatsapp.findAll({
-      attributes: ["id", "name", "status", "timeSendQueue", "sendIdQueue",
-        "expiresInactiveMessage", "expiresTicket",
-        "complationMessage"],
-      where: {
-        expiresTicket: { [Op.gt]: '0' },
-        companyId: companyId, // Filtrar pelo companyId fornecido como parâmetro
-        status: "CONNECTED"
+
+    const { rows: tickets } = await Ticket.findAndCountAll({
+      where: { status: { [Op.in]: ["open"] }, companyId },
+      order: [["updatedAt", "DESC"]]
+    });
+
+    tickets.forEach(async ticket => {
+      const showTicket = await ShowTicketService(ticket.id, companyId);
+      const whatsapp = await Whatsapp.findByPk(showTicket?.whatsappId);
+      const ticketTraking = await TicketTraking.findOne({
+        where: {
+          ticketId: ticket.id,
+          finishedAt: null,
+        }
+      })
+
+      if (!whatsapp) return;
+
+      let {
+        expiresInactiveMessage, //mensage de encerramento por inatividade      
+        expiresTicket //tempo em horas para fechar ticket automaticamente
+      } = whatsapp
+
+
+      // @ts-ignore: Unreachable code error
+      if (expiresTicket && expiresTicket !== "" &&
+        // @ts-ignore: Unreachable code error
+        expiresTicket !== "0" && Number(expiresTicket) > 0) {
+
+        //mensagem de encerramento por inatividade
+        const bodyExpiresMessageInactive = formatBody(`\u200e ${expiresInactiveMessage}`, showTicket.contact);
+
+        const dataLimite = new Date()
+        dataLimite.setMinutes(dataLimite.getMinutes() - Number(expiresTicket));
+
+        if (showTicket.status === "open" && !showTicket.isGroup) {
+
+          const dataUltimaInteracaoChamado = new Date(showTicket.updatedAt)
+
+          if (dataUltimaInteracaoChamado < dataLimite && showTicket.fromMe) {
+
+            closeTicket(showTicket, showTicket.status, bodyExpiresMessageInactive);
+
+            if (expiresInactiveMessage !== "" && expiresInactiveMessage !== undefined) {
+              const sentMessage = await SendWhatsAppMessage({ body: bodyExpiresMessageInactive, ticket: showTicket });
+
+              await verifyMessage(sentMessage, showTicket, showTicket.contact);
+            }
+
+            await ticketTraking.update({
+              finishedAt: moment().toDate(),
+              closedAt: moment().toDate(),
+              whatsappId: ticket.whatsappId,
+              userId: ticket.userId,
+            })
+
+            io.to("open").emit(`company-${companyId}-ticket`, {
+              action: "delete",
+              ticketId: showTicket.id
+            });
+
+          }
+        }
       }
     });
 
-    // Agora você pode iterar sobre as instâncias de Whatsapp diretamente
-    if (whatsapps.length > 0) {
-      for (const whatsapp of whatsapps) {
-        if (whatsapp.expiresTicket) {
-          await handleOpenTickets(companyId, whatsapp);
-        }
-      }
-    }
-
-  } catch (error) {
-    console.error('Erro:', error);
+  } catch (e: any) {
+    console.log('e', e)
   }
-};
+
+}

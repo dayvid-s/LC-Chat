@@ -3,13 +3,25 @@ import isAuth from "../middleware/isAuth";
 
 import * as ContactController from "../controllers/ContactController";
 import * as ImportPhoneContactsController from "../controllers/ImportPhoneContactsController";
+import routes from "./contactListRoutes";
+import uploadConfig from "../config/upload";
+import multer from "multer";
 
 const contactRoutes = express.Router();
+
+const upload = multer(uploadConfig);
 
 contactRoutes.post(
   "/contacts/import",
   isAuth,
   ImportPhoneContactsController.store
+);
+
+routes.post(
+  "/contacts/upload",
+  isAuth,
+  upload.array("file"),
+  ContactController.upload
 );
 
 contactRoutes.get("/contacts", isAuth, ContactController.index);
@@ -24,12 +36,6 @@ contactRoutes.put("/contacts/:contactId", isAuth, ContactController.update);
 
 contactRoutes.delete("/contacts/:contactId", isAuth, ContactController.remove);
 
-contactRoutes.get("/contacts/profile/:number", isAuth, ContactController.getContactProfileURL);
-
-contactRoutes.put("/contacts/toggleDisableBot/:contactId", isAuth, ContactController.toggleDisableBot);
-
-contactRoutes.post("/contactsImport", isAuth, ContactController.importXls);
-
-contactRoutes.delete("/delete-contacts", isAuth, ContactController.deleteAllContactsFromCompanie);
+contactRoutes.get("/contact", isAuth, ContactController.getContactVcard);
 
 export default contactRoutes;

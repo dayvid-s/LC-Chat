@@ -1,18 +1,18 @@
-import { WAMessage } from "@whiskeysockets/baileys";
-import WALegacySocket from "@whiskeysockets/baileys"
 import * as Sentry from "@sentry/node";
+import { WAMessage } from "@whiskeysockets/baileys";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
 import formatBody from "../../helpers/Mustache";
+import { map_msg } from "../../utils/global";
 
 interface Request {
   body: string;
   ticket: Ticket;
   quotedMsg?: Message;
-  isForwarded?: boolean;
+  isForwarded?: boolean;  
 }
 
 const SendWhatsAppMessage = async ({

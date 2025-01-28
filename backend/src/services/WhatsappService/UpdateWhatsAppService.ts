@@ -17,18 +17,16 @@ interface WhatsappData {
   ratingMessage?: string;
   queueIds?: number[];
   token?: string;
-  sendIdQueue?: number;
-  timeSendQueue?: number;
+  //sendIdQueue?: number;
+  //timeSendQueue?: number;
+  transferQueueId?: number; 
+  timeToTransfer?: number;    
   promptId?: number;
   maxUseBotQueues?: number;
   timeUseBotQueues?: number;
   expiresTicket?: number;
   expiresInactiveMessage?: string;
-  importOldMessages?: string;
-  importRecentMessages?: string;
-  importOldMessagesGroups?: boolean;
-  closedTicketsPostImported?: boolean;
-  requestQR?: boolean;
+
 }
 
 interface Request {
@@ -64,18 +62,15 @@ const UpdateWhatsAppService = async ({
     ratingMessage,
     queueIds = [],
     token,
-    timeSendQueue,
-    sendIdQueue = null,
+    //timeSendQueue,
+    //sendIdQueue = null,
+    transferQueueId,	
+	timeToTransfer,	
     promptId,
     maxUseBotQueues,
     timeUseBotQueues,
     expiresTicket,
-    expiresInactiveMessage,
-    importOldMessages,
-    importRecentMessages,
-    closedTicketsPostImported,
-    importOldMessagesGroups,
-    requestQR = false,
+    expiresInactiveMessage
   } = whatsappData;
 
   try {
@@ -116,23 +111,19 @@ const UpdateWhatsAppService = async ({
     isDefault,
     companyId,
     token,
-    timeSendQueue,
-    sendIdQueue,
+    //timeSendQueue,
+    //sendIdQueue,
+    transferQueueId,	
+	timeToTransfer,	
     promptId,
     maxUseBotQueues,
     timeUseBotQueues,
     expiresTicket,
-    expiresInactiveMessage,
-    importOldMessages,
-    importRecentMessages,
-    closedTicketsPostImported,
-    importOldMessagesGroups
+    expiresInactiveMessage
   });
 
-  if (!requestQR) {
-    await AssociateWhatsappQueue(whatsapp, queueIds);
-  }
-  
+  await AssociateWhatsappQueue(whatsapp, queueIds);
+
   return { whatsapp, oldDefaultWhatsapp };
 };
 

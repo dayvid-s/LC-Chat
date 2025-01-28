@@ -20,18 +20,9 @@ const useSettings = () => {
         return responseData;
     }
 
-    const getPublicSetting = async (key) => {
-        const { data } = await api.request({
-            url: `/public-settings/${key}`,
-            method: 'GET'
-        });
-        return data;
-    }
-
     return {
-        getAll,
-        update,
-        getPublicSetting,
+		getAll,
+        update
     }
 }
 

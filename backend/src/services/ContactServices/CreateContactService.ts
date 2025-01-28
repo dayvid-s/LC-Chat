@@ -14,7 +14,6 @@ interface Request {
   profilePicUrl?: string;
   companyId: number;
   extraInfo?: ExtraInfo[];
-  disableBot?: boolean;
 }
 
 const CreateContactService = async ({
@@ -22,8 +21,7 @@ const CreateContactService = async ({
   number,
   email = "",
   companyId,
-  extraInfo = [],
-  disableBot
+  extraInfo = []
 }: Request): Promise<Contact> => {
   const numberExists = await Contact.findOne({
     where: { number, companyId }
@@ -39,8 +37,7 @@ const CreateContactService = async ({
       number,
       email,
       extraInfo,
-      companyId,
-      disableBot
+      companyId
     },
     {
       include: ["extraInfo"]

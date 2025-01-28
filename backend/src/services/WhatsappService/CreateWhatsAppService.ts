@@ -18,17 +18,15 @@ interface Request {
   isDefault?: boolean;
   token?: string;
   provider?: string;
-  sendIdQueue?: number;
-  timeSendQueue?: number;
+  //sendIdQueue?: number;
+  //timeSendQueue?: number;
+  transferQueueId?: number;
+  timeToTransfer?: number;    
   promptId?: number;
   maxUseBotQueues?: number;
   timeUseBotQueues?: number;
   expiresTicket?: number;
   expiresInactiveMessage?: string;
-  importOldMessages?: string;
-  importRecentMessages?: string;
-  importOldMessagesGroups?: boolean;
-  closedTicketsPostImported?: boolean;
 }
 
 interface Response {
@@ -48,17 +46,15 @@ const CreateWhatsAppService = async ({
   companyId,
   token = "",
   provider = "beta",
-  timeSendQueue,
-  sendIdQueue,
+  //timeSendQueue,
+  //sendIdQueue,
+  transferQueueId,
+  timeToTransfer,    
   promptId,
   maxUseBotQueues = 3,
   timeUseBotQueues = 0,
   expiresTicket = 0,
-  expiresInactiveMessage = "",
-  importOldMessages,
-  importRecentMessages,
-  closedTicketsPostImported,
-  importOldMessagesGroups
+  expiresInactiveMessage = ""
 }: Request): Promise<Response> => {
   const company = await Company.findOne({
     where: {
@@ -161,17 +157,15 @@ const CreateWhatsAppService = async ({
       companyId,
       token,
       provider,
-      timeSendQueue,
-      sendIdQueue,
+      //timeSendQueue,
+      //sendIdQueue,
+	  transferQueueId,
+	  timeToTransfer,	  
       promptId,
       maxUseBotQueues,
       timeUseBotQueues,
       expiresTicket,
-      expiresInactiveMessage,
-      importOldMessages,
-      importRecentMessages,
-      closedTicketsPostImported,
-      importOldMessagesGroups
+      expiresInactiveMessage
     },
     { include: ["queues"] }
   );

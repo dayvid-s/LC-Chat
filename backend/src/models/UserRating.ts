@@ -13,7 +13,6 @@ import {
   import Company from "./Company";
   import User from "./User";
   import Ticket from "./Ticket";
-import TicketTraking from "./TicketTraking";
   
   @Table({
     tableName: "UserRatings"
@@ -53,13 +52,6 @@ import TicketTraking from "./TicketTraking";
   
     @UpdatedAt
     updatedAt: Date;
-
-    @Column
-    @ForeignKey(() => TicketTraking)
-    ticketTrakingId: number;
-
-    @BelongsTo(() => TicketTraking)
-    ticketTraking: TicketTraking;
   }
   
   export default UserRating;

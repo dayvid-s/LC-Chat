@@ -56,7 +56,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const io = getIO();
 
   record.users.forEach(user => {
-    io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-chat-user-${user.userId}`, {
+    io.to(`user-${user.userId}`).emit(`company-${companyId}-chat-user-${user.userId}`, {
       action: "create",
       record
     });
@@ -81,7 +81,7 @@ export const update = async (
   const io = getIO();
 
   record.users.forEach(user => {
-    io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-chat-user-${user.userId}`, {
+    io.to(`user-${user.userId}`).emit(`company-${companyId}-chat-user-${user.userId}`, {
       action: "update",
       record
     });
@@ -116,42 +116,21 @@ export const remove = async (
   return res.status(200).json({ message: "Chat deleted" });
 };
 
-export const saveMessage = async (req: Request, res: Response): Promise<Response> => {
-  const medias = req.files as Express.Multer.File[];
+export const saveMessage = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { companyId } = req.user;
   const { message } = req.body;
   const { id } = req.params;
   const senderId = +req.user.id;
   const chatId = +id;
 
-  let newMessage = null;
-
-  // const newMessage = await CreateMessageService({
-  //   chatId,
-  //   senderId,
-  //   message
-  // });
-
-  if (medias) {
-    await Promise.all(
-      medias.map(async (media: Express.Multer.File) => {
-        newMessage = await CreateMessageService({
-          chatId,
-          senderId,
-          message: media.originalname,
-          mediaPath: media.filename,
-          mediaName: media.originalname,
-          mediaType: media.mimetype.split("/")[0]
-        });
-      })
-    );
-  } else {
-    newMessage = await CreateMessageService({
-      chatId,
-      senderId,
-      message
-    });
-  }
+  const newMessage = await CreateMessageService({
+    chatId,
+    senderId,
+    message
+  });
 
   const chat = await Chat.findByPk(chatId, {
     include: [

@@ -21,7 +21,6 @@ import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
-import { Switch } from "@material-ui/core";
 
 const useStyles = makeStyles(theme => ({
 	root: {
@@ -70,11 +69,9 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 		name: "",
 		number: "",
 		email: "",
-		disableBot: false,
 	};
 
 	const [contact, setContact] = useState(initialState);
-	const [disableBot, setDisableBot] = useState(false);
 
 	useEffect(() => {
 		return () => {
@@ -95,8 +92,8 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 			try {
 				const { data } = await api.get(`/contacts/${contactId}`);
 				if (isMounted.current) {
+					console.log(data)
 					setContact(data);
-					setDisableBot(data.disableBot)
 				}
 			} catch (err) {
 				toastError(err);
@@ -114,10 +111,10 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 	const handleSaveContact = async values => {
 		try {
 			if (contactId) {
-				await api.put(`/contacts/${contactId}`, { ...values, disableBot: disableBot });
+				await api.put(`/contacts/${contactId}`, values);
 				handleClose();
 			} else {
-				const { data } = await api.post("/contacts", { ...values, disableBot: disableBot });
+				const { data } = await api.post("/contacts", values);
 				if (onSave) {
 					onSave(data);
 				}
@@ -125,7 +122,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 			}
 			toast.success(i18n.t("contactModal.success"));
 		} catch (err) {
-			toastError(err.request.response);
+			toastError(err);
 		}
 	};
 
@@ -135,7 +132,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 				<DialogTitle id="form-dialog-title">
 					{contactId
 						? `${i18n.t("contactModal.title.edit")}`
-						: `${i18n.t("contactModal.title.add")} `}
+						: `${i18n.t("contactModal.title.add")}`}
 				</DialogTitle>
 				<Formik
 					initialValues={contact}
@@ -171,7 +168,7 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 									name="number"
 									error={touched.number && Boolean(errors.number)}
 									helperText={touched.number && errors.number}
-									placeholder="5513912344321"
+									placeholder="5541998608485"
 									variant="outlined"
 									margin="dense"
 								/>
@@ -188,20 +185,6 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 										variant="outlined"
 									/>
 								</div>
-								<Typography
-									style={{ marginBottom: 8, marginTop: 12 }}
-									variant="subtitle1"
-								>
-									<Switch
-										size="small"
-										checked={disableBot}
-										onChange={() =>
-											setDisableBot(!disableBot)
-										}
-										name="disableBot"
-									/>
-									{i18n.t("contactModal.form.chatBotContact")}
-								</Typography>
 								<Typography
 									style={{ marginBottom: 8, marginTop: 12 }}
 									variant="subtitle1"

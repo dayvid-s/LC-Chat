@@ -15,19 +15,8 @@ const ShowWhatsAppService = async (
       {
         model: Queue,
         as: "queues",
-        attributes: ["id", "name", "color", "greetingMessage", "integrationId", "promptId",],
-        include: [
-          {
-            model: QueueOption,
-            as: "options",
-            required: false,
-            where: { parentId: null },
-            order: [
-              ["option", "ASC"],
-              ["createdAt", "ASC"],
-            ],
-          }
-        ]
+        attributes: ["id", "name", "color", "greetingMessage", "integrationId", "promptId", "mediaPath", "mediaName"],
+        include: [{ model: QueueOption, as: "options" }]
       },
       {
         model: Prompt,
@@ -37,7 +26,7 @@ const ShowWhatsAppService = async (
     order: [["queues", "orderQueue", "ASC"]]
   };
 
-  if (session !== undefined && session === 0) {
+  if (session !== undefined && session == 0) {
     findOptions.attributes = { exclude: ["session"] };
   }
 

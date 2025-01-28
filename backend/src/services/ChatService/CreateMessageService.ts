@@ -8,27 +8,17 @@ export interface ChatMessageData {
   senderId: number;
   chatId: number;
   message: string;
-  mediaName?: string;
-  mediaPath?: string;
-  mediaType?: string;
 }
 
 export default async function CreateMessageService({
   senderId,
   chatId,
-  message,
-  mediaName,
-  mediaPath,
-  mediaType = "text"
+  message
 }: ChatMessageData) {
   const newMessage = await ChatMessage.create({
     senderId,
     chatId,
-    message,
-    mediaName,
-    mediaPath,
-    mediaType
-
+    message
   });
 
   await newMessage.reload({
@@ -44,8 +34,7 @@ export default async function CreateMessageService({
 
   const sender = await User.findByPk(senderId);
 
-  // await newMessage.chat.update({ lastMessage: `${sender.name}: ${message}` });
-  await newMessage.chat.update({ lastMessage: `${sender.name}: ${mediaName != null ? mediaName : message}` });
+  await newMessage.chat.update({ lastMessage: `${sender.name}: ${message}` });
 
   const chatUsers = await ChatUser.findAll({
     where: { chatId }

@@ -14,33 +14,33 @@ interface Request {
   media: Express.Multer.File;
   ticket: Ticket;
   body?: string;
-  isForwarded?: boolean;
+  isForwarded?: boolean;  
 }
 
 const publicFolder = path.resolve(__dirname, "..", "..", "..", "public");
 
-const processAudio = async (audio: string, notDeleteFile?:boolean): Promise<string> => {
-  const outputAudio = path.join(publicFolder,`${new Date().getTime()}.mp3`);
+const processAudio = async (audio: string): Promise<string> => {
+  const outputAudio = `${publicFolder}/${new Date().getTime()}.mp3`;
   return new Promise((resolve, reject) => {
     exec(
-      `${ffmpegPath.path} -i "${audio}" -vn -ab 128k -ar 44100 -f ipod ${outputAudio} -y`,
+      `${ffmpegPath.path} -i ${audio} -vn -ab 128k -ar 44100 -f ipod ${outputAudio} -y`,
       (error, _stdout, _stderr) => {
         if (error) reject(error);
-        if(!notDeleteFile)fs.unlinkSync(audio);
+        fs.unlinkSync(audio);
         resolve(outputAudio);
       }
     );
   });
 };
 
-const processAudioFile = async (audio: string, notDeleteFile?:boolean): Promise<string> => {
-  const outputAudio = path.join(publicFolder,`${new Date().getTime()}.mp3`);
+const processAudioFile = async (audio: string): Promise<string> => {
+  const outputAudio = `${publicFolder}/${new Date().getTime()}.mp3`;
   return new Promise((resolve, reject) => {
     exec(
-      `${ffmpegPath.path} -i "${audio}" -vn -ar 44100 -ac 2 -b:a 192k ${outputAudio}`,
+      `${ffmpegPath.path} -i ${audio} -vn -ar 44100 -ac 2 -b:a 192k ${outputAudio}`,
       (error, _stdout, _stderr) => {
         if (error) reject(error);
-        if(!notDeleteFile)fs.unlinkSync(audio);
+        fs.unlinkSync(audio);
         resolve(outputAudio);
       }
     );
@@ -50,8 +50,7 @@ const processAudioFile = async (audio: string, notDeleteFile?:boolean): Promise<
 export const getMessageOptions = async (
   fileName: string,
   pathMedia: string,
-  body?: string,
-  notDeleteFile?:boolean
+  body?: string
 ): Promise<any> => {
   const mimeType = mime.lookup(pathMedia);
   const typeMessage = mimeType.split("/")[0];
@@ -71,7 +70,7 @@ export const getMessageOptions = async (
       };
     } else if (typeMessage === "audio") {
       const typeAudio = true; //fileName.includes("audio-record-site");
-      const convert = await processAudio(pathMedia, notDeleteFile);
+      const convert = await processAudio(pathMedia);
       if (typeAudio) {
         options = {
           audio: fs.readFileSync(convert),

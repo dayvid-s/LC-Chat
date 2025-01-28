@@ -3,8 +3,7 @@ import AppError from "../../errors/AppError";
 import Queue from "../../models/Queue";
 import Company from "../../models/Company";
 
-const ShowUserService = async (id: string | number, requestUserId: string | number = null): Promise<User> => {
-  const requestUser = requestUserId ? await User.findByPk(requestUserId) : null;
+const ShowUserService = async (id: string | number): Promise<User> => {
   const user = await User.findByPk(id, {
     attributes: [
       "name",
@@ -15,7 +14,7 @@ const ShowUserService = async (id: string | number, requestUserId: string | numb
       "super",
       "tokenVersion",
       "whatsappId",
-      "wpp"
+	  "allTicket"
     ],
     include: [
       { model: Queue, as: "queues", attributes: ["id", "name", "color"] },
@@ -25,10 +24,6 @@ const ShowUserService = async (id: string | number, requestUserId: string | numb
 
   if (!user) {
     throw new AppError("ERR_NO_USER_FOUND", 404);
-  }
-
-  if (requestUser && requestUser.super === false && user.companyId !== requestUser.companyId) {
-    throw new AppError("ERR_FORBIDDEN", 403);
   }
 
   return user;

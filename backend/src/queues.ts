@@ -1,34 +1,31 @@
 import * as Sentry from "@sentry/node";
 import BullQueue from "bull";
-import { MessageData, SendMessage } from "./helpers/SendMessage";
-import Whatsapp from "./models/Whatsapp";
-import { logger } from "./utils/logger";
+import { addSeconds, differenceInSeconds } from "date-fns";
+import { isArray, isEmpty, isNil } from "lodash";
 import moment from "moment";
-import Schedule from "./models/Schedule";
-import Contact from "./models/Contact";
-import { Op, QueryTypes, Sequelize } from "sequelize";
+import path from "path";
+import { Op, QueryTypes } from "sequelize";
+import sequelize from "./database";
 import GetDefaultWhatsApp from "./helpers/GetDefaultWhatsApp";
+import GetWhatsappWbot from "./helpers/GetWhatsappWbot";
+import formatBody from "./helpers/Mustache";
+import { MessageData, SendMessage } from "./helpers/SendMessage";
+import { getIO } from "./libs/socket";
 import Campaign from "./models/Campaign";
-import ContactList from "./models/ContactList";
-import ContactListItem from "./models/ContactListItem";
-import { isEmpty, isNil, isArray } from "lodash";
 import CampaignSetting from "./models/CampaignSetting";
 import CampaignShipping from "./models/CampaignShipping";
-import GetWhatsappWbot from "./helpers/GetWhatsappWbot";
-import sequelize from "./database";
-import { getMessageOptions } from "./services/WbotServices/SendWhatsAppMedia";
-import { getIO } from "./libs/socket";
-import path from "path";
-import User from "./models/User";
 import Company from "./models/Company";
+import Contact from "./models/Contact";
+import ContactList from "./models/ContactList";
+import ContactListItem from "./models/ContactListItem";
 import Plan from "./models/Plan";
-import Ticket from "./models/Ticket";
+import Schedule from "./models/Schedule";
+import User from "./models/User";
+import Whatsapp from "./models/Whatsapp";
 import ShowFileService from "./services/FileServices/ShowService";
-import FilesOptions from './models/FilesOptions';
-import { addSeconds, differenceInSeconds } from "date-fns";
-import formatBody from "./helpers/Mustache";
+import { getMessageOptions } from "./services/WbotServices/SendWhatsAppMedia";
 import { ClosedAllOpenTickets } from "./services/WbotServices/wbotClosedTickets";
-import fs from "fs";
+import { logger } from "./utils/logger";
 
 
 const nodemailer = require('nodemailer');
@@ -95,12 +92,16 @@ async function handleSendMessage(job) {
   }
 }
 
-async function handleVerifyQueue(job) {
+{/*async function handleVerifyQueue(job) {
+  logger.info("Buscando atendimentos perdidos nas filas");
   try {
     const companies = await Company.findAll({
       attributes: ['id', 'name'],
       where: {
         status: true,
+        dueDate: {
+          [Op.gt]: Sequelize.literal('CURRENT_DATE')
+        }
       },
       include: [
         {
@@ -111,9 +112,9 @@ async function handleVerifyQueue(job) {
           }
         },
       ]
-    });
+    }); */}
 
-    companies.map(async c => {
+{/*    companies.map(async c => {
       c.whatsapps.map(async w => {
 
         if (w.status === "CONNECTED") {
@@ -178,7 +179,11 @@ async function handleVerifyQueue(job) {
 
                   logger.info(`Atendimento Perdido: ${ticket.id} - Empresa: ${companyId}`);
                 });
+              } else {
+                logger.info(`Nenhum atendimento perdido encontrado - Empresa: ${companyId}`);
               }
+            } else {
+              logger.info(`Condição não respeitada - Empresa: ${companyId}`);
             }
           }
         }
@@ -189,7 +194,7 @@ async function handleVerifyQueue(job) {
     logger.error("SearchForQueue -> VerifyQueue: error", e.message);
     throw e;
   }
-};
+}; */}
 
 async function handleCloseTicketsAutomatic() {
   const job = new CronJob('*/1 * * * *', async () => {
@@ -301,7 +306,7 @@ async function handleVerifyCampaigns(job) {
 
   if (campaigns.length > 0)
     logger.info(`Campanhas encontradas: ${campaigns.length}`);
-
+  
   for (let campaign of campaigns) {
     try {
       const now = moment();
@@ -526,11 +531,6 @@ async function verifyAndFinalizeCampaign(campaign) {
   });
 
   if (count1 === count2) {
-    if(campaign.mediaPath){ 
-      const publicFolder = path.resolve(__dirname, "..", "public");
-      const filePath = path.join(publicFolder, campaign.mediaPath);
-      fs.unlinkSync(filePath)
-    }
     await campaign.update({ status: "FINALIZADA", completedAt: moment() });
   }
 
@@ -543,7 +543,6 @@ async function verifyAndFinalizeCampaign(campaign) {
 
 function calculateDelay(index, baseDelay, longerIntervalAfter, greaterInterval, messageInterval) {
   const diffSeconds = differenceInSeconds(baseDelay, new Date());
-
   if (index > longerIntervalAfter) {
     return diffSeconds * 1000 + greaterInterval
   } else {
@@ -578,17 +577,15 @@ async function handleProcessCampaign(job) {
 
           const { contactId, campaignId, variables } = contactData[i];
           const delay = calculateDelay(i, baseDelay, longerIntervalAfter, greaterInterval, messageInterval);
-
-          //const queuePromise =
-          campaignQueue.add(
+          const queuePromise = campaignQueue.add(
             "PrepareContact",
             { contactId, campaignId, variables, delay },
             { removeOnComplete: true }
           );
-          //queuePromises.push(queuePromise);
+          queuePromises.push(queuePromise);
           logger.info(`Registro enviado pra fila de disparo: Campanha=${campaign.id};Contato=${contacts[i].name};delay=${delay}`);
         }
-       // await Promise.all(queuePromises);
+        await Promise.all(queuePromises);
         await campaign.update({ status: "EM_ANDAMENTO" });
       }
     }
@@ -597,6 +594,7 @@ async function handleProcessCampaign(job) {
   }
 }
 
+let ultima_msg = 0;
 async function handlePrepareContact(job) {
   try {
     const { contactId, campaignId, delay, variables }: PrepareContactData =
@@ -611,13 +609,17 @@ async function handlePrepareContact(job) {
 
     const messages = getCampaignValidMessages(campaign);
     if (messages.length) {
-      const radomIndex = randomValue(0, messages.length);
+      const radomIndex = ultima_msg;
+      console.log('ultima_msg:', ultima_msg);
+      ultima_msg++;
+      if (ultima_msg >= messages.length) {
+        ultima_msg = 0;
+      }
       const message = getProcessedMessage(
         messages[radomIndex],
         variables,
         contact
       );
-
       campaignShipping.message = `\u200c ${message}`;
     }
 
@@ -737,7 +739,7 @@ async function handleDispatchCampaign(job) {
       const publicFolder = path.resolve(__dirname, "..", "public");
       const filePath = path.join(publicFolder, campaign.mediaPath);
 
-      const options = await getMessageOptions(campaign.mediaName, filePath, body, true);
+      const options = await getMessageOptions(campaign.mediaName, filePath, body);
       if (Object.keys(options).length) {
         await wbot.sendMessage(chatId, { ...options });
       }
@@ -832,7 +834,7 @@ async function handleInvoiceCreate() {
                         pass: 'senha'
                       }
                     });
-
+ 
                     const mailOptions = {
                       from: 'heenriquega@gmail.com', // sender address
                       to: `${c.email}`, // receiver (use array of string for a list)
@@ -846,7 +848,7 @@ async function handleInvoiceCreate() {
           Qualquer duvida estamos a disposição!
                       `// plain text body
                     };
-
+ 
                     transporter.sendMail(mailOptions, (err, info) => {
                       if (err)
                         console.log(err)
@@ -890,7 +892,7 @@ export async function startQueueProcess() {
 
   userMonitor.process("VerifyLoginStatus", handleLoginStatus);
 
-  queueMonitor.process("VerifyQueueStatus", handleVerifyQueue);
+  //queueMonitor.process("VerifyQueueStatus", handleVerifyQueue);
 
 
 

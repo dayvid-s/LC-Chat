@@ -21,6 +21,7 @@ import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
 import Title from "../../components/Title";
+import UserStatusIcon from "../../components/UserModal/statusIcon";
 
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
@@ -29,7 +30,8 @@ import UserModal from "../../components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import { Tooltip } from "@material-ui/core";
+
+
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_USERS") {
@@ -86,7 +88,6 @@ const useStyles = makeStyles((theme) => ({
 
 const Users = () => {
   const classes = useStyles();
-
 
   const [loading, setLoading] = useState(false);
   const [pageNumber, setPageNumber] = useState(1);
@@ -186,50 +187,14 @@ const Users = () => {
       loadMore();
     }
   };
-  // Componente para renderizar quadrados de fila
-  function QueueSquare({ queue }) {
-    // Define um estilo para o quadrado com a cor da fila
-    const squareStyle = {
-      width: '20px',
-      height: '20px',
-      backgroundColor: queue.color, // Supondo que cada fila tenha uma propriedade 'color'
-      display: 'inline-block',
-      marginRight: '5px',
-      borderRadius: '3px',
-      textAlign: 'center',
-      lineHeight: '20px',
-      color: '#fff', // Cor do texto dentro do quadrado
-    };
 
-    // Pega apenas a inicial do nome da fila
-    const queueInitial = queue.name.charAt(0);
-
-    return (
-      <Tooltip title={queue.name}>
-        <div style={squareStyle}>
-          {queueInitial}
-        </div>
-      </Tooltip>
-
-    );
-  }
-
-  // Componente para renderizar as filas de um usuário
-  function UserQueues({ queues }) {
-    return (
-      <div>
-        {queues.map((queue, index) => (
-          <QueueSquare key={index} queue={queue} />
-        ))}
-      </div>
-    );
-  }
   return (
     <MainContainer>
       <ConfirmationModal
         title={
           deletingUser &&
-          `${i18n.t("users.confirmationModal.deleteTitle")} ${deletingUser.name
+          `${i18n.t("users.confirmationModal.deleteTitle")} ${
+            deletingUser.name
           }?`
         }
         open={confirmModalOpen}
@@ -277,25 +242,31 @@ const Users = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell align="center">{i18n.t("users.table.id")}</TableCell>
+			<TableCell align="center">
+                {i18n.t("users.table.id")}
+              </TableCell>
+              <TableCell align="center">{i18n.t("users.table.status")}</TableCell>
               <TableCell align="center">{i18n.t("users.table.name")}</TableCell>
-              <TableCell align="center">{i18n.t("users.table.email")}</TableCell>
-              <TableCell align="center">{i18n.t("users.table.profile")}</TableCell>
-              <TableCell align="center">{i18n.t("users.table.rating")}</TableCell>
-              <TableCell align="center">{i18n.t("users.table.queues")}</TableCell>
-              <TableCell align="center">{i18n.t("users.table.actions")}</TableCell>
+              <TableCell align="center">
+                {i18n.t("users.table.email")}
+              </TableCell>
+              <TableCell align="center">
+                {i18n.t("users.table.profile")}
+              </TableCell>
+              <TableCell align="center">
+                {i18n.t("users.table.actions")}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             <>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell align="center">{user.id}</TableCell>
+				  <TableCell align="center">{user.id}</TableCell>
+				  <TableCell align="center"><UserStatusIcon user={user} /></TableCell>
                   <TableCell align="center">{user.name}</TableCell>
                   <TableCell align="center">{user.email}</TableCell>
                   <TableCell align="center">{user.profile}</TableCell>
-                  <TableCell align="center">{user?.averageRating}</TableCell>
-                  <TableCell align="center"><UserQueues queues={user.queues} /></TableCell>
                   <TableCell align="center">
                     <IconButton
                       size="small"

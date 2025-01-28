@@ -10,6 +10,7 @@ import {
   Divider,
   IconButton,
   makeStyles,
+  Badge,
 } from "@material-ui/core";
 
 import {
@@ -27,15 +28,13 @@ import ModalImageCors from "../ModalImageCors";
 import MessageOptionsMenu from "../MessageOptionsMenu";
 import whatsBackground from "../../assets/wa-background.png";
 import LocationPreview from "../LocationPreview";
-
 import whatsBackgroundDark from "../../assets/wa-background-dark.png"; //DARK MODE PLW DESIGN//
-import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
-import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
-
+import VCardPreview from "../VCardPreview";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
-import VcardPreview from "../VcardPreview";
+import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
+import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import SelectMessageCheckbox from "./SelectMessageCheckbox";
 
 const useStyles = makeStyles((theme) => ({
@@ -195,6 +194,11 @@ const useStyles = makeStyles((theme) => ({
     overflowWrap: "break-word",
     padding: "3px 80px 6px 6px",
   },
+  
+  textContentItemEdited: {
+    overflowWrap: "break-word",
+    padding: "3px 120px 6px 6px",
+  },
 
   textContentItemDeleted: {
     fontStyle: "italic",
@@ -322,7 +326,7 @@ const reducer = (state, action) => {
   }
 };
 
-const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
+const MessagesList = ({ ticket, ticketId, isGroup }) => {
   const classes = useStyles();
 
   const [messagesList, dispatch] = useReducer(reducer, []);
@@ -335,12 +339,10 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const messageOptionsMenuOpen = Boolean(anchorEl);
   const currentTicketId = useRef(ticketId);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const socketManager = useContext(SocketContext);
   const { setReplyingMessage } = useContext(ReplyMessageContext);
   const { showSelectMessageCheckbox } = useContext(ForwardMessageContext);
-
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-  const socketManager = useContext(SocketContext);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -381,28 +383,26 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
   }, [pageNumber, ticketId]);
 
   useEffect(() => {
-    if (user.id) {
-      const companyId = localStorage.getItem("companyId");
-      const socket = socketManager.getSocket(companyId);
+    const companyId = localStorage.getItem("companyId");
+    const socket = socketManager.getSocket(companyId);
 
-      socket.on("connect", () => socket.emit("joinChatBox", `${ticket.id}`));
+    socket.on("ready", () => socket.emit("joinChatBox", `${ticket.id}`));
 
-      socket.on(`company-${companyId}-appMessage`, (data) => {
-        if (data.action === "create" && data.message.ticketId === currentTicketId.current) {
-          dispatch({ type: "ADD_MESSAGE", payload: data.message });
-          scrollToBottom();
-        }
+    socket.on(`company-${companyId}-appMessage`, (data) => {
+      if (data.action === "create" && data.message.ticketId === currentTicketId.current) {
+        dispatch({ type: "ADD_MESSAGE", payload: data.message });
+        scrollToBottom();
+      }
 
-        if (data.action === "update" && data.message.ticketId === currentTicketId.current) {
-          dispatch({ type: "UPDATE_MESSAGE", payload: data.message });
-        }
-      });
+      if (data.action === "update" && data.message.ticketId === currentTicketId.current) {
+        dispatch({ type: "UPDATE_MESSAGE", payload: data.message });
+      }
+    });
 
-      return () => {
-        socket.disconnect();
-      };
-    }
-  }, [ticketId, ticket, user, socketManager]);
+    return () => {
+      socket.disconnect();
+    };
+  }, [ticketId, ticket, socketManager]);
 
   const loadMore = () => {
     setPageNumber((prevPageNumber) => prevPageNumber + 1);
@@ -448,7 +448,19 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
   };
 
   const checkMessageMedia = (message) => {
+    if (message.mediaType === "locationMessage" && message.body.split('|').length >= 2) {
+      let locationParts = message.body.split('|')
+      let imageLocation = locationParts[0]
+      let linkLocation = locationParts[1]
 
+      let descriptionLocation = null
+
+      if (locationParts.length > 2)
+        descriptionLocation = message.body.split('|')[2]
+
+      return <LocationPreview image={imageLocation} link={linkLocation} description={descriptionLocation} />
+    }
+    else
     if (message.mediaType === "contactMessage") {
       let array = message.body.split("\n");
       let obj = [];
@@ -465,124 +477,130 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
           }
         }
       }
-      return <VcardPreview contact={contact} numbers={obj[0]?.number} queueId={ticket?.queueId} whatsappId={ticket?.whatsappId} />
-    } else
-
-      if (message.mediaType === "locationMessage" && message.body.split('|').length >= 2) {
-        let locationParts = message.body.split('|')
-        let imageLocation = locationParts[0]
-        let linkLocation = locationParts[1]
-
-        let descriptionLocation = null
-
-        if (locationParts.length > 2)
-          descriptionLocation = message.body.split('|')[2]
-
-        return <LocationPreview image={imageLocation} link={linkLocation} description={descriptionLocation} />
-      }
-      /* else if (message.mediaType === "vcard") {
-        let array = message.body.split("\n");
-        let obj = [];
-        let contact = "";
-        for (let index = 0; index < array.length; index++) {
-          const v = array[index];
-          let values = v.split(":");
-          for (let ind = 0; ind < values.length; ind++) {
-            if (values[ind].indexOf("+") !== -1) {
-              obj.push({ number: values[ind] });
-            }
-            if (values[ind].indexOf("FN") !== -1) {
-              contact = values[ind + 1];
-            }
+      //console.log(array);
+      //console.log(contact);
+      //console.log(obj[0].number);
+      return <VCardPreview contact={contact} numbers={obj[0].number} />
+    }
+    /* else if (message.mediaType === "vcard") {
+      let array = message.body.split("\n");
+      let obj = [];
+      let contact = "";
+      for (let index = 0; index < array.length; index++) {
+        const v = array[index];
+        let values = v.split(":");
+        for (let ind = 0; ind < values.length; ind++) {
+          if (values[ind].indexOf("+") !== -1) {
+            obj.push({ number: values[ind] });
+          }
+          if (values[ind].indexOf("FN") !== -1) {
+            contact = values[ind + 1];
           }
         }
-        return <VcardPreview contact={contact} numbers={obj[0].number} />
-      } */
-      /*else if (message.mediaType === "multi_vcard") {
-        console.log("multi_vcard")
-        console.log(message)
-      	
-        if(message.body !== null && message.body !== "") {
-          let newBody = JSON.parse(message.body)
-          return (
-            <>
-              {
-              newBody.map(v => (
-                <VcardPreview contact={v.name} numbers={v.number} />
-              ))
-              }
-            </>
-          )
-        } else return (<></>)
-      }*/
-      else if ((message.mediaType === "image") || (message.mediaType === "imageMessage")) {
-        return <ModalImageCors imageUrl={message.mediaUrl} />;
-      } else if (message.mediaType === "audio") {
-
-
-        if (isIOS) {
-          message.mediaUrl = message.mediaUrl.replace("ogg", "mp3");
-
-          return (
-            <audio controls>
-              <source src={message.mediaUrl} type="audio/mp3"></source>
-            </audio>
-          );
-        } else {
-          return (
-            <audio controls>
-              <source src={message.mediaUrl} type="audio/ogg"></source>
-            </audio>
-          );
-        }
-
-      } else if (message.mediaType === "video") {
-        return (
-          <video
-            className={classes.messageMedia}
-            src={message.mediaUrl}
-            controls
-          />
-        );
-      } else {
+      }
+      return <VcardPreview contact={contact} numbers={obj[0].number} />
+    } */
+    /*else if (message.mediaType === "multi_vcard") {
+      console.log("multi_vcard")
+      console.log(message)
+      
+      if(message.body !== null && message.body !== "") {
+        let newBody = JSON.parse(message.body)
         return (
           <>
-            <div className={classes.downloadMedia}>
-              <Button
-                startIcon={<GetApp />}
-                color="primary"
-                variant="outlined"
-                target="_blank"
-                href={message.mediaUrl}
-              >
-                Download
-              </Button>
-            </div>
-            <Divider />
+            {
+            newBody.map(v => (
+              <VcardPreview contact={v.name} numbers={v.number} />
+            ))
+            }
           </>
+        )
+      } else return (<></>)
+    }*/
+    else if (message.mediaType === "image") {
+      return <ModalImageCors imageUrl={message.mediaUrl} />;
+    } else if (message.mediaType === "audio") {
+
+      //console.log(isIOS);
+
+      if (isIOS) {
+        message.mediaUrl = message.mediaUrl.replace("ogg", "mp3");
+
+        return (
+          <audio controls>
+            <source src={message.mediaUrl} type="audio/mp3"></source>
+          </audio>
+        );
+      } else {
+
+        return (
+          <audio controls>
+            <source src={message.mediaUrl} type="audio/ogg"></source>
+          </audio>
         );
       }
+    } else if (message.mediaType === "video") {
+      return (
+        <video
+          className={classes.messageMedia}
+          src={message.mediaUrl}
+          controls
+        />
+      );
+    } else {
+      return (
+        <>
+          <div className={classes.downloadMedia}>
+            <Button
+              startIcon={<GetApp />}
+              color="primary"
+              variant="outlined"
+              target="_blank"
+              href={message.mediaUrl}
+            >
+              Download
+            </Button>
+          </div>
+          <Divider />
+        </>
+      );
+    }
+};
 
+  /*
+    const renderMessageAck = (message) => {
+      if (message.ack === 1) {
+        return <AccessTime fontSize="small" className={classes.ackIcons} />;
+      }
+      if (message.ack === 2) {
+        return <Done fontSize="small" className={classes.ackIcons} />;
+      }
+      if (message.ack === 3) {
+        return <DoneAll fontSize="small" className={classes.ackIcons} />;
+      }
+      if (message.ack === 4 || message.ack === 5) {
+        return <DoneAll fontSize="small" className={classes.ackDoneAllIcon} />;
+      }
+    };
+    */
 
-  };
-
-  const renderMessageAck = (message) => {
-    if (message.ack === 0) {
-      return <AccessTime fontSize="small" className={classes.ackIcons} />;
-    } else
+    const renderMessageAck = (message) => {
+      if (message.ack === 0) {
+        return <AccessTime fontSize="small" className={classes.ackIcons} />;
+      }
       if (message.ack === 1) {
         return <Done fontSize="small" className={classes.ackIcons} />;
-      } else
-        if (message.ack === 2) {
-          return <DoneAll fontSize="small" className={classes.ackIcons} />;
-        } else
-          if (message.ack === 3 || message.ack === 4) {
-            return <DoneAll fontSize="small" className={message.mediaType === "audio" ? classes.ackPlayedIcon : classes.ackDoneAllIcon} />;
-          } else
-            if (message.ack === 5) {
-              return <DoneAll fontSize="small" className={classes.ackDoneAllIcon} />
-            }
-  };
+      }
+      if (message.ack === 2) {
+        return <Done fontSize="small" className={classes.ackIcons} />;
+      }
+      if (message.ack === 3) {
+        return <DoneAll fontSize="small" className={classes.ackIcons} />;
+      }
+      if (message.ack === 4 || message.ack === 5) {
+        return <DoneAll fontSize="small" className={classes.ackDoneAllIcon} style={{color:'#0377FC'}} />;
+      }
+    };
 
   const renderDailyTimestamps = (message, index) => {
     if (index === 0) {
@@ -696,11 +714,6 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
                 src={message.quotedMsg.mediaUrl}
                 controls
               />
-            )
-          }
-          {message.quotedMsg.mediaType === "contactMessage"
-            && (
-              "Contato"
             )
           }
           {message.quotedMsg.mediaType === "application"
@@ -822,14 +835,44 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
                   </div>
                 )}
 
-                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "contactMessage"
+                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
                   //|| message.mediaType === "multi_vcard" 
                 ) && checkMessageMedia(message)}
                 <div className={classes.textContentItem}>
                   {message.quotedMsg && renderQuotedMessage(message)}
-                  <MarkdownWrapper>{message.mediaType === "locationMessage" || message.mediaType === "contactMessage" ? null : message.body}</MarkdownWrapper>
+                  {message.mediaType !== "reactionMessage" && (
+                    <MarkdownWrapper>
+                      {message.mediaType === "locationMessage" || message.mediaType === "contactMessage" 
+                        ? null
+                        : message.body}
+                    </MarkdownWrapper>
+                  )}
+                  {message.quotedMsg && message.mediaType === "reactionMessage" && message.body && (
+                    <>
+                      <span style={{ marginLeft: "0px", display: 'flex', alignItems: 'center' }}>
+                        <MarkdownWrapper>
+                          {"_*" + (message.fromMe ? 'Você' : (message?.contact?.name ?? 'Contato')) + "*_ reagiu... "}
+                        </MarkdownWrapper>
+                        <Badge 
+                          className={classes.badge}
+                          overlap="circular"
+                          anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'right',
+                          }}
+                          badgeContent={
+                            <span style={{ fontSize: "1.2em", marginTop: "0", marginLeft: "5px" }}>
+                              {message.body}
+                            </span>
+                          }
+                        >
+                        </Badge>
+                      </span>
+                    </>
+                  )}
+                                  
                   <span className={classes.timestamp}>
-                    {message.isEdited ? "Editada " + format(parseISO(message.createdAt), "HH:mm") : format(parseISO(message.createdAt), "HH:mm")}
+                    {format(parseISO(message.createdAt), "HH:mm")}
                   </span>
                 </div>
               </div>
@@ -842,16 +885,16 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
               {renderNumberTicket(message, index)}
               {renderMessageDivider(message, index)}
               <div className={classes.messageRight}
-                onDoubleClick={(e) => hanldeReplyMessage(e, message)}
-              >
-                {showSelectMessageCheckbox && (
-                  <SelectMessageCheckbox
-                    // showSelectMessageCheckbox={showSelectMessageCheckbox}
-                    message={message}
-                  // selectedMessagesList={selectedMessagesList}
-                  // setSelectedMessagesList={setSelectedMessagesList}
-                  />
-                )}
+              onDoubleClick={(e) => hanldeReplyMessage(e, message)}
+            >
+              {showSelectMessageCheckbox && (
+                <SelectMessageCheckbox
+                  // showSelectMessageCheckbox={showSelectMessageCheckbox}
+                  message={message}
+                // selectedMessagesList={selectedMessagesList}
+                // setSelectedMessagesList={setSelectedMessagesList}
+                />
+              )}
                 <IconButton
                   variant="contained"
                   size="small"
@@ -870,7 +913,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
                     <br />
                   </div>
                 )}
-                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "contactMessage"
+                {(message.mediaUrl || message.mediaType === "locationMessage" || message.mediaType === "vcard" || message.mediaType === "contactMessage"
                   //|| message.mediaType === "multi_vcard" 
                 ) && checkMessageMedia(message)}
                 <div
@@ -886,9 +929,36 @@ const MessagesList = ({ ticket, ticketId, isGroup, user }) => {
                     />
                   )}
                   {message.quotedMsg && renderQuotedMessage(message)}
-                  <MarkdownWrapper>{message.body}</MarkdownWrapper>
+                  {message.mediaType !== "reactionMessage" && message.mediaType !== "locationMessage" && (
+                    <MarkdownWrapper>{message.body}</MarkdownWrapper>
+                  )}
+                  {message.quotedMsg && message.mediaType === "reactionMessage" && message.body && (
+                    <>
+                      <span style={{ marginLeft: "0px", display: 'flex', alignItems: 'center' }}>
+                        <MarkdownWrapper>
+                          {"_*" + (message.fromMe ? 'Você' : (message?.contact?.name ?? 'Contato')) + "*_ reagiu... "}
+                        </MarkdownWrapper>
+                        <Badge 
+                          className={classes.badge}
+                          overlap="circular"
+                          anchorOrigin={{
+                            vertical: 'bottom',
+                            horizontal: 'right',
+                          }}
+                          badgeContent={
+                            <span style={{ fontSize: "1.2em", marginTop: "0", marginLeft: "5px" }}>
+                              {message.body}
+                            </span>
+                          }
+                        >
+                        </Badge>
+                      </span>
+                    </>
+                  )}
+                  
+                
                   <span className={classes.timestamp}>
-                    {message.isEdited ? "Editada " + format(parseISO(message.createdAt), "HH:mm") : format(parseISO(message.createdAt), "HH:mm")}
+                    {format(parseISO(message.createdAt), "HH:mm")}
                     {renderMessageAck(message)}
                   </span>
                 </div>

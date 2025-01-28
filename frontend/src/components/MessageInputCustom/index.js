@@ -5,7 +5,7 @@ import { Picker } from "emoji-mart";
 import MicRecorder from "mic-recorder-to-mp3";
 import clsx from "clsx";
 import { isNil } from "lodash";
-
+import { Reply } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import InputBase from "@material-ui/core/InputBase";
@@ -30,14 +30,15 @@ import axios from "axios";
 
 import RecordingTimer from "./RecordingTimer";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
+import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import toastError from "../../errors/toastError";
 
+import Compressor from 'compressorjs';
+import LinearWithValueLabel from "./ProgressBarCustom";
+
 import useQuickMessages from "../../hooks/useQuickMessages";
-import { Reply } from "@material-ui/icons";
-import { ForwardMessageContext } from "../../context/ForwarMessage/ForwardMessageContext";
-import { EditMessageContext } from "../../context/EditingMessage/EditingMessageContext";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -206,14 +207,13 @@ const EmojiOptions = (props) => {
 };
 
 const SignSwitch = (props) => {
-  const { width, setSignMessage, signMessage, disabled } = props;
+  const { width, setSignMessage, signMessage } = props;
   if (isWidthUp("md", width)) {
     return (
       <FormControlLabel
         style={{ marginRight: 7, color: "gray" }}
         label={i18n.t("messagesInput.signMessage")}
         labelPlacement="start"
-        disabled={disabled}
         control={
           <Switch
             size="small"
@@ -274,15 +274,15 @@ const ActionButtons = (props) => {
   if (inputMessage || showSelectMessageCheckbox) {
     return (
       <IconButton
-        aria-label="sendMessage"
-        component="span"
-        onClick={showSelectMessageCheckbox ? handleOpenModalForward : handleSendMessage}
-        disabled={loading}
-      >
-        {showSelectMessageCheckbox ?
-          <Reply className={classes.ForwardMessageIcons} /> : <SendIcon className={classes.sendMessageIcons} />}      </IconButton>
-    );
-  } else if (recording) {
+      aria-label="sendMessage"
+      component="span"
+      onClick={showSelectMessageCheckbox ? handleOpenModalForward : handleSendMessage}
+      disabled={loading}
+    >
+      {showSelectMessageCheckbox ?
+        <Reply className={classes.ForwardMessageIcons} /> : <SendIcon className={classes.sendMessageIcons} />}      </IconButton>
+  );
+} else if (recording) {
     return (
       <div className={classes.recorderWrapper}>
         <IconButton
@@ -337,24 +337,15 @@ const CustomInput = (props) => {
     handleInputPaste,
     disableOption,
     handleQuickAnswersClick,
-    editingMessage,
     replyingMessage
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
   const [options, setOptions] = useState([]);
   const [popupOpen, setPopupOpen] = useState(false);
-
   const { user } = useContext(AuthContext);
 
   const { list: listQuickMessages } = useQuickMessages();
-
-  useEffect(() => {
-    inputRef.current.focus();
-    if (editingMessage) {
-      setInputMessage(editingMessage.body);
-    }
-  }, [replyingMessage, editingMessage]);
 
   useEffect(() => {
     async function fetchData() {
@@ -395,7 +386,6 @@ const CustomInput = (props) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputMessage]);
-
 
   const onKeyPress = (e) => {
     if (loading || e.shiftKey) return;
@@ -442,7 +432,7 @@ const CustomInput = (props) => {
           }
         }}
         onChange={(event, opt) => {
-
+         
           if (isObject(opt) && has(opt, "value") && isNil(opt.mediaPath)) {
             setInputMessage(opt.value);
             setTimeout(() => {
@@ -464,7 +454,6 @@ const CustomInput = (props) => {
         onPaste={onPaste}
         onKeyPress={onKeyPress}
         style={{ width: "100%" }}
-        disabled={disableOption()}
         renderInput={(params) => {
           const { InputLabelProps, InputProps, ...rest } = params;
           return (
@@ -488,7 +477,7 @@ const CustomInput = (props) => {
 const MessageInputCustom = (props) => {
   const { ticketStatus, ticketId } = props;
   const classes = useStyles();
-
+  const [percentLoading, setPercentLoading] = useState(0);
   const [medias, setMedias] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
@@ -500,7 +489,6 @@ const MessageInputCustom = (props) => {
   const { user } = useContext(AuthContext);
 
   const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
-  const { setEditingMessage, editingMessage } = useContext(EditMessageContext);
 
   const {
     selectedMessages,
@@ -518,9 +506,8 @@ const MessageInputCustom = (props) => {
       setShowEmoji(false);
       setMedias([]);
       setReplyingMessage(null);
-      setEditingMessage(null);
     };
-  }, [ticketId, setReplyingMessage, setEditingMessage]);
+  }, [ticketId, setReplyingMessage]);
 
   // const handleChangeInput = e => {
   // 	if (isObject(e) && has(e, 'value')) {
@@ -529,6 +516,15 @@ const MessageInputCustom = (props) => {
   // 		setInputMessage(e.target.value)
   // 	}
   // };
+
+  const handleOpenModalForward = () => {
+    if (selectedMessages.length === 0) {
+      setForwardMessageModalOpen(false)
+      toastError(i18n.t("messagesList.header.notMessage"));
+      return;
+    }
+    setForwardMessageModalOpen(true);
+  }
 
   const handleAddEmoji = (e) => {
     let emoji = e.native;
@@ -558,7 +554,7 @@ const MessageInputCustom = (props) => {
       const formData = new FormData();
       const filename = `${new Date().getTime()}.${extension}`;
       formData.append("medias", blob, filename);
-      formData.append("body", message);
+      formData.append("body",  message);
       formData.append("fromMe", true);
 
       await api.post(`/messages/${ticketId}`, formData);
@@ -568,7 +564,7 @@ const MessageInputCustom = (props) => {
     }
     setLoading(false);
   };
-
+  
   const handleQuickAnswersClick = async (value) => {
     if (value.mediaPath) {
       try {
@@ -595,20 +591,78 @@ const MessageInputCustom = (props) => {
 
     const formData = new FormData();
     formData.append("fromMe", true);
-    medias.forEach((media) => {
-      formData.append("medias", media);
-      formData.append("body", media.name);
-    });
 
-    try {
-      await api.post(`/messages/${ticketId}`, formData);
-    } catch (err) {
-      toastError(err);
-    }
+    medias.forEach(async (media, idx) => {
 
-    setLoading(false);
-    setMedias([]);
-  };
+      const file = media;
+
+      if (!file) { return; }
+
+      if (media?.type.split('/')[0] == 'image') {
+        new Compressor(file, {
+          quality: 0.7,
+
+          async success(media) {
+            //const formData = new FormData();
+            // The third parameter is required for server
+            //formData.append('file', result, result.name);
+
+            formData.append("medias", media);
+            formData.append("body", media.name);
+
+          },
+          error(err) {
+            alert('erro')
+            console.log(err.message);
+          },
+
+        });
+      } else {
+        formData.append("medias", media);
+        formData.append("body", media.name);
+
+      }
+
+
+    },);
+
+    setTimeout(async()=> {
+
+      try {
+        await api.post(`/messages/${ticketId}`, formData, {
+          onUploadProgress: (event) => {
+            let progress = Math.round(
+              (event.loaded * 100) / event.total
+            );
+            setPercentLoading(progress);
+            console.log(
+              `A imagem  está ${progress}% carregada... `
+            );
+          },
+        })
+          .then((response) => {
+            setLoading(false)
+            setMedias([])
+            setPercentLoading(0);
+            console.log(
+              `A imagem á foi enviada para o servidor!`
+
+            );
+          })
+          .catch((err) => {
+            console.error(
+              `Houve um problema ao realizar o upload da imagem.`
+            );
+            console.log(err);
+          });
+      } catch (err) {
+        toastError(err);
+      }
+
+
+    },2000)
+
+  }
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "") return;
@@ -618,17 +672,13 @@ const MessageInputCustom = (props) => {
       read: 1,
       fromMe: true,
       mediaUrl: "",
-      body: signMessage && !editingMessage
+      body: signMessage
         ? `*${user?.name}:*\n${inputMessage.trim()}`
         : inputMessage.trim(),
       quotedMsg: replyingMessage,
     };
     try {
-      if (editingMessage !== null) {
-        await api.post(`/messages/edit/${editingMessage.id}`, message);
-      } else {
-        await api.post(`/messages/${ticketId}`, message);
-      }
+      await api.post(`/messages/${ticketId}`, message);
     } catch (err) {
       toastError(err);
     }
@@ -637,17 +687,7 @@ const MessageInputCustom = (props) => {
     setShowEmoji(false);
     setLoading(false);
     setReplyingMessage(null);
-    setEditingMessage(null);
   };
-
-  const handleOpenModalForward = () => {
-    if (selectedMessages.length === 0) {
-      setForwardMessageModalOpen(false)
-      toastError(i18n.t("messagesList.header.notMessage"));
-      return;
-    }
-    setForwardMessageModalOpen(true);
-  }
 
   const handleStartRecording = async () => {
     setLoading(true);
@@ -743,7 +783,8 @@ const MessageInputCustom = (props) => {
 
         {loading ? (
           <div>
-            <CircularProgress className={classes.circleLoading} />
+            {/*<CircularProgress className={classes.circleLoading} />*/}
+            <LinearWithValueLabel progress={percentLoading} />
           </div>
         ) : (
           <span>
@@ -782,7 +823,6 @@ const MessageInputCustom = (props) => {
             width={props.width}
             setSignMessage={setSignMessage}
             signMessage={signMessage}
-            disabled={disableOption()}
           />
 
           <CustomInput
@@ -795,10 +835,8 @@ const MessageInputCustom = (props) => {
             handleSendMessage={handleSendMessage}
             handleInputPaste={handleInputPaste}
             disableOption={disableOption}
-            handleQuickAnswersClick={handleQuickAnswersClick}
             replyingMessage={replyingMessage}
-            editingMessage={editingMessage}
-
+            handleQuickAnswersClick={handleQuickAnswersClick}
           />
 
           <ActionButtons
@@ -820,3 +858,4 @@ const MessageInputCustom = (props) => {
 };
 
 export default withWidth()(MessageInputCustom);
+

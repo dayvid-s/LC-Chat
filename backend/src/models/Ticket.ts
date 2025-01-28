@@ -149,9 +149,6 @@ class Ticket extends Model<Ticket> {
   @Default(0)
   @Column
   amountUsedBotQueues: number;
-
-  @Column
-  imported: Date;
 }
 
 export default Ticket;

@@ -159,6 +159,10 @@ export default function AnnouncementsPopover() {
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.getSocket(companyId);
+    
+    if (!socket) {
+      return () => {}; 
+    }
 
     socket.on(`company-announcement`, (data) => {
       if (data.action === "update" || data.action === "create") {

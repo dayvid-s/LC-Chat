@@ -8,8 +8,7 @@ import {
   AutoIncrement,
   ForeignKey,
   BelongsTo,
-  AllowNull,
-  HasMany
+  AllowNull
 } from "sequelize-typescript";
 import Queue from "./Queue";
 
@@ -39,14 +38,6 @@ class QueueOption extends Model<QueueOption> {
   @Column
   parentId: number;
 
-  @ForeignKey(() => Queue)
-  @AllowNull
-  @Column
-  forwardQueueId: number;
-
-  @Column
-  closeTicket: boolean;
-  
   @CreatedAt
   createdAt: Date;
 
@@ -59,16 +50,11 @@ class QueueOption extends Model<QueueOption> {
   @BelongsTo(() => QueueOption, { foreignKey: 'parentId' })
   parent: QueueOption;
   
-  @BelongsTo(() => Queue, { foreignKey: "forwardQueueId" })
-  forwardQueue: Queue;
+  @Column
+  mediaPath: string;
 
-  @HasMany(() => QueueOption, {
-    onDelete: "DELETE",
-    onUpdate: "DELETE",
-    hooks: true
-  })
-  options: QueueOption[];
-  
+  @Column
+  mediaName: string;
 }
 
 export default QueueOption;

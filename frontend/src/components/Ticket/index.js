@@ -1,28 +1,24 @@
-import React, { useState, useEffect, useContext } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 
-import { toast } from "react-toastify";
 import clsx from "clsx";
+import { toast } from "react-toastify";
 
 import { Paper, makeStyles } from "@material-ui/core";
 
+import { AuthContext } from "../../context/Auth/AuthContext";
+import { ReplyMessageProvider } from "../../context/ReplyingMessage/ReplyingMessageContext";
+import { SocketContext } from "../../context/Socket/SocketContext";
+import toastError from "../../errors/toastError";
+import api from "../../services/api";
 import ContactDrawer from "../ContactDrawer";
 import MessageInput from "../MessageInputCustom/";
+import MessagesList from "../MessagesList";
+import { TagsContainer } from "../TagsContainer";
+import TicketActionButtons from "../TicketActionButtonsCustom";
 import TicketHeader from "../TicketHeader";
 import TicketInfo from "../TicketInfo";
-import TicketActionButtons from "../TicketActionButtonsCustom";
-import MessagesList from "../MessagesList";
-import api from "../../services/api";
 
-import { ReplyMessageProvider } from "../../context/ReplyingMessage/ReplyingMessageContext";
-import { ForwardMessageProvider } from "../../context/ForwarMessage/ForwardMessageContext";
-import { EditMessageProvider } from "../../context/EditingMessage/EditingMessageContext";
-
-import toastError from "../../errors/toastError";
-import { AuthContext } from "../../context/Auth/AuthContext";
-import { TagsContainer } from "../TagsContainer";
-import { SocketContext } from "../../context/Socket/SocketContext";
-import useSettings from '../../hooks/useSettings';
 const drawerWidth = 320;
 
 const useStyles = makeStyles((theme) => ({
@@ -71,8 +67,7 @@ const Ticket = () => {
   const [loading, setLoading] = useState(true);
   const [contact, setContact] = useState({});
   const [ticket, setTicket] = useState({});
-  const { getAll } = useSettings();
-  
+
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
@@ -80,17 +75,12 @@ const Ticket = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchTicket = async () => {
         try {
-          const settings = await getAll();
-          const visibleTicket = settings.some((setting) => {
-            return (setting?.key === "userViewTicketsWithoutQueue" &&
-              setting?.value === "enabled")
-          });
           const { data } = await api.get("/tickets/u/" + ticketId);
           const { queueId } = data;
           const { queues, profile } = user;
 
           const queueAllowed = queues.find((q) => q.id === queueId);
-          if (queueAllowed === undefined && profile !== "admin" && !visibleTicket) {
+          if (queueAllowed === undefined && profile !== "admin") {
             toast.error("Acesso não permitido");
             history.push("/tickets");
             return;
@@ -113,10 +103,10 @@ const Ticket = () => {
     const companyId = localStorage.getItem("companyId");
     const socket = socketManager.getSocket(companyId);
 
-    socket.on("connect", () => socket.emit("joinChatBox", `${ticket.id}`));
+    socket.on("ready", () => socket.emit("joinChatBox", `${ticket.id}`));
 
     socket.on(`company-${companyId}-ticket`, (data) => {
-      if (data.action === "update" && data.ticketId === ticket.id) {
+      if (data.action === "update" && data.ticket.id === ticket.id) {
         setTicket(data.ticket);
       }
 
@@ -169,7 +159,6 @@ const Ticket = () => {
           ticket={ticket}
           ticketId={ticket.id}
           isGroup={ticket.isGroup}
-          user={user}
         ></MessagesList>
         <MessageInput ticketId={ticket.id} ticketStatus={ticket.status} />
       </>
@@ -192,13 +181,7 @@ const Ticket = () => {
         <Paper>
           <TagsContainer ticket={ticket} />
         </Paper>
-        <ReplyMessageProvider>
-          {/* <ForwardMessageProvider> */}
-          <EditMessageProvider>
-            {renderMessagesList()}
-          </EditMessageProvider>
-          {/* </ForwardMessageProvider> */}
-        </ReplyMessageProvider>
+        <ReplyMessageProvider>{renderMessagesList()}</ReplyMessageProvider>
       </Paper>
       <ContactDrawer
         open={drawerOpen}
@@ -207,7 +190,7 @@ const Ticket = () => {
         loading={loading}
         ticket={ticket}
       />
-    </div >
+    </div>
   );
 };
 

@@ -10,9 +10,16 @@ import Tab from "@material-ui/core/Tab";
 import Badge from "@material-ui/core/Badge";
 import MoveToInboxIcon from "@material-ui/icons/MoveToInbox";
 import CheckBoxIcon from "@material-ui/icons/CheckBox";
-
+import api from "../../services/api";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
+
+import PlaylistAddCheckOutlinedIcon from '@material-ui/icons/PlaylistAddCheckOutlined';
+
+
+import {
+  Add as AddIcon,
+} from "@material-ui/icons";
 
 import NewTicketModal from "../NewTicketModal";
 import TicketsList from "../TicketsListCustom";
@@ -22,40 +29,38 @@ import { i18n } from "../../translate/i18n";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
 import TicketsQueueSelect from "../TicketsQueueSelect";
-import { Button, Snackbar } from "@material-ui/core";
+import { Button, Snackbar, IconButton } from "@material-ui/core";
 import { TagsFilter } from "../TagsFilter";
 import { UsersFilter } from "../UsersFilter";
-import api from "../../services/api";
-import { TicketsListGroup } from "../TicketsListGroup";
-import GroupIcon from "@material-ui/icons/Group";
 
 const useStyles = makeStyles(theme => ({
-  ticketsWrapper: {
-    position: "relative",
-    display: "flex",
-    height: "100%",
-    flexDirection: "column",
-    overflow: "hidden",
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    borderRadius: 0,
-  },
+	ticketsWrapper: {
+		position: "relative",
+		display: "flex",
+		height: "100%",
+		flexDirection: "column",
+		overflow: "hidden",
+		borderTopRightRadius: 0,
+		borderBottomRightRadius: 0,
+		borderRadius:0,
+	},
 
-  tabsHeader: {
-    flex: "none",
-    backgroundColor: theme.palette.tabHeaderBackground,
-  },
 
-  tabsInternal: {
-    flex: "none",
-    backgroundColor: theme.palette.tabHeaderBackground
-  },
+	tabsHeader: {
+		flex: "none",
+		backgroundColor: theme.palette.tabHeaderBackground,
+	},
 
-  settingsIcon: {
-    alignSelf: "center",
-    marginLeft: "auto",
-    padding: 8,
-  },
+	tabsInternal: {
+		flex: "none",
+		backgroundColor: theme.palette.tabHeaderBackground
+	},
+
+	settingsIcon: {
+		alignSelf: "center",
+		marginLeft: "auto",
+		padding: 8,
+	},
   snackbar: {
     display: "flex",
     justifyContent: "space-between",
@@ -97,95 +102,103 @@ const useStyles = makeStyles(theme => ({
     },
     borderRadius: 30,
   },
-  tab: {
-    minWidth: 120,
-    width: 120,
-  },
 
-  internalTab: {
-    minWidth: 120,
-    width: 120,
-    padding: 5
-  },
+	tab: {
+		minWidth: 120,
+		width: 120,
+	},
 
-  ticketOptionsBox: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    background: theme.palette.optionsBackground,
-    padding: theme.spacing(1),
-  },
+	internalTab: {
+		minWidth: 120,
+		width: 120,
+		padding: 5
+	},
 
-  ticketSearchLine: {
-    padding: theme.spacing(1),
-  },
+	ticketOptionsBox: {
+		display: "flex",
+		justifyContent: "space-between",
+		alignItems: "center",
+		background: theme.palette.optionsBackground,
+		padding: theme.spacing(1),
+	},
 
-  serachInputWrapper: {
-    flex: 1,
-    background: theme.palette.total,
-    display: "flex",
-    borderRadius: 40,
-    padding: 4,
-    marginRight: theme.spacing(1),
-  },
+	ticketSearchLine: {
+		padding: theme.spacing(1),
+	},
 
-  searchIcon: {
-    color: "grey",
-    marginLeft: 6,
-    marginRight: 6,
-    alignSelf: "center",
-  },
+	serachInputWrapper: {
+		flex: 1,
+		background: theme.palette.total,
+		display: "flex",
+		borderRadius: 40,
+		padding: 4,
+		marginRight: theme.spacing(1),
+	},
 
-  searchInput: {
-    flex: 1,
-    border: "none",
-    borderRadius: 30,
-  },
+	searchIcon: {
+		color: "grey",
+		marginLeft: 6,
+		marginRight: 6,
+		alignSelf: "center",
+	},
 
-  insiderTabPanel: {
-    height: '100%',
-    marginTop: "-72px",
-    paddingTop: "72px"
-  },
+	searchInput: {
+		flex: 1,
+		border: "none",
+		borderRadius: 30,
+	},
 
-  insiderDoubleTabPanel: {
-    display: "flex",
-    flexDirection: "column",
-    marginTop: "-72px",
-    paddingTop: "72px",
-    height: "100%"
-  },
+	insiderTabPanel: {
+		height: '100%',
+		marginTop: "-72px",
+		paddingTop: "72px"
+	},
 
-  labelContainer: {
-    width: "auto",
-    padding: 0
-  },
-  iconLabelWrapper: {
-    flexDirection: "row",
-    '& > *:first-child': {
-      marginBottom: '3px !important',
-      marginRight: 16
-    }
-  },
-  insiderTabLabel: {
-    [theme.breakpoints.down(1600)]: {
-      display: 'none'
-    }
-  },
-  smallFormControl: {
-    '& .MuiOutlinedInput-input': {
-      padding: "12px 10px",
-    },
-    '& .MuiInputLabel-outlined': {
-      marginTop: "-6px"
-    }
-  }
+	insiderDoubleTabPanel: {
+		display:"flex",
+		flexDirection: "column",
+		marginTop: "-72px",
+		paddingTop: "72px",
+		height: "100%"
+	},
+
+	labelContainer: {
+		width: "auto",
+		padding: 0
+	},
+	iconLabelWrapper: {
+		flexDirection: "row",
+		'& > *:first-child': {
+			marginBottom: '3px !important',
+			marginRight: 16
+		}
+	},
+	insiderTabLabel: {
+		[theme.breakpoints.down(1600)]: {
+			display:'none'
+		}
+	},
+	smallFormControl: {
+		'& .MuiOutlinedInput-input': {
+			padding: "12px 10px",
+		},
+		'& .MuiInputLabel-outlined': {
+			marginTop: "-6px"
+		}
+	}
 }));
 
 const TicketsManagerTabs = () => {
   const classes = useStyles();
   const history = useHistory();
+  
+  const [isHoveredAll, setIsHoveredAll] = useState(false);
+  const [isHoveredNew, setIsHoveredNew] = useState(false);
+  const [isHoveredResolve, setIsHoveredResolve] = useState(false);
+  const [isHoveredOpen, setIsHoveredOpen] = useState(false);
+  const [isHoveredClosed, setIsHoveredClosed] = useState(false);
 
+  
   const [searchParam, setSearchParam] = useState("");
   const [tab, setTab] = useState("open");
   const [tabOpen, setTabOpen] = useState("open");
@@ -195,7 +208,6 @@ const TicketsManagerTabs = () => {
   const { user } = useContext(AuthContext);
   const { profile } = user;
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-
   const [openCount, setOpenCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
 
@@ -203,12 +215,8 @@ const TicketsManagerTabs = () => {
   const [selectedQueueIds, setSelectedQueueIds] = useState(userQueueIds || []);
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
-  const [showGroupTab, setShowTabGroup] = useState(false);
 
   useEffect(() => {
-
-    fetchSettings();
-
     if (user.profile.toUpperCase() === "ADMIN") {
       setShowAllTickets(true);
     }
@@ -222,16 +230,6 @@ const TicketsManagerTabs = () => {
   }, [tab]);
 
   let searchTimeout;
-
-  const fetchSettings = async () => {
-    try {
-      const { data } = await api.get("/settings");
-      const showGroups = data.find((s) => s.key === "CheckMsgIsGroup");
-      setShowTabGroup(showGroups.value === "disabled");
-    } catch (err) {
-      // toastError(err);
-    }
-  };
 
   const handleSearch = (e) => {
     const searchedTerm = e.target.value.toLowerCase();
@@ -307,7 +305,7 @@ const TicketsManagerTabs = () => {
       <NewTicketModal
         modalOpen={newTicketModalOpen}
         onClose={(ticket) => {
-
+          
           handleCloseOrOpenTicket(ticket);
         }}
       />
@@ -326,16 +324,6 @@ const TicketsManagerTabs = () => {
             label={i18n.t("tickets.tabs.open.title")}
             classes={{ root: classes.tab }}
           />
-
-          {showGroupTab && (
-            <Tab
-              value={"group"}
-              icon={<GroupIcon />}
-              label={i18n.t("tickets.tabs.group.title")}
-              classes={{ root: classes.tab }}
-            />
-          )}
-
           <Tab
             value={"closed"}
             icon={<CheckBoxIcon />}
@@ -390,28 +378,52 @@ const TicketsManagerTabs = () => {
                 </>
               }
             />
-            <Button
-              variant="outlined"
+            <Badge
               color="primary"
-              onClick={() => setNewTicketModalOpen(true)}
-              style={{ minWidth: "30px", fontSize: "0.7rem" }} // Define o tamanho mínimo e a fonte
+              invisible={
+                isHoveredAll ||
+                !isHoveredNew ||
+                isHoveredResolve ||
+                isHoveredOpen ||
+                isHoveredClosed
+              }
+              badgeContent={i18n.t("Novo")}
+              classes={{ badge: classes.tabsBadge }}
             >
-              {i18n.t("ticketsManager.buttons.newTicket")}
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleSnackbarOpen}
-              style={{
-                minWidth: "90px", fontSize: "0.7rem",
-                "@media (max-width: 600px)": {
-                  fontSize: "0.5rem",
-                },
-              }} // Define o tamanho mínimo e a fonte
-            >
-              {i18n.t("ticketsManager.buttons.closeallTicket")}
-
-            </Button>
+              <IconButton
+                onMouseEnter={() => setIsHoveredNew(true)}
+                onMouseLeave={() => setIsHoveredNew(false)}
+                className={classes.button}
+                onClick={() => {
+                  setNewTicketModalOpen(true);
+                }}
+              >
+                <AddIcon className={classes.icon} />
+              </IconButton>
+            </Badge>
+			{user.profile === "admin" && (
+              <Badge
+                color="primary"
+                invisible={
+                  isHoveredAll ||
+                  isHoveredNew ||
+                  !isHoveredResolve ||
+                  isHoveredOpen ||
+                  isHoveredClosed
+                }
+                badgeContent={i18n.t("tickets.inbox.closedAll")}
+                classes={{ badge: classes.tabsBadge }}
+              >
+                <IconButton
+                  onMouseEnter={() => setIsHoveredResolve(true)}
+                  onMouseLeave={() => setIsHoveredResolve(false)}
+                  className={classes.button}
+                  onClick={handleSnackbarOpen}
+                >
+                  <PlaylistAddCheckOutlinedIcon style={{ color: "green" }} />
+                </IconButton>
+              </Badge>
+			   )}
             <Can
               role={user.profile}
               perform="tickets-manager:showall"
@@ -442,7 +454,6 @@ const TicketsManagerTabs = () => {
           onChange={(values) => setSelectedQueueIds(values)}
         />
       </Paper>
-
       <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
         <Tabs
           value={tabOpen}
@@ -492,57 +503,6 @@ const TicketsManagerTabs = () => {
           />
         </Paper>
       </TabPanel>
-
-      <TabPanel value={tab} name="group" className={classes.ticketsWrapper}>
-        <Tabs
-          value={tabOpen}
-          onChange={handleChangeTabOpen}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="fullWidth"
-        >
-          <Tab
-            label={
-              <Badge
-                className={classes.badge}
-                badgeContent={openCount}
-                color="primary"
-              >
-                {i18n.t("ticketsList.assignedHeader")}
-              </Badge>
-            }
-            value={"open"}
-          />
-          <Tab
-            label={
-              <Badge
-                className={classes.badge}
-                badgeContent={pendingCount}
-                color="secondary"
-              >
-                {i18n.t("ticketsList.pendingHeader")}
-              </Badge>
-            }
-            value={"pending"}
-          />
-        </Tabs>
-        <Paper className={classes.ticketsWrapper}>
-          <TicketsListGroup
-            status="open"
-            showAll={showAllTickets}
-            selectedQueueIds={selectedQueueIds}
-            updateCount={(val) => setOpenCount(val)}
-            style={applyPanelStyle("open")}
-          />
-          <TicketsListGroup
-            status="pending"
-            selectedQueueIds={selectedQueueIds}
-            updateCount={(val) => setPendingCount(val)}
-            style={applyPanelStyle("pending")}
-          />
-        </Paper>
-      </TabPanel>
-
       <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
         <TicketsList
           status="closed"
@@ -550,7 +510,6 @@ const TicketsManagerTabs = () => {
           selectedQueueIds={selectedQueueIds}
         />
       </TabPanel>
-
       <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
         <TagsFilter onFiltered={handleSelectedTags} />
         {profile === "admin" && (

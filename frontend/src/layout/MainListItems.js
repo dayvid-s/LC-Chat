@@ -6,7 +6,7 @@ import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListSubheader from "@material-ui/core/ListSubheader";
 import Divider from "@material-ui/core/Divider";
-import { Badge, Collapse, List, Typography } from "@material-ui/core";
+import { Badge, Collapse, List } from "@material-ui/core";
 import DashboardOutlinedIcon from "@material-ui/icons/DashboardOutlined";
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import SyncAltIcon from "@material-ui/icons/SyncAlt";
@@ -35,6 +35,7 @@ import LoyaltyRoundedIcon from '@material-ui/icons/LoyaltyRounded';
 import { Can } from "../components/Can";
 import { SocketContext } from "../context/Socket/SocketContext";
 import { isArray } from "lodash";
+import TableChartIcon from '@material-ui/icons/TableChart';
 import api from "../services/api";
 import BorderColorIcon from '@material-ui/icons/BorderColor';
 import ToDoList from "../pages/ToDoList/";
@@ -42,6 +43,8 @@ import toastError from "../errors/toastError";
 import { makeStyles } from "@material-ui/core/styles";
 import { AllInclusive, AttachFile, BlurCircular, Description, DeviceHubOutlined, Schedule } from '@material-ui/icons';
 import usePlans from "../hooks/usePlans";
+import Typography from "@material-ui/core/Typography";
+import useVersion from "../hooks/useVersion";
 
 const useStyles = makeStyles((theme) => ({
   ListSubheader: {
@@ -49,21 +52,17 @@ const useStyles = makeStyles((theme) => ({
     marginTop: "-15px",
     marginBottom: "-10px",
   },
-  colorIcons: {
-    color: theme.palette.drawerIcons,
-  },
-
-  colorText: {
-    color: theme.palette.drawerText,
-  }
-
+    logoutButton: {
+    borderRadius: 10,
+    marginTop: 10,
+    backgroundColor: theme.palette.sair.main,
+    color: theme.palette.text.sair,
+	},
 }));
 
 
 function ListItemLink(props) {
   const { icon, primary, to, className } = props;
-
-  const classes = useStyles();
 
   const renderLink = React.useMemo(
     () =>
@@ -75,8 +74,8 @@ function ListItemLink(props) {
 
   return (
     <li>
-      <ListItem button dense component={renderLink} className={classes.colorText}>
-        {icon ? <ListItemIcon className={classes.colorIcons}>{icon}</ListItemIcon> : null}
+      <ListItem button dense component={renderLink} className={className}>
+        {icon ? <ListItemIcon>{icon}</ListItemIcon> : null}
         <ListItemText primary={primary} />
       </ListItem>
     </li>
@@ -154,15 +153,29 @@ const MainListItems = (props) => {
   const [showInternalChat, setShowInternalChat] = useState(false);
   const [showExternalApi, setShowExternalApi] = useState(false);
 
-  const actualTheme = localStorage.getItem("preferredTheme");
 
   const [invisible, setInvisible] = useState(true);
   const [pageNumber, setPageNumber] = useState(1);
   const [searchParam] = useState("");
   const [chats, dispatch] = useReducer(reducer, []);
   const { getPlanCompany } = usePlans();
+  
+  const [version, setVersion] = useState(false);
+  
+  
+  const { getVersion } = useVersion();
 
   const socketManager = useContext(SocketContext);
+
+  useEffect(() => {
+    async function fetchVersion() {
+      const _version = await getVersion();
+      setVersion(_version.version);
+    }
+    fetchVersion();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+ 
 
   useEffect(() => {
     dispatch({ type: "RESET" });
@@ -185,6 +198,7 @@ const MainListItems = (props) => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
 
   useEffect(() => {
@@ -273,8 +287,6 @@ const MainListItems = (props) => {
     //handleCloseMenu();
     handleLogout();
   };
-
-
 
   return (
     <div onClick={drawerClose}>
@@ -388,12 +400,6 @@ const MainListItems = (props) => {
               to="/"
               primary="Dashboard"
               icon={<DashboardOutlinedIcon />}
-            />
-            <ListItemLink
-              small
-              to="/reports"
-              primary={i18n.t("mainDrawer.listItems.reports")}
-              icon={<Description />}
             />
           </>
         )}
@@ -579,23 +585,40 @@ const MainListItems = (props) => {
               primary={i18n.t("mainDrawer.listItems.settings")}
               icon={<SettingsOutlinedIcon />}
             />
-            { }
+			
+			
+            {!collapsed && (
+              <React.Fragment>
+                <Divider />
+              {/* 
+              // IMAGEM NO MENU
+              <Hidden only={['sm', 'xs']}>
+                <img style={{ width: "100%", padding: "10px" }} src={logo} alt="image" />            
+              </Hidden> 
+              */}
+              <Typography style={{ fontSize: "12px", padding: "10px", textAlign: "right", fontWeight: "bold" }}>
+                Versão: {`${version}`}
 
+                </Typography>
+              </React.Fragment>
+            )}
           </>
         )}
       />
-      <li>
-        <ListItem
+	  <Divider />
+	  <li>
+		<ListItem
           button
           dense
-          onClick={handleClickLogout}>
-          <ListItemIcon><RotateRight /></ListItemIcon>
-          <ListItemText primary={i18n.t("mainDrawer.listItems.logout")} />
+          onClick={handleClickLogout}
+          className={classes.logoutButton}
+        >
+          <ListItemIcon>
+            <RotateRight />
+          </ListItemIcon>
+          <ListItemText primary={i18n.t("Sair")} />
         </ListItem>
       </li>
-      <Divider />
-      {/**versão do software */}
-      <Typography variant="caption" align="center" style={{ marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> Versão 7.0.0</Typography>
     </div>
   );
 };

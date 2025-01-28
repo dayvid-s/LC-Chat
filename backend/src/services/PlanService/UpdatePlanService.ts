@@ -15,7 +15,6 @@ interface PlanData {
   useKanban?: boolean;
   useOpenAi?: boolean;
   useIntegrations?: boolean;
-  isPublic?: boolean;
 }
 
 const UpdatePlanService = async (planData: PlanData): Promise<Plan> => {

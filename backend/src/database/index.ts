@@ -37,7 +37,6 @@ import Files from "../models/Files";
 import FilesOptions from "../models/FilesOptions";
 import Prompt from "../models/Prompt";
 import QueueIntegrations from "../models/QueueIntegrations";
-import BaileysKeys from "../models/BaileysKeys";
 
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
@@ -84,7 +83,6 @@ const models = [
   FilesOptions,
   Prompt,
   QueueIntegrations,
-  BaileysKeys,
 ];
 
 sequelize.addModels(models);

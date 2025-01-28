@@ -1,8 +1,8 @@
 import express from "express";
 import isAuth from "../middleware/isAuth";
+import isSuper from "../middleware/isSuper";
 
 import * as CompanyController from "../controllers/CompanyController";
-import isSuper from "../middleware/isSuper";
 
 const companyRoutes = express.Router();
 

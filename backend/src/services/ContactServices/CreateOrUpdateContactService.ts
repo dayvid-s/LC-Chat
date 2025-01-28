@@ -2,8 +2,6 @@ import { getIO } from "../../libs/socket";
 import Contact from "../../models/Contact";
 import ContactCustomField from "../../models/ContactCustomField";
 import { isNil } from "lodash";
-import { logger } from "../../utils/logger";
-import Whatsapp from "../../models/Whatsapp";
 interface ExtraInfo extends ContactCustomField {
   name: string;
   value: string;
@@ -44,27 +42,12 @@ const CreateOrUpdateContactService = async ({
 
   if (contact) {
     contact.update({ profilePicUrl });
-
-    try {
-      if (isNil(contact.whatsappId)) {
-        const whatsapp = await Whatsapp.findOne({
-          where: {
-            id: whatsappId,
-            companyId
-          }
-        });
-
-        if (whatsapp) {
-          contact.update({
-            whatsappId
-          });
-        }
-      }
-    } catch (err) {
-      logger.error("Error to update WhatsappId on contact:", err);
-      throw err;
+    console.log(contact.whatsappId)
+    if (isNil(contact.whatsappId === null)) {
+      contact.update({
+        whatsappId
+      });
     }
-    
     io.to(`company-${companyId}-mainchannel`).emit(`company-${companyId}-contact`, {
       action: "update",
       contact

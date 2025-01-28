@@ -18,14 +18,15 @@ import MessagesAPI from "../pages/MessagesAPI/";
 import Helps from "../pages/Helps/";
 import ContactLists from "../pages/ContactLists/";
 import ContactListItems from "../pages/ContactListItems/";
+import { ForwardMessageProvider } from "../context/ForwarMessage/ForwardMessageContext";
 // import Companies from "../pages/Companies/";
 import QuickMessages from "../pages/QuickMessages/";
 import Kanban from "../pages/Kanban";
 import { AuthProvider } from "../context/Auth/AuthContext";
 import { TicketsContextProvider } from "../context/Tickets/TicketsContext";
-import { ForwardMessageProvider } from "../context/ForwarMessage/ForwardMessageContext";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
 import Route from "./Route";
+//import kanbanSchedules from "../pages/kanbanSchedules/";
 import Schedules from "../pages/Schedules";
 import Campaigns from "../pages/Campaigns";
 import CampaignsConfig from "../pages/CampaignsConfig";
@@ -37,8 +38,7 @@ import Subscription from "../pages/Subscription/";
 import Files from "../pages/Files/";
 import Prompts from "../pages/Prompts";
 import QueueIntegration from "../pages/QueueIntegration";
-import Reports from "../pages/Reports";
-import PasswordReset from "../pages/PasswordReset";
+import ForgetPassword from "../pages/ForgetPassWord/"; // Reset PassWd
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -53,133 +53,132 @@ const Routes = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ForwardMessageProvider>
-          <TicketsContextProvider>
-            <Switch>
-              <Route exact path="/login" component={Login} />
-              <Route exact path="/signup" component={Signup} />
-              <Route exact path="/recovery-password" component={PasswordReset} />
-              {/* <Route exact path="/create-company" component={Companies} /> */}
-              <WhatsAppsProvider>
-                <LoggedInLayout>
-                  <Route exact path="/" component={Dashboard} isPrivate />
-                  <Route
-                    exact
-                    path="/tickets/:ticketId?"
-                    component={TicketResponsiveContainer}
-                    isPrivate
+	  <ForwardMessageProvider>
+        <TicketsContextProvider>
+          <Switch>
+            <Route exact path="/login" component={Login} />
+            <Route exact path="/signup" component={Signup} />
+			<Route exact path="/forgetpsw" component={ForgetPassword} /> 
+            {/* <Route exact path="/create-company" component={Companies} /> */}
+            <WhatsAppsProvider>
+              <LoggedInLayout>
+                <Route exact path="/" component={Dashboard} isPrivate />
+                <Route
+                  exact
+                  path="/tickets/:ticketId?"
+                  component={TicketResponsiveContainer}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/connections"
+                  component={Connections}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/quick-messages"
+                  component={QuickMessages}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/todolist"
+                  component={ToDoList}
+                  isPrivate
                   />
-                  <Route
-                    exact
-                    path="/connections"
-                    component={Connections}
-                    isPrivate
-                  />
-                  <Route
-                    exact
-                    path="/quick-messages"
-                    component={QuickMessages}
-                    isPrivate
-                  />
-                  <Route
-                    exact
-                    path="/todolist"
-                    component={ToDoList}
-                    isPrivate
-                  />
-                  <Route
-                    exact
-                    path="/schedules"
-                    component={Schedules}
-                    isPrivate
-                  />
-                  <Route exact path="/tags" component={Tags} isPrivate />
-                  <Route exact path="/contacts" component={Contacts} isPrivate />
-                  <Route exact path="/helps" component={Helps} isPrivate />
-                  <Route exact path="/users" component={Users} isPrivate />
-                  <Route exact path="/files" component={Files} isPrivate />
-                  <Route exact path="/prompts" component={Prompts} isPrivate />
-                  <Route exact path="/reports" component={Reports} isPrivate />
-                  <Route exact path="/queue-integration" component={QueueIntegration} isPrivate />
-
-                  <Route
-                    exact
-                    path="/messages-api"
-                    component={MessagesAPI}
-                    isPrivate
-                  />
-                  <Route
-                    exact
-                    path="/settings"
-                    component={SettingsCustom}
-                    isPrivate
-                  />
-                  <Route
-                    exact
-                    path="/kanban"
-                    component={Kanban}
-                    isPrivate
-                  />
-                  <Route
-                    exact
-                    path="/financeiro"
-                    component={Financeiro}
-                    isPrivate
-                  />
-                  <Route exact path="/queues" component={Queues} isPrivate />
-                  <Route
-                    exact
-                    path="/announcements"
-                    component={Annoucements}
-                    isPrivate
-                  />
-                  <Route
-                    exact
-                    path="/subscription"
-                    component={Subscription}
-                    isPrivate
-                  />
-                  <Route exact path="/chats/:id?" component={Chat} isPrivate />
-                  {showCampaigns && (
-                    <>
-                      <Route
-                        exact
-                        path="/contact-lists"
-                        component={ContactLists}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/contact-lists/:contactListId/contacts"
-                        component={ContactListItems}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/campaigns"
-                        component={Campaigns}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/campaign/:campaignId/report"
-                        component={CampaignReport}
-                        isPrivate
-                      />
-                      <Route
-                        exact
-                        path="/campaigns-config"
-                        component={CampaignsConfig}
-                        isPrivate
-                      />
-                    </>
-                  )}
-                </LoggedInLayout>
-              </WhatsAppsProvider>
-            </Switch>
-            <ToastContainer autoClose={3000} />
-          </TicketsContextProvider>
-        </ForwardMessageProvider>
+                <Route
+                  exact
+                  path="/schedules"
+                  component={Schedules}
+                  isPrivate
+                />
+                <Route exact path="/tags" component={Tags} isPrivate />
+                <Route exact path="/contacts" component={Contacts} isPrivate />
+                <Route exact path="/helps" component={Helps} isPrivate />
+                <Route exact path="/users" component={Users} isPrivate />
+                <Route exact path="/files" component={Files} isPrivate />
+                <Route exact path="/prompts" component={Prompts} isPrivate />
+                <Route exact path="/queue-integration" component={QueueIntegration} isPrivate />
+					{/*<Route exact path="/kanban-schedules" component={kanbanSchedules} isPrivate />*/}
+                <Route
+                  exact
+                  path="/messages-api"
+                  component={MessagesAPI}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/settings"
+                  component={SettingsCustom}
+                  isPrivate
+                />
+				        <Route 
+                  exact
+                  path="/kanban"
+                  component={Kanban}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/financeiro"
+                  component={Financeiro}
+                  isPrivate
+                />
+                <Route exact path="/queues" component={Queues} isPrivate />
+                <Route
+                  exact
+                  path="/announcements"
+                  component={Annoucements}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/subscription"
+                  component={Subscription}
+                  isPrivate
+                />
+                <Route exact path="/chats/:id?" component={Chat} isPrivate />
+                {showCampaigns && (
+                  <>
+                    <Route
+                      exact
+                      path="/contact-lists"
+                      component={ContactLists}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/contact-lists/:contactListId/contacts"
+                      component={ContactListItems}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/campaigns"
+                      component={Campaigns}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/campaign/:campaignId/report"
+                      component={CampaignReport}
+                      isPrivate
+                    />
+                    <Route
+                      exact
+                      path="/campaigns-config"
+                      component={CampaignsConfig}
+                      isPrivate
+                    />
+                  </>
+                )}
+              </LoggedInLayout>
+            </WhatsAppsProvider>
+          </Switch>
+          <ToastContainer autoClose={3000} />
+        </TicketsContextProvider>
+		</ForwardMessageProvider>
       </AuthProvider>
     </BrowserRouter>
   );

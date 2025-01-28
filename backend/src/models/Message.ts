@@ -44,11 +44,16 @@ class Message extends Model<Message> {
 
   @Column(DataType.TEXT)
   body: string;
-
+  
+  @Column(DataType.JSON)
+  reactions: { type: string; userId: number; }[];
+  
   @Column(DataType.STRING)
   get mediaUrl(): string | null {
     if (this.getDataValue("mediaUrl")) {
-      return `${process.env.BACKEND_URL}${process.env.PROXY_PORT ?`:${process.env.PROXY_PORT}`:""}/public/${this.getDataValue("mediaUrl")}`;
+      return `${process.env.BACKEND_URL}/public/${this.getDataValue(
+        "mediaUrl"
+      )}`;
     }
     return null;
   }
@@ -60,6 +65,7 @@ class Message extends Model<Message> {
   @Column
   isDeleted: boolean;
 
+  @CreatedAt
   @Column(DataType.DATE(6))
   createdAt: Date;
 
@@ -101,14 +107,15 @@ class Message extends Model<Message> {
 
   @BelongsTo(() => Queue)
   queue: Queue;
-
+  
   @Default(false)
   @Column
   isEdited: boolean;
-
+  
   @Default(false)
   @Column
   isForwarded: boolean;
+  
 }
 
 export default Message;

@@ -43,8 +43,7 @@ export default (body: string, contact: Contact): string => {
 
   const protocol = yy + mm + dd + String(hh) + min + ss;
 
-  const hora = `${hh}:${min}`;
-  const today = `${dd}-${mm}-${yy}`;
+  const hora = `${hh}:${min}:${ss}`;
 
   const view = {
     firstName: firstName(contact),
@@ -52,8 +51,7 @@ export default (body: string, contact: Contact): string => {
     gretting: greeting(),
     ms,
     protocol,
-    hour: hora,
-    today,
+    hora
   };
   return Mustache.render(body, view);
 };

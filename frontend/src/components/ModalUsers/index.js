@@ -148,7 +148,6 @@ const ModalUsers = ({ open, onClose, userId, companyId }) => {
           {({ touched, errors, isSubmitting }) => (
             <Form>
               <DialogContent dividers>
-
                 <div className={classes.multFieldLine}>
                   <Field
                     as={TextField}
@@ -172,9 +171,7 @@ const ModalUsers = ({ open, onClose, userId, companyId }) => {
                     margin="dense"
                     fullWidth
                   />
-
                 </div>
-
                 <div className={classes.multFieldLine}>
                   <Field
                     as={TextField}
@@ -216,7 +213,6 @@ const ModalUsers = ({ open, onClose, userId, companyId }) => {
                     />
                   </FormControl>
                 </div>
-
                 <Can
                   role={loggedInUser.profile}
                   perform="user-modal:editQueues"

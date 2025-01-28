@@ -3,19 +3,26 @@ import MainContainer from "../../components/MainContainer";
 import MainHeader from "../../components/MainHeader";
 import Title from "../../components/Title";
 import { makeStyles, Paper, Tabs, Tab } from "@material-ui/core";
+
 import TabPanel from "../../components/TabPanel";
+
 import SchedulesForm from "../../components/SchedulesForm";
 import CompaniesManager from "../../components/CompaniesManager";
 import PlansManager from "../../components/PlansManager";
 import HelpsManager from "../../components/HelpsManager";
 import Options from "../../components/Settings/Options";
+import Uploader from "../../components/Settings/Uploader";
+import NewCompaniesManager from "../../pages/Companies";
+
 import { i18n } from "../../translate/i18n.js";
 import { toast } from "react-toastify";
+
 import useCompanies from "../../hooks/useCompanies";
 import useAuth from "../../hooks/useAuth.js";
 import useSettings from "../../hooks/useSettings";
+
 import OnlyForSuperUser from "../../components/OnlyForSuperUser";
-import Whitelabel from "../../components/Whitelabel/index.js";
+
 const useStyles = makeStyles((theme) => ({
   root: {
     flex: 1,
@@ -49,6 +56,7 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
   },
 }));
+
 const SettingsCustom = () => {
   const classes = useStyles();
   const [tab, setTab] = useState("options");
@@ -58,9 +66,11 @@ const SettingsCustom = () => {
   const [currentUser, setCurrentUser] = useState({});
   const [settings, setSettings] = useState({});
   const [schedulesEnabled, setSchedulesEnabled] = useState(false);
+
   const { getCurrentUserInfo } = useAuth();
   const { find, updateSchedules } = useCompanies();
   const { getAll: getAllSettings } = useSettings();
+
   useEffect(() => {
     async function findData() {
       setLoading(true);
@@ -71,6 +81,7 @@ const SettingsCustom = () => {
         setCompany(company);
         setSchedules(company.schedules);
         setSettings(settingList);
+
         if (Array.isArray(settingList)) {
           const scheduleType = settingList.find(
             (d) => d.key === "scheduleType"
@@ -79,6 +90,7 @@ const SettingsCustom = () => {
             setSchedulesEnabled(scheduleType.value === "company");
           }
         }
+
         const user = await getCurrentUserInfo();
         setCurrentUser(user);
       } catch (e) {
@@ -89,35 +101,40 @@ const SettingsCustom = () => {
     findData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   const handleTabChange = (event, newValue) => {
-    async function findData() {
-      setLoading(true);
-      try {
-        const companyId = localStorage.getItem("companyId");
-        const company = await find(companyId);
-        const settingList = await getAllSettings();
-        setCompany(company);
-        setSchedules(company.schedules);
-        setSettings(settingList);
-        if (Array.isArray(settingList)) {
-          const scheduleType = settingList.find(
-            (d) => d.key === "scheduleType"
-          );
-          if (scheduleType) {
-            setSchedulesEnabled(scheduleType.value === "company");
+      async function findData() {
+        setLoading(true);
+        try {
+          const companyId = localStorage.getItem("companyId");
+          const company = await find(companyId);
+          const settingList = await getAllSettings();
+          setCompany(company);
+          setSchedules(company.schedules);
+          setSettings(settingList);
+  
+          if (Array.isArray(settingList)) {
+            const scheduleType = settingList.find(
+              (d) => d.key === "scheduleType"
+            );
+            if (scheduleType) {
+              setSchedulesEnabled(scheduleType.value === "company");
+            }
           }
+  
+          const user = await getCurrentUserInfo();
+          setCurrentUser(user);
+        } catch (e) {
+          toast.error(e);
         }
-        const user = await getCurrentUserInfo();
-        setCurrentUser(user);
-      } catch (e) {
-        toast.error(e);
+        setLoading(false);
       }
-      setLoading(false);
-    }
-    findData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      findData();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+
     setTab(newValue);
   };
+
   const handleSubmitSchedules = async (data) => {
     setLoading(true);
     try {
@@ -129,9 +146,11 @@ const SettingsCustom = () => {
     }
     setLoading(false);
   };
+
   const isSuper = () => {
     return currentUser.super;
   };
+
   return (
     <MainContainer className={classes.root}>
       <MainHeader>
@@ -149,8 +168,9 @@ const SettingsCustom = () => {
         >
           <Tab label="Opções" value={"options"} />
           {schedulesEnabled && <Tab label="Horários" value={"schedules"} />}
-          {/* <Tab label="Estilizador" value={"whitelabel"} /> */}
+		  {isSuper() ? <Tab label="Logo" value={"uploader"} /> : null}
           {isSuper() ? <Tab label="Empresas" value={"companies"} /> : null}
+		  {isSuper() ? <Tab label="Cadastrar Empresa" value={"newcompanie"} /> : null}
           {isSuper() ? <Tab label="Planos" value={"plans"} /> : null}
           {isSuper() ? <Tab label="Ajuda" value={"helps"} /> : null}
         </Tabs>
@@ -184,6 +204,18 @@ const SettingsCustom = () => {
               <TabPanel
                 className={classes.container}
                 value={tab}
+                name={"newcompanie"}
+              >
+                <NewCompaniesManager />
+              </TabPanel>
+            )}
+          />
+          <OnlyForSuperUser
+            user={currentUser}
+            yes={() => (
+              <TabPanel
+                className={classes.container}
+                value={tab}
                 name={"plans"}
               >
                 <PlansManager />
@@ -202,6 +234,18 @@ const SettingsCustom = () => {
               </TabPanel>
             )}
           />
+		 <OnlyForSuperUser
+            user={currentUser}
+            yes={() => (
+              <TabPanel
+                className={classes.container}
+                value={tab}
+                name={"uploader"}
+              >
+                <Uploader />
+              </TabPanel>
+            )}
+          />
           <TabPanel className={classes.container} value={tab} name={"options"}>
             <Options
               settings={settings}
@@ -210,20 +254,10 @@ const SettingsCustom = () => {
               }
             />
           </TabPanel>
-
-          {/* <TabPanel
-            className={classes.container}
-            value={tab}
-            name={"whitelabel"}
-          >
-            <Whitelabel
-              settings={settings}
-            />
-          </TabPanel> */}
-
         </Paper>
       </Paper>
     </MainContainer>
   );
 };
+
 export default SettingsCustom;

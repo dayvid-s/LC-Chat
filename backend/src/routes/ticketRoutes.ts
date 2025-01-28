@@ -11,8 +11,6 @@ ticketRoutes.get("/tickets/:ticketId", isAuth, TicketController.show);
 
 ticketRoutes.get("/ticket/kanban", isAuth, TicketController.kanban);
 
-ticketRoutes.get("/ticket/reports", isAuth, TicketController.report);
-
 ticketRoutes.get("/tickets/u/:uuid", isAuth, TicketController.showFromUUID);
 
 ticketRoutes.post("/tickets", isAuth, TicketController.store);

@@ -18,7 +18,6 @@ import Ticket from "./Ticket";
 import Company from "./Company";
 import Schedule from "./Schedule";
 import Whatsapp from "./Whatsapp";
-import TicketTraking from "./TicketTraking";
 
 @Table
 class Contact extends Model<Contact> {
@@ -54,15 +53,15 @@ class Contact extends Model<Contact> {
   @UpdatedAt
   updatedAt: Date;
 
-  @Default(false)
-  @Column
-  disableBot: boolean;
-  
   @HasMany(() => Ticket)
   tickets: Ticket[];
 
   @HasMany(() => ContactCustomField)
   extraInfo: ContactCustomField[];
+
+  @Default(true)
+  @Column
+  active: boolean;
 
   @ForeignKey(() => Company)
   @Column
@@ -84,13 +83,6 @@ class Contact extends Model<Contact> {
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;
-
-  @HasMany(() => TicketTraking, {
-    onDelete: "CASCADE",
-    onUpdate: "CASCADE",
-    hooks: true
-  })
-  ticketTrakings: TicketTraking[];
 }
 
 export default Contact;
