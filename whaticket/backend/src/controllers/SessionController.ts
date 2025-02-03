@@ -15,22 +15,21 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     email,
     password
   });
- 
+
   SendRefreshToken(res, refreshToken);
 
   const io = getIO();
-
-  io.of(serializedUser.companyId.toString())
-  .emit(`company-${serializedUser.companyId}-auth`, {
-    action: "update",
-    user: {
-      id: serializedUser.id,
-      email: serializedUser.email,
-      companyId: serializedUser.companyId,
-      token: serializedUser.token
+  io.to(`user-${serializedUser.id}`).emit(
+    `company-${serializedUser.companyId}-auth`,
+    {
+      action: "update",
+      user: {
+        id: serializedUser.id,
+        email: serializedUser.email,
+        companyId: serializedUser.companyId
+      }
     }
-  });
-  
+  );
 
   return res.status(200).json({
     token,
@@ -61,13 +60,13 @@ export const update = async (
 export const me = async (req: Request, res: Response): Promise<Response> => {
   const token: string = req.cookies.jrt;
   const user = await FindUserFromToken(token);
-  const { id, profile, super: superAdmin } = user;
+  const { id, profile, email, super: superAdmin } = user;
 
   if (!token) {
     throw new AppError("ERR_SESSION_EXPIRED", 401);
   }
 
-  return res.json({ id, profile, super: superAdmin });
+  return res.json({ id, profile, email, super: superAdmin });
 };
 
 export const remove = async (
@@ -75,10 +74,9 @@ export const remove = async (
   res: Response
 ): Promise<Response> => {
   const { id } = req.user;
-  if (id) {
-    const user = await User.findByPk(id);
-    await user.update({ online: false });
-  }
+  const user = await User.findByPk(id);
+  await user.update({ online: false });
+
   res.clearCookie("jrt");
 
   return res.send();

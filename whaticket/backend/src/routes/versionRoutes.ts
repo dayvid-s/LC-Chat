@@ -1,10 +1,8 @@
-import { Router } from "express";
+import express from "express";
+import * as VersionController from "../controllers/VersionController";
 
-import * as VerssionController from "../controllers/VersionController";
+const versionRoutes = express.Router();
 
-const versionRouter = Router();
+versionRoutes.get("/", VersionController.version);
 
-versionRouter.get("/version", VerssionController.index);
-versionRouter.post("/version", VerssionController.store);
-
-export default versionRouter;
+export default versionRoutes;

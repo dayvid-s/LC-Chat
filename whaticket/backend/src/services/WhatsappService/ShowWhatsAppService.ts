@@ -1,10 +1,9 @@
+import { FindOptions } from "sequelize/types";
+import { Sequelize } from "sequelize-typescript";
 import Whatsapp from "../../models/Whatsapp";
 import AppError from "../../errors/AppError";
 import Queue from "../../models/Queue";
-import Chatbot from "../../models/Chatbot";
-import { FindOptions } from "sequelize/types";
-import Prompt from "../../models/Prompt";
-import { FlowBuilderModel } from "../../models/FlowBuilder";
+import QueueOption from "../../models/QueueOption";
 
 const ShowWhatsAppService = async (
   id: string | number,
@@ -14,32 +13,34 @@ const ShowWhatsAppService = async (
   const findOptions: FindOptions = {
     include: [
       {
-        model: FlowBuilderModel,
-      },
-      {
         model: Queue,
         as: "queues",
-        attributes: ["id", "name", "color", "greetingMessage", "integrationId", "fileListId", "closeTicket"],
+        attributes: [
+          "id",
+          "name",
+          "color",
+          "greetingMessage",
+          "outOfHoursMessage",
+          "mediaPath",
+          "mediaName"
+        ],
         include: [
           {
-            model: Chatbot,
-            as: "chatbots",
-            attributes: ["id", "name", "greetingMessage", "closeTicket"]
+            model: QueueOption,
+            as: "options",
+            required: false,
+            where: { parentId: null },
           }
         ]
-      },
-      {
-        model: Prompt,
-        as: "prompt",
       }
     ],
     order: [
-      ["queues", "orderQueue", "ASC"],
-      ["queues", "chatbots", "id", "ASC"]
+      ["queues", "name", "ASC"],
+      [Sequelize.cast(Sequelize.col("queues.options.option"), "INTEGER"), "ASC"]
     ]
   };
 
-  if (session !== undefined && session == 0) {
+  if (session !== undefined && session === 0) {
     findOptions.attributes = { exclude: ["session"] };
   }
 

@@ -8,19 +8,20 @@ import {
   PrimaryKey,
   Default,
   BelongsTo,
-  ForeignKey
+  ForeignKey,
+  HasMany
 } from "sequelize-typescript";
 import Contact from "./Contact";
 import Ticket from "./Ticket";
 import Company from "./Company";
 import Queue from "./Queue";
-import TicketTraking from "./TicketTraking";
+import OldMessage from "./OldMessage";
 
 @Table
-class Message extends Model<Message> {
+class Message extends Model {
   @PrimaryKey
   @Column
-  id: number;
+  id: string;
 
   @Column(DataType.STRING)
   remoteJid: string;
@@ -43,15 +44,27 @@ class Message extends Model<Message> {
   @Column
   fromMe: boolean;
 
+  @Column({ defaultValue: "whatsapp" })
+  channel: string;
+
   @Column(DataType.TEXT)
   body: string;
 
   @Column(DataType.STRING)
   get mediaUrl(): string | null {
     if (this.getDataValue("mediaUrl")) {
-      
-      return `${process.env.BACKEND_URL}${process.env.PROXY_PORT ?`:${process.env.PROXY_PORT}`:""}/public/company${this.companyId}/${this.getDataValue("mediaUrl")}`;
+      return `${process.env.BACKEND_URL}/public/${this.getDataValue(
+        "mediaUrl"
+      )}`;
+    }
+    return null;
+  }
 
+  @Column(DataType.STRING)
+  get thumbnailUrl(): string | null {
+    const value = this.getDataValue("thumbnailUrl");
+    if (value) {
+      return `${process.env.BACKEND_URL}/public/${value}`;
     }
     return null;
   }
@@ -63,6 +76,11 @@ class Message extends Model<Message> {
   @Column
   isDeleted: boolean;
 
+  @Default(false)
+  @Column
+  isEdited: boolean;
+
+  @CreatedAt
   @Column(DataType.DATE(6))
   createdAt: Date;
 
@@ -78,18 +96,12 @@ class Message extends Model<Message> {
   quotedMsg: Message;
 
   @ForeignKey(() => Ticket)
+  @PrimaryKey
   @Column
   ticketId: number;
 
   @BelongsTo(() => Ticket)
   ticket: Ticket;
-
-  @ForeignKey(() => TicketTraking)
-  @Column
-  ticketTrakingId: number;
-
-  @BelongsTo(() => TicketTraking, "ticketTrakingId")
-  ticketTraking: TicketTraking;
 
   @ForeignKey(() => Contact)
   @Column
@@ -111,21 +123,9 @@ class Message extends Model<Message> {
 
   @BelongsTo(() => Queue)
   queue: Queue;
-  
-  @Column
-  wid: string;
 
-  @Default(false)
-  @Column
-  isPrivate: boolean;
-
-  @Default(false)
-  @Column
-  isEdited: boolean;
-
-  @Default(false)
-  @Column
-  isForwarded: boolean;
+  @HasMany(() => OldMessage)
+  oldMessages: OldMessage[];
 }
 
 export default Message;

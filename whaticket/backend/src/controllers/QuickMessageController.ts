@@ -10,9 +10,6 @@ import DeleteService from "../services/QuickMessageService/DeleteService";
 import FindService from "../services/QuickMessageService/FindService";
 
 import QuickMessage from "../models/QuickMessage";
-import { head } from "lodash";
-import fs from "fs";
-import path from "path";
 
 import AppError from "../errors/AppError";
 
@@ -26,21 +23,11 @@ type StoreData = {
   shortcode: string;
   message: string;
   userId: number | number;
-  mediaPath?: string;
-  mediaName?: string;
-  geral: boolean;
-  isMedia: boolean;
-  visao: boolean;
-};
-
-type FindParams = {
-  companyId: string;
-  userId: string;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam, pageNumber } = req.query as IndexQuery;
-  const { companyId, id: userId } = req.user;
+  const { searchParam, pageNumber, userId } = req.query as IndexQuery;
+  const { companyId } = req.user;
 
   const { records, count, hasMore } = await ListService({
     searchParam,
@@ -56,11 +43,9 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { companyId } = req.user;
   const data = req.body as StoreData;
 
-
-
   const schema = Yup.object().shape({
     shortcode: Yup.string().required(),
-    message: data.isMedia ? Yup.string().notRequired() : Yup.string().required()
+    message: Yup.string().required()
   });
 
   try {
@@ -72,12 +57,11 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const record = await CreateService({
     ...data,
     companyId,
-    userId: req.user.id
+    userId: Number.parseInt(req.user.id, 10)
   });
 
   const io = getIO();
-  io.of(String(companyId))
-  .emit(`company-${companyId}-quickmessage`, {
+  io.emit(`company-${companyId}-quickmessage`, {
     action: "create",
     record
   });
@@ -102,7 +86,7 @@ export const update = async (
 
   const schema = Yup.object().shape({
     shortcode: Yup.string().required(),
-    message: data.isMedia ? Yup.string().notRequired() : Yup.string().required()
+    message: Yup.string().required()
   });
 
   try {
@@ -115,13 +99,12 @@ export const update = async (
 
   const record = await UpdateService({
     ...data,
-    userId: req.user.id,
-    id,
+    userId: Number.parseInt(req.user.id, 10),
+    id: Number.parseInt(id, 10),
   });
 
   const io = getIO();
-  io.of(String(companyId))
-  .emit(`company-${companyId}-quickmessage`, {
+  io.emit(`company-${companyId}-quickmessage`, {
     action: "update",
     record
   });
@@ -139,8 +122,7 @@ export const remove = async (
   await DeleteService(id);
 
   const io = getIO();
-  io.of(String(companyId))
-  .emit(`company-${companyId}-quickmessage`, {
+  io.emit(`company-${companyId}-quickmessage`, {
     action: "delete",
     id
   });
@@ -152,55 +134,7 @@ export const findList = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const params = req.query as FindParams;
-  const records: QuickMessage[] = await FindService(params);
+  const records: QuickMessage[] = await FindService({userId: parseInt(req.user.id,10), companyId: req.user.companyId});
 
   return res.status(200).json(records);
-};
-
-export const mediaUpload = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { id } = req.params;
-  const files = req.files as Express.Multer.File[];
-  const file = head(files);
-
-  try {
-    const quickmessage = await QuickMessage.findByPk(id);
-    
-    await quickmessage.update ({
-      mediaPath: file.filename,
-      mediaName: file.originalname
-    });
-
-    return res.send({ mensagem: "Arquivo Anexado" });
-    } catch (err: any) {
-      throw new AppError(err.message);
-  }
-};
-
-export const deleteMedia = async (
-  req: Request,
-  res: Response
-): Promise<Response> => {
-  const { id } = req.params;
-  const { companyId } = req.user
-
-  try {
-    const quickmessage = await QuickMessage.findByPk(id);
-    const filePath = path.resolve("public", `company${companyId}`,"quickMessage",quickmessage.mediaName);
-    const fileExists = fs.existsSync(filePath);
-    if (fileExists) {
-      fs.unlinkSync(filePath);
-    }
-    await quickmessage.update ({
-      mediaPath: null,
-      mediaName: null
-    });
-
-    return res.send({ mensagem: "Arquivo Excluído" });
-    } catch (err: any) {
-      throw new AppError(err.message);
-  }
 };

@@ -1,13 +1,13 @@
 import axios from "axios";
+import { getBackendURL } from "../services/config";
 
 const api = axios.create({
-	baseURL: process.env.REACT_APP_BACKEND_URL,
+	baseURL: getBackendURL(),
 	withCredentials: true,
 });
 
 export const openApi = axios.create({
-	baseURL: process.env.REACT_APP_BACKEND_URL
-	
+	baseURL: getBackendURL()
 });
 
 export default api;

@@ -1,4 +1,3 @@
-import * as Yup from "yup";
 import { Request, Response } from "express";
 import { getIO } from "../libs/socket";
 
@@ -23,11 +22,6 @@ type IndexQuery = {
 type StoreData = {
   users: any[];
   title: string;
-};
-
-type FindParams = {
-  companyId: number;
-  ownerId?: number;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -56,12 +50,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const io = getIO();
 
   record.users.forEach(user => {
-    console.log(user.id);
-    io.of(String(companyId))
-      .emit(`company-${companyId}-chat-user-${user.id}`, {
-        action: "create",
-        record
-      });
+    io.emit(`company-${companyId}-chat-user-${user.userId}`, {
+      action: "create",
+      record
+    });
   });
 
   return res.status(200).json(record);
@@ -83,12 +75,10 @@ export const update = async (
   const io = getIO();
 
   record.users.forEach(user => {
-    io.of(String(companyId))
-      .emit(`company-${companyId}-chat-user-${user.id}`, {
-        action: "update",
-        record,
-        userId: user.userId
-      });
+    io.emit(`company-${companyId}-chat-user-${user.userId}`, {
+      action: "update",
+      record
+    });
   });
 
   return res.status(200).json(record);
@@ -112,11 +102,10 @@ export const remove = async (
   await DeleteService(id);
 
   const io = getIO();
-  io.of(String(companyId))
-    .emit(`company-${companyId}-chat`, {
-      action: "delete",
-      id
-    });
+  io.emit(`company-${companyId}-chat`, {
+    action: "delete",
+    id
+  });
 
   return res.status(200).json({ message: "Chat deleted" });
 };
@@ -125,17 +114,35 @@ export const saveMessage = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
+  const medias = req.files as Express.Multer.File[];
   const { companyId } = req.user;
   const { message } = req.body;
   const { id } = req.params;
   const senderId = +req.user.id;
   const chatId = +id;
 
-  const newMessage = await CreateMessageService({
-    chatId,
-    senderId,
-    message
-  });
+  let newMessage = null;
+
+  if (medias) {
+    await Promise.all(
+      medias.map(async (media: Express.Multer.File) => {
+        newMessage = await CreateMessageService({
+          chatId,
+          senderId,
+          message: media.originalname,
+          mediaPath: media.filename,
+          mediaName: media.originalname,
+          mediaType: media.mimetype.split("/")[0]
+        });
+      })
+    );
+  } else {
+    newMessage = await CreateMessageService({
+      chatId,
+      senderId,
+      message
+    });
+  }
 
   const chat = await Chat.findByPk(chatId, {
     include: [
@@ -144,20 +151,20 @@ export const saveMessage = async (
     ]
   });
 
-  const io = getIO();
-  io.of(String(companyId))
-    .emit(`company-${companyId}-chat-${chatId}`, {
-      action: "new-message",
-      newMessage,
-      chat
-    });
+  const chatUsersChannels = chat.users.map(user => `user-${user.userId}`);
 
-  io.of(String(companyId))
-    .emit(`company-${companyId}-chat`, {
-      action: "new-message",
-      newMessage,
-      chat
-    });
+  const io = getIO();
+  io.to(chatUsersChannels).emit(`company-${companyId}-chat-${chatId}`, {
+    action: "new-message",
+    newMessage,
+    chat
+  });
+
+  io.to(chatUsersChannels).emit(`company-${companyId}-chat`, {
+    action: "new-message",
+    newMessage,
+    chat
+  });
 
   return res.json(newMessage);
 };
@@ -180,18 +187,18 @@ export const checkAsRead = async (
     ]
   });
 
-  const io = getIO();
-  io.of(String(companyId))
-    .emit(`company-${companyId}-chat-${id}`, {
-      action: "update",
-      chat
-    });
+  const chatUsersChannels = chat.users.map(user => `user-${user.userId}`);
 
-  io.of(String(companyId))
-    .emit(`company-${companyId}-chat`, {
-      action: "update",
-      chat
-    });
+  const io = getIO();
+  io.to(chatUsersChannels).emit(`company-${companyId}-chat-${id}`, {
+    action: "update",
+    chat
+  });
+
+  io.to(chatUsersChannels).emit(`company-${companyId}-chat`, {
+    action: "update",
+    chat
+  });
 
   return res.json(chat);
 };

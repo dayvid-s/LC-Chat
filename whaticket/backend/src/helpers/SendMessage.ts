@@ -1,47 +1,57 @@
+import { proto } from "@whiskeysockets/baileys";
 import Whatsapp from "../models/Whatsapp";
 import GetWhatsappWbot from "./GetWhatsappWbot";
-import fs from "fs";
-import formatBody from "./Mustache";
-
 import { getMessageOptions } from "../services/WbotServices/SendWhatsAppMedia";
+import { handleMessage } from "../services/WbotServices/wbotMessageListener";
+import Message from "../models/Message";
 
 export type MessageData = {
-  number: number | string;
+  number: string;
   body: string;
   mediaPath?: string;
-  companyId?: number;
-  mediaName?: string;
+  saveOnTicket?: boolean;
+  fromMe?: boolean;
+  read?: boolean;
+  quotedMsg?: Message;
+  linkPreview?: any;
 };
 
 export const SendMessage = async (
   whatsapp: Whatsapp,
-  messageData: MessageData,
-  isGroup: boolean = false
-
+  messageData: MessageData
 ): Promise<any> => {
   try {
     const wbot = await GetWhatsappWbot(whatsapp);
-    const chatId = `${messageData.number}@${!!isGroup ? 'g.us' : 's.whatsapp.net'}`;
-    const companyId = messageData?.companyId ? messageData.companyId.toString(): null;
+    const number = messageData.number.toString();
+    const chatId = number.includes("@") ? number : `${number}@s.whatsapp.net`;
 
-    let message;
+    let message: proto.WebMessageInfo;
+
+    const body = `${messageData.body}`;
 
     if (messageData.mediaPath) {
-      const options = await getMessageOptions(
-        messageData.mediaName,
-        messageData.mediaPath,
-        companyId,
-        messageData.body,
-      );
+      const options = await getMessageOptions(body, messageData.mediaPath);
       if (options) {
-        const body = fs.readFileSync(messageData.mediaPath);
         message = await wbot.sendMessage(chatId, {
           ...options
         });
       }
     } else {
-      const body = formatBody(`${messageData.body}`);
-      message = await wbot.sendMessage(chatId, { text: body });
+      message = await wbot.sendMessage(chatId, {
+        text: body,
+        linkPreview:
+          messageData.linkPreview === true
+            ? undefined
+            : messageData.linkPreview || false
+      });
+    }
+
+    if (messageData.saveOnTicket) {
+      handleMessage(
+        message,
+        await GetWhatsappWbot(whatsapp),
+        whatsapp.companyId
+      );
     }
 
     return message;

@@ -14,8 +14,6 @@ import {
 import Company from "./Company";
 import Ticket from "./Ticket";
 import TicketTag from "./TicketTag";
-import Contact from "./Contact";
-import ContactTag from "./ContactTag";
 
 @Table
 class Tag extends Model<Tag> {
@@ -39,12 +37,6 @@ class Tag extends Model<Tag> {
   @BelongsToMany(() => Ticket, () => TicketTag)
   tickets: Ticket[];
 
-  @BelongsToMany(() => Contact, () => ContactTag)
-  contacts: Array<Contact & { ContactTag: ContactTag }>;
-
-  @HasMany(() => ContactTag)
-  contactTags: ContactTag[];
-
   @ForeignKey(() => Company)
   @Column
   companyId: number;
@@ -57,18 +49,6 @@ class Tag extends Model<Tag> {
 
   @UpdatedAt
   updatedAt: Date;
-
-  @Column
-  timeLane: number;
-
-	@Column
-  nextLaneId: number;
-	
-  @Column
-  greetingMessageLane: string;
-
-  @Column
-  rollbackLaneId: number;
 }
 
 export default Tag;

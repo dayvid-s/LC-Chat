@@ -2,17 +2,19 @@ import { Op } from "sequelize";
 import TicketTraking from "../../models/TicketTraking";
 
 interface Params {
-  ticketId: string | number;
-  companyId: string | number;
-  whatsappId?: string | number;
-  userId?: string | number;
+  ticketId: number;
+  companyId: number;
+  whatsappId?: number;
+  userId?: number;
+  channel?: string;
 }
 
 const FindOrCreateATicketTrakingService = async ({
   ticketId,
   companyId,
   whatsappId,
-  userId
+  userId,
+  channel
 }: Params): Promise<TicketTraking> => {
   const ticketTraking = await TicketTraking.findOne({
     where: {
@@ -24,14 +26,14 @@ const FindOrCreateATicketTrakingService = async ({
   });
 
   if (ticketTraking) {
-     return ticketTraking;
+    return ticketTraking;
   }
 
   const newRecord = await TicketTraking.create({
     ticketId,
     companyId,
     whatsappId,
-    userId
+    userId,
   });
 
   return newRecord;

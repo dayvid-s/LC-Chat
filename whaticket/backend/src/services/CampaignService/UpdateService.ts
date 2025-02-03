@@ -1,16 +1,14 @@
 import AppError from "../../errors/AppError";
 import Campaign from "../../models/Campaign";
 import ContactList from "../../models/ContactList";
-import Queue from "../../models/Queue";
-import User from "../../models/User";
 import Whatsapp from "../../models/Whatsapp";
 
 interface Data {
-  id: number | string;
+  id: number;
   name: string;
   status: string;
   confirmation: boolean;
-  scheduledAt: string;
+  scheduledAt: Date;
   companyId: number;
   contactListId: number;
   message1?: string;
@@ -23,10 +21,6 @@ interface Data {
   confirmationMessage3?: string;
   confirmationMessage4?: string;
   confirmationMessage5?: string;
-  userId: number | string;
-  queueId: number | string;
-  statusTicket: string;
-  openTicket: string;
 }
 
 const UpdateService = async (data: Data): Promise<Campaign> => {
@@ -47,7 +41,6 @@ const UpdateService = async (data: Data): Promise<Campaign> => {
 
   if (
     data.scheduledAt != null &&
-    data.scheduledAt != "" &&
     data.status === "INATIVA"
   ) {
     data.status = "PROGRAMADA";
@@ -58,9 +51,7 @@ const UpdateService = async (data: Data): Promise<Campaign> => {
   await record.reload({
     include: [
       { model: ContactList },
-      { model: Whatsapp, attributes: ["id", "name"] },
-      { model: User, attributes: ["id", "name"] },
-      { model: Queue, attributes: ["id", "name"] },
+      { model: Whatsapp, attributes: ["id", "name"] }
     ]
   });
 

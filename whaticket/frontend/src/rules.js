@@ -5,7 +5,7 @@ const rules = {
 
 	admin: {
 		static: [
-			"dashboard:view",
+			//"dashboard:view",
 			"drawer-admin-items:view",
 			"tickets-manager:showall",
 			"user-modal:editProfile",
@@ -14,8 +14,7 @@ const rules = {
 			"contacts-page:deleteContact",
 			"connections-page:actionButtons",
 			"connections-page:addConnection",
-			"connections-page:editOrDeleteConnection",
-			"tickets-manager:closeAll",
+			"connections-page:editOrDeleteConnection"
 		],
 	},
 };

@@ -2,24 +2,15 @@ import * as Yup from "yup";
 
 import AppError from "../../errors/AppError";
 import Schedule from "../../models/Schedule";
+import Contact from "../../models/Contact";
 
 interface Request {
   body: string;
-  sendAt: string;
-  contactId: number | string;
-  companyId: number | string;
-  userId?: number | string;
-  ticketUserId?: number | string;
-  queueId?: number | string;
-  openTicket?: string;
-  statusTicket?: string;
-  whatsappId?: number | string;
-  intervalo?: number;
-  valorIntervalo?: number;
-  enviarQuantasVezes?: number;
-  tipoDias?: number;
-  contadorEnvio?: number;
-  assinar?: boolean;
+  sendAt: Date;
+  contactId: number;
+  companyId: number;
+  userId?: number;
+  saveMessage?: boolean;
 }
 
 const CreateService = async ({
@@ -28,17 +19,7 @@ const CreateService = async ({
   contactId,
   companyId,
   userId,
-  ticketUserId,
-  queueId,
-  openTicket,
-  statusTicket,
-  whatsappId,
-  intervalo,
-  valorIntervalo,
-  enviarQuantasVezes,
-  tipoDias,
-  assinar,
-  contadorEnvio
+  saveMessage
 }: Request): Promise<Schedule> => {
   const schema = Yup.object().shape({
     body: Yup.string().required().min(5),
@@ -47,33 +28,23 @@ const CreateService = async ({
 
   try {
     await schema.validate({ body, sendAt });
-  } catch (err: any) {
+  } catch (err) {
     throw new AppError(err.message);
   }
 
-  const schedule = await Schedule.create(
-    {
-      body,
-      sendAt,
-      contactId,
-      companyId,
-      userId,
-      status: 'PENDENTE',
-      ticketUserId,
-      queueId,
-      openTicket,
-      statusTicket,
-      whatsappId,
-      intervalo,
-      valorIntervalo,
-      enviarQuantasVezes,
-      tipoDias,
-      assinar,
-      contadorEnvio
-    }
-  );
+  const schedule = await Schedule.create({
+    body,
+    sendAt,
+    contactId,
+    companyId,
+    userId,
+    saveMessage,
+    status: "PENDENTE"
+  });
 
-  await schedule.reload();
+  await schedule.reload({
+    include: [{ model: Contact, as: "contact" }]
+  });
 
   return schedule;
 };

@@ -1,19 +1,17 @@
 import { Request, Response } from "express";
-import Version from "../models/Versions";
+import GetPublicSettingService from "../services/SettingServices/GetPublicSettingService";
+import { GitInfo } from "../gitinfo";
 
-export const index = async (req: Request, res: Response): Promise<Response> => {
-    const version = await Version.findByPk(1);
-    return res.status(200).json({
-        version: version.versionFrontend
-    });
-};
+export const version = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const appName = await GetPublicSettingService({ key: "appName" });
 
-export const store = async (req: Request, res: Response): Promise<Response> => {
-    const version = await Version.findByPk(1);
-    version.versionFrontend = req.body.version;
-    await version.save();
+  const data = {
+    name: appName || "Ticketz - Chat Based Ticket System",
+    ...GitInfo
+  };
 
-    return res.status(200).json({
-        version: version.versionFrontend
-    });
+  return res.status(200).json(data);
 };

@@ -1,13 +1,14 @@
-import { proto } from "@whiskeysockets/baileys";
 import {
+  proto,
   AuthenticationCreds,
   AuthenticationState,
-  SignalDataTypeMap
+  SignalDataTypeMap,
+  initAuthCreds,
+  BufferJSON
 } from "@whiskeysockets/baileys";
-import { initAuthCreds } from "@whiskeysockets/baileys";
-import { BufferJSON } from "@whiskeysockets/baileys";
-import cacheLayer from "../libs/cache";
 import Whatsapp from "../models/Whatsapp";
+import { cacheLayer } from "../libs/cache";
+import { logger } from "../utils/logger";
 
 export const useMultiFileAuthState = async (
   whatsapp: Whatsapp
@@ -27,8 +28,13 @@ export const useMultiFileAuthState = async (
   const readData = async (file: string) => {
     try {
       const data = await cacheLayer.get(`sessions:${whatsapp.id}:${file}`);
-      return JSON.parse(data, BufferJSON.reviver);
+
+      if (data) {
+        return JSON.parse(data, BufferJSON.reviver);
+      }
+      return null;
     } catch (error) {
+      console.log("Read data error", error);
       return null;
     }
   };
@@ -36,7 +42,9 @@ export const useMultiFileAuthState = async (
   const removeData = async (file: string) => {
     try {
       await cacheLayer.del(`sessions:${whatsapp.id}:${file}`);
-    } catch {}
+    } catch (error) {
+      console.log("removeData", error);
+    }
   };
 
   const creds: AuthenticationCreds =
@@ -48,22 +56,31 @@ export const useMultiFileAuthState = async (
       keys: {
         get: async (type, ids) => {
           const data: { [_: string]: SignalDataTypeMap[typeof type] } = {};
-          await Promise.all(
-            ids.map(async id => {
+
+          for (let id of ids) {
+            try {
               let value = await readData(`${type}-${id}`);
-              if (type === "app-state-sync-key" && value) {
+              if (type === "app-state-sync-key") {
                 value = proto.Message.AppStateSyncKeyData.fromObject(value);
               }
-
               data[id] = value;
-            })
-          );
+            } catch (error) {
+              logger.error(
+                `useMultiFileAuthState (69) -> error: ${error.message}`
+              );
+              logger.error(
+                `useMultiFileAuthState (72) -> stack: ${error.stack}`
+              );
+            }
+          }
 
           return data;
         },
         set: async data => {
           const tasks: Promise<void>[] = [];
+          // eslint-disable-next-line no-restricted-syntax, guard-for-in
           for (const category in data) {
+            // eslint-disable-next-line no-restricted-syntax, guard-for-in
             for (const id in data[category]) {
               const value = data[category][id];
               const file = `${category}-${id}`;

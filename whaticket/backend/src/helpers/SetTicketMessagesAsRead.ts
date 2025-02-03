@@ -1,79 +1,99 @@
-import { proto, WASocket } from "@whiskeysockets/baileys";
-import cacheLayer from "../libs/cache";
+import { WASocket, proto } from "@whiskeysockets/baileys";
+import { cacheLayer } from "../libs/cache";
 import { getIO } from "../libs/socket";
 import Message from "../models/Message";
 import Ticket from "../models/Ticket";
-import logger from "../utils/logger";
+import { logger } from "../utils/logger";
 import GetTicketWbot from "./GetTicketWbot";
-import ShowWhatsAppService from "../services/WhatsappService/ShowWhatsAppService";
 
 const SetTicketMessagesAsRead = async (ticket: Ticket): Promise<void> => {
+  await ticket.update({ unreadMessages: 0 });
+  await cacheLayer.set(`contacts:${ticket.contactId}:unreads`, "0");
+  let companyId: number;
 
-  if (ticket.whatsappId) {
-    // console.log("SETTING MESSAGES AS READ", ticket.whatsappId)
-    const whatsapp = await ShowWhatsAppService(
-      ticket.whatsappId,
+  try {
+    const wbot = await GetTicketWbot(ticket);
 
+    const messages = await Message.findAll({
+      attributes: ["id", "companyId", "dataJson"],
+      where: {
+        ticketId: ticket.id,
+        fromMe: false,
+        read: false
+      },
+      order: [["createdAt", "DESC"]]
+    });
 
-      ticket.companyId
+    if (messages.length === 0) return;
+
+    companyId = messages[0]?.companyId;
+
+    const messageKeys = messages
+      .map(m => {
+        const message: proto.IWebMessageInfo = JSON.parse(m.dataJson);
+        return message.key;
+      })
+      .filter(key => key !== undefined);
+
+    logger.debug(
+      { messageKeys, ticketId: ticket.id },
+      `Marking ${messageKeys.length} messages of ticket ${ticket.id} as read`
     );
 
-    if (["open", "group"].includes(ticket.status) && whatsapp && whatsapp.status === 'CONNECTED' && ticket.unreadMessages > 0) {
-      try {
-        const wbot = await GetTicketWbot(ticket);
-        // no baileys temos que marcar cada mensagem como lida
-        // não o chat inteiro como é feito no legacy
-        const getJsonMessage = await Message.findAll({
-          where: {
-            ticketId: ticket.id,
-            fromMe: false,
-            read: false
-          },
-          order: [["createdAt", "DESC"]]
-        });
-
-        if (getJsonMessage.length > 0) {
-
-          getJsonMessage.forEach(async message => {
-            const msg: proto.IWebMessageInfo = JSON.parse(message.dataJson);
-            if (msg.key && msg.key.fromMe === false && !ticket.isBot && (ticket.userId || ticket.isGroup)) {
-
-              await wbot.readMessages([msg.key])
-            }
-          });
-        }
-
-        await Message.update(
-          { read: true },
-          {
-            where: {
-              ticketId: ticket.id,
-              read: false
-            }
-          }
+    // Process message keys in batches of 250
+    const batchSize = 250;
+    for (let i = 0; i < messageKeys.length; i += batchSize) {
+      const batch = messageKeys.slice(i, i + batchSize);
+      (wbot as WASocket).readMessages(batch).catch(err => {
+        logger.error(
+          { error: err as Error },
+          `Could not mark messages as read. Err: ${err?.message}`
         );
-
-        await ticket.update({ unreadMessages: 0 });
-        await cacheLayer.set(`contacts:${ticket.contactId}:unreads`, "0");
-
-        const io = getIO();
-
-        io.of(ticket.companyId.toString())
-          // .to(ticket.status).to("notification")
-          .emit(`company-${ticket.companyId}-ticket`, {
-            action: "updateUnread",
-            ticketId: ticket.id
-          });
-
-      } catch (err) {
-        logger.warn(
-          `Could not mark messages as read. Maybe whatsapp session disconnected? Err: ${err}`
-        );
-      }
-
+      });
     }
+
+    const lastMessage: proto.IWebMessageInfo = JSON.parse(messages[0].dataJson);
+    if (lastMessage?.key?.remoteJid && !lastMessage.key.fromMe) {
+      // Asynchronous chatModify call
+      (wbot as WASocket)
+        .chatModify(
+          { markRead: true, lastMessages: [lastMessage] },
+          lastMessage.key.remoteJid
+        )
+        .catch(err => {
+          logger.error(
+            { error: err as Error },
+            `Could not modify chat. Err: ${err?.message}`
+          );
+        });
+    }
+
+    await Message.update(
+      { read: true },
+      {
+        where: {
+          ticketId: ticket.id,
+          read: false
+        }
+      }
+    );
+  } catch (err) {
+    logger.error(
+      { error: err as Error },
+      `Could not mark messages as read. Err: ${err?.message}`
+    );
   }
 
+  const io = getIO();
+  if (companyId) {
+    io.to(ticket.id.toString())
+      .to(`company-${companyId}-${ticket.status}`)
+      .to(`queue-${ticket.queueId}-${ticket.status}`)
+      .emit(`company-${companyId}-ticket`, {
+        action: "updateUnread",
+        ticketId: ticket.id
+      });
+  }
 };
 
 export default SetTicketMessagesAsRead;

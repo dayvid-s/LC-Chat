@@ -1,81 +1,82 @@
-import 'dotenv/config';
 import gracefulShutdown from "http-graceful-shutdown";
 import app from "./app";
-import cron from "node-cron";
 import { initIO } from "./libs/socket";
-import logger from "./utils/logger";
+import { logger } from "./utils/logger";
 import { StartAllWhatsAppsSessions } from "./services/WbotServices/StartAllWhatsAppsSessions";
 import Company from "./models/Company";
-import BullQueue from './libs/queue';
-
 import { startQueueProcess } from "./queues";
-// import { ScheduledMessagesJob, ScheduleMessagesGenerateJob, ScheduleMessagesEnvioJob, ScheduleMessagesEnvioForaHorarioJob } from "./wbotScheduledMessages";
+import {
+  checkOpenInvoices,
+  payGatewayInitialize
+} from "./services/PaymentGatewayServices/PaymentGatewayServices";
 
-const server = app.listen(process.env.PORT, async () => {
-  const companies = await Company.findAll({
-    where: { status: true },
-    attributes: ["id"]
-  });
+// Environment Variable Validation
+if (!process.env.PORT) {
+  logger.error("PORT environment variable is not set.");
+  process.exit(1);
+}
 
-  const allPromises: any[] = [];
-  companies.map(async c => {
-    const promise = StartAllWhatsAppsSessions(c.id);
-    allPromises.push(promise);
-  });
+// Function to start server and initialize services
+async function startServer() {
+  try {
+    const companies = await Company.findAll();
+    const sessionPromises = companies.map(async company => {
+      try {
+        await StartAllWhatsAppsSessions(company.id);
+        logger.info(`Started WhatsApp session for company ID: ${company.id}`);
+      } catch (error) {
+        logger.error(
+          `Error starting WhatsApp session for company ID: ${company.id} - ${error.message}`
+        );
+      }
+    });
 
-  Promise.all(allPromises).then(async () => {
+    await Promise.all(sessionPromises);
 
-    await startQueueProcess();
-  });
+    startQueueProcess();
+    logger.info(`Server started on port: ${process.env.PORT}`);
 
-  if (process.env.REDIS_URI_ACK && process.env.REDIS_URI_ACK !== '') {
-    BullQueue.process();
+    try {
+      await payGatewayInitialize();
+    } catch (error) {
+      logger.error(`Error initializing payment gateway: ${error.message}`);
+    }
+
+    checkOpenInvoices();
+  } catch (error) {
+    logger.error(`Error during server startup: ${error.message}`);
+    process.exit(1);
   }
+}
 
-  logger.info(`Server started on port: ${process.env.PORT}`);
+// Create and start the server
+const server = app.listen(process.env.PORT, async () => {
+  logger.info(`Server is listening on port: ${process.env.PORT}`);
+  await startServer();
 });
-
-process.on("uncaughtException", err => {
-  console.error(`${new Date().toUTCString()} uncaughtException:`, err.message);
-  console.error(err.stack);
-  process.exit(1);
-});
-
-process.on("unhandledRejection", (reason, p) => {
-  console.error(
-    `${new Date().toUTCString()} unhandledRejection:`,
-    reason,
-    p
-  );
-  process.exit(1);
-});
-
-// cron.schedule("* * * * * *", async () => {
-
-//   try {
-//     // console.log("Running a job at 5 minutes at America/Sao_Paulo timezone")
-//     await ScheduledMessagesJob();
-//     await ScheduleMessagesGenerateJob();
-//   }
-//   catch (error) {
-//     logger.error(error);
-//   }
-
-// });
-
-// cron.schedule("* * * * * *", async () => {
-
-//   try {
-//     // console.log("Running a job at 01:00 at America/Sao_Paulo timezone")
-//     console.log("Running a job at 2 minutes at America/Sao_Paulo timezone")
-//     await ScheduleMessagesEnvioJob();
-//     await ScheduleMessagesEnvioForaHorarioJob()
-//   }
-//   catch (error) {
-//     logger.error(error);
-//   }
-
-// });
 
 initIO(server);
-gracefulShutdown(server);
+
+// Graceful Shutdown Setup
+gracefulShutdown(server, {
+  signals: "SIGINT SIGTERM",
+  timeout: 30000,
+  onShutdown: async () => {
+    logger.info("Shutdown initiated. Cleaning up...");
+  },
+  finally: () => {
+    logger.info("Server has shut down.");
+  }
+});
+
+// Global Exception Handlers
+process.on("uncaughtException", err => {
+  logger.error({ err }, `Uncaught Exception: ${err.message}`);
+  process.exit(1);
+});
+
+// Global Exception Handlers for logging only
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+process.on("unhandledRejection", (reason: any, promise) => {
+  logger.debug({ promise, reason }, "Unhandled Rejection");
+});

@@ -2,7 +2,7 @@ import { Op, fn, col, where } from "sequelize";
 import ContactList from "../../models/ContactList";
 import ContactListItem from "../../models/ContactListItem";
 import { isEmpty } from "lodash";
-import removeAccents from "remove-accents"
+
 interface Request {
   companyId: number | string;
   searchParam?: string;
@@ -25,16 +25,14 @@ const ListService = async ({
   };
 
   if (!isEmpty(searchParam)) {
-    const sanitizedSearchParam = removeAccents(searchParam.toLocaleLowerCase().trim());
-
     whereCondition = {
       ...whereCondition,
       [Op.or]: [
         {
           name: where(
-            fn("LOWER", fn('unaccent',col("ContactList.name"))),
+            fn("LOWER", col("ContactList.name")),
             "LIKE",
-            `%${sanitizedSearchParam}%`
+            `%${searchParam.toLowerCase().trim()}%`
           )
         }
       ]
@@ -44,7 +42,7 @@ const ListService = async ({
   const limit = 20;
   const offset = limit * (+pageNumber - 1);
 
-  const { count, rows: records } = await ContactList.findAndCountAll({
+  const { count: counters, rows: records } = await ContactList.findAndCountAll({
     where: whereCondition,
     limit,
     offset,
@@ -64,6 +62,12 @@ const ListService = async ({
       [fn("count", col("contacts.id")), "contactsCount"]
     ],
     group: ["ContactList.id"]
+  });
+
+  let count = 0;
+  
+  Object.keys(counters).forEach((key)=> {
+    count += counters[key].count;
   });
 
   const hasMore = count > offset + records.length;

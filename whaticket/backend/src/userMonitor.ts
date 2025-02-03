@@ -3,7 +3,8 @@ import * as Sentry from "@sentry/node";
 import { QueryTypes } from "sequelize";
 import { isNil } from "lodash";
 
-import logger from "./utils/logger";
+
+import { logger } from "./utils/logger";
 import sequelize from "./database";
 import User from "./models/User";
 const connection = process.env.REDIS_URI || "";
@@ -55,7 +56,7 @@ export async function initUserMonitorQueues() {
     "VerifyLoginStatus",
     {},
     {
-      repeat: { cron: "* * * * *", key: "verify-login-status"},
+      repeat: { cron: "* * * * *" },
       removeOnComplete: { age: 60 * 60, count: 10 },
       removeOnFail: { age: 60 * 60, count: 10 }
     }

@@ -5,12 +5,8 @@ import GetWbotMessage from "../../helpers/GetWbotMessage";
 import Message from "../../models/Message";
 import Ticket from "../../models/Ticket";
 
-const DeleteWhatsAppMessage = async (messageId: string, companyId?: string | number): Promise<Message> => {
-  const message = await Message.findOne({
-    where: {
-      id: messageId,
-      companyId
-    },
+const DeleteWhatsAppMessage = async (messageId: string): Promise<Message> => {
+  const message = await Message.findByPk(messageId, {
     include: [
       {
         model: Ticket,
@@ -26,30 +22,30 @@ const DeleteWhatsAppMessage = async (messageId: string, companyId?: string | num
 
   const { ticket } = message;
 
-  if (!message.isPrivate) {
-    const messageToDelete = await GetWbotMessage(ticket, messageId);
+  const messageToDelete = await GetWbotMessage(ticket, messageId);
 
-    // ALTERAÇÃO PARA BAILEYS 5.0
-    try {
-      const wbot = await GetTicketWbot(ticket);
+  try {
+    const wbot = await GetTicketWbot(ticket);
+    const messageDelete = messageToDelete as proto.WebMessageInfo;
+
+    
       const menssageDelete = messageToDelete as Message;
 
-      const jsonStringToParse = JSON.parse(menssageDelete.dataJson)
-
       await (wbot as WASocket).sendMessage(menssageDelete.remoteJid, {
-        delete: jsonStringToParse.key
-      })
-
-    } catch (err) {
-      console.log(err);
-      throw new AppError("ERR_DELETE_WAPP_MSG");
-    }
+        delete: {
+          id: menssageDelete.id,
+          remoteJid: menssageDelete.remoteJid,
+          participant: menssageDelete.participant,
+          fromMe: menssageDelete.fromMe
+        }
+      });
+    
+  } catch (err) {
+    console.log(err);
+    throw new AppError("ERR_DELETE_WAPP_MSG");
   }
+  await message.update({ isDeleted: true });
 
-  if (!message.isPrivate) {
-    await message.update({ isDeleted: true });
-  }
-  
   return message;
 };
 

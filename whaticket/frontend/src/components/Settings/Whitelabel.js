@@ -1,3 +1,44 @@
+/*
+
+   DO NOT REMOVE / NÃO REMOVER
+
+   VERSÃO EM PORTUGUÊS MAIS ABAIXO
+
+   
+   BASIC LICENSE INFORMATION:
+
+   Author: Claudemir Todo Bom
+   Email: claudemir@todobom.com
+   
+   Licensed under the AGPLv3 as stated on LICENSE.md file
+   
+   Any work that uses code from this file is obligated to 
+   give access to its source code to all of its users (not only
+   the system's owner running it)
+   
+   EXCLUSIVE LICENSE to use on closed source derived work can be
+   purchased from the author and put at the root of the source
+   code tree as proof-of-purchase.
+
+
+
+   INFORMAÇÕES BÁSICAS DE LICENÇA
+
+   Autor: Claudemir Todo Bom
+   Email: claudemir@todobom.com
+
+   Licenciado sob a licença AGPLv3 conforme arquivo LICENSE.md
+    
+   Qualquer sistema que inclua este código deve ter o seu código
+   fonte fornecido a todos os usuários do sistema (não apenas ao
+   proprietário da infraestrutura que o executa)
+   
+   LICENÇA EXCLUSIVA para uso em produto derivado em código fechado
+   pode ser adquirida com o autor e colocada na raiz do projeto
+   como prova de compra. 
+   
+ */
+
 import React, { useEffect, useState, useContext, useRef } from "react";
 
 import Grid from "@material-ui/core/Grid";
@@ -8,7 +49,7 @@ import { toast } from 'react-toastify';
 import { makeStyles } from "@material-ui/core/styles";
 import { grey, blue } from "@material-ui/core/colors";
 import OnlyForSuperUser from "../OnlyForSuperUser";
-import useAuth from "../../hooks/useAuth.js/index.js";
+import useAuth from "../../hooks/useAuth.js";
 
 import {
   IconButton,
@@ -19,12 +60,11 @@ import { Colorize, AttachFile, Delete } from "@material-ui/icons";
 import ColorPicker from "../ColorPicker";
 import ColorModeContext from "../../layout/themeContext";
 import api from "../../services/api";
-import { getBackendUrl } from "../../config";
+import { getBackendURL } from "../../services/config";
 
-import defaultLogoLight from "../../assets/logo.png";
-import defaultLogoDark from "../../assets/logo-black.png";
-import defaultLogoFavicon from "../../assets/favicon.ico";
-import ColorBoxModal from "../ColorBoxModal/index.js";
+const defaultLogoLight = "/vector/logo.svg";
+const defaultLogoDark = "/vector/logo-dark.svg";
+const defaultLogoFavicon = "/vector/favicon.svg";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -86,7 +126,7 @@ const useStyles = makeStyles((theme) => ({
     width: 20,
     height: 20,
   },
-
+  
   uploadInput: {
     display: "none",
   },
@@ -99,7 +139,7 @@ const useStyles = makeStyles((theme) => ({
     borderColor: "#424242",
     textAlign: "center",
   },
-
+  
   appLogoDarkPreviewDiv: {
     backgroundColor: "#424242",
     padding: "10px",
@@ -108,7 +148,7 @@ const useStyles = makeStyles((theme) => ({
     borderColor: "white",
     textAlign: "center",
   },
-
+  
   appLogoFaviconPreviewDiv: {
     padding: "10px",
     borderStyle: "solid",
@@ -116,23 +156,23 @@ const useStyles = makeStyles((theme) => ({
     borderColor: "black",
     textAlign: "center",
   },
-
+  
   appLogoLightPreviewImg: {
     width: "100%",
     maxHeight: 72,
-    content: "url(" + theme.calculatedLogoLight() + ")"
+    content: `url("${theme.calculatedLogoLight()}")`
   },
-
+  
   appLogoDarkPreviewImg: {
     width: "100%",
     maxHeight: 72,
-    content: "url(" + theme.calculatedLogoDark() + ")"
+    content: `url("${theme.calculatedLogoDark()}")`
   },
 
   appLogoFaviconPreviewImg: {
     width: "100%",
     maxHeight: 72,
-    content: "url(" + ((theme.appLogoFavicon) ? theme.appLogoFavicon : "") + ")"
+    content: `url("${((theme.appLogoFavicon) ? theme.appLogoFavicon : "/vector/favicon.svg" )}")`
   }
 }));
 
@@ -157,15 +197,10 @@ export default function Whitelabel(props) {
   const { update } = useSettings();
 
   function updateSettingsLoaded(key, value) {
-    console.log("|=========== updateSettingsLoaded ==========|")
-    console.log(key, value)
-    console.log("|===========================================|")
-    if (key === 'primaryColorLight' || key === 'primaryColorDark' || key === 'appName') {
-      localStorage.setItem(key, value);
-    };
     const newSettings = { ...settingsLoaded };
     newSettings[key] = value;
     setSettingsLoaded(newSettings);
+    console.debug(key, value, newSettings, settingsLoaded);
   }
 
   useEffect(() => {
@@ -175,6 +210,8 @@ export default function Whitelabel(props) {
       }
     );
 
+    console.debug("settings", settings);
+
     if (Array.isArray(settings) && settings.length) {
       const primaryColorLight = settings.find((s) => s.key === "primaryColorLight")?.value;
       const primaryColorDark = settings.find((s) => s.key === "primaryColorDark")?.value;
@@ -182,15 +219,13 @@ export default function Whitelabel(props) {
       const appLogoDark = settings.find((s) => s.key === "appLogoDark")?.value;
       const appLogoFavicon = settings.find((s) => s.key === "appLogoFavicon")?.value;
       const appName = settings.find((s) => s.key === "appName")?.value;
-
       setAppName(appName || "");
-      setSettingsLoaded({ ...settingsLoaded, primaryColorLight, primaryColorDark, appLogoLight, appLogoDark, appLogoFavicon, appName });
+      setSettingsLoaded( { ...settingsLoaded , primaryColorLight, primaryColorDark, appLogoLight, appLogoDark, appLogoFavicon, appName });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
 
   async function handleSaveSetting(key, value) {
-
     await update({
       key,
       value,
@@ -203,15 +238,14 @@ export default function Whitelabel(props) {
     if (!e.target.files) {
       return;
     }
-
+    
     const file = e.target.files[0];
     const formData = new FormData();
-
-    formData.append("typeArch", "logo");
-    formData.append("mode", mode);
+    
     formData.append("file", file);
-
-    await api.post("/settings-whitelabel/logo", formData, {
+    formData.append("mode", mode);
+    
+    api.post("/settings/logo", formData, {
       onUploadProgress: (event) => {
         let progress = Math.round(
           (event.loaded * 100) / event.total
@@ -222,7 +256,7 @@ export default function Whitelabel(props) {
       },
     }).then((response) => {
       updateSettingsLoaded(`appLogo${mode}`, response.data);
-      colorMode[`setAppLogo${mode}`](getBackendUrl() + "/public/" + response.data);
+      colorMode[`setAppLogo${mode}`]( getBackendURL()+"/public/"+response.data );
     }).catch((err) => {
       console.error(
         `Houve um problema ao realizar o upload da imagem.`
@@ -270,21 +304,17 @@ export default function Whitelabel(props) {
                     }}
                   />
                 </FormControl>
-                <ColorBoxModal
+                <ColorPicker
                   open={primaryColorLightModalOpen}
-                  handleClose={() => setPrimaryColorLightModalOpen(false)}
+                  handleClose={() => setPrimaryColorDarkModalOpen(false)}
                   onChange={(color) => {
-                    handleSaveSetting("primaryColorLight", `#${color.hex}`);
-                    colorMode.setPrimaryColorLight(`#${color.hex}`);
+                    setPrimaryColorLightModalOpen(false);
+                    handleSaveSetting("primaryColorLight", color);
+                    colorMode.setPrimaryColorLight(color);
                   }}
-
-
-                  currentColor={settingsLoaded.primaryColorLight}
                 />
-
               </Grid>
               <Grid xs={12} sm={6} md={4} item>
-
                 <FormControl className={classes.selectContainer}>
                   <TextField
                     id="primary-color-dark-field"
@@ -313,17 +343,16 @@ export default function Whitelabel(props) {
                     }}
                   />
                 </FormControl>
-                <ColorBoxModal
+                <ColorPicker
                   open={primaryColorDarkModalOpen}
                   handleClose={() => setPrimaryColorDarkModalOpen(false)}
                   onChange={(color) => {
-                    handleSaveSetting("primaryColorDark", `#${color.hex}`);
-                    colorMode.setPrimaryColorDark(`#${color.hex}`);
+                    setPrimaryColorDarkModalOpen(false);
+                    handleSaveSetting("primaryColorDark", color);
+                    colorMode.setPrimaryColorDark(color);
                   }}
-                  currentColor={settingsLoaded.primaryColorDark}
                 />
               </Grid>
-
               <Grid xs={12} sm={6} md={4} item>
                 <FormControl className={classes.selectContainer}>
                   <TextField
@@ -337,8 +366,8 @@ export default function Whitelabel(props) {
                       setAppName(e.target.value);
                     }}
                     onBlur={async (_) => {
-                      await handleSaveSetting("appName", appName);
-                      colorMode.setAppName(appName || "Multi100");
+                      await handleSaveSetting("appName",appName);
+                      colorMode.setAppName(appName || "ticketz");
                     }}
                   />
                 </FormControl>
@@ -353,15 +382,15 @@ export default function Whitelabel(props) {
                     InputProps={{
                       endAdornment: (
                         <>
-                          {settingsLoaded.appLogoLight &&
+                          { settingsLoaded.appLogoLight &&
                             <IconButton
                               size="small"
                               color="default"
-                              onClick={() => {
-                                handleSaveSetting("appLogoLight", "");
-                                colorMode.setAppLogoLight(defaultLogoLight);
-                              }
-                              }
+                              onClick={() => { 
+                                  handleSaveSetting("appLogoLight","");
+                                  colorMode.setAppLogoLight(defaultLogoLight);
+                                }
+                              }  
                             >
                               <Delete />
                             </IconButton>
@@ -371,7 +400,7 @@ export default function Whitelabel(props) {
                             id="upload-logo-light-button"
                             ref={logoLightInput}
                             className={classes.uploadInput}
-                            onChange={(e) => uploadLogo(e, "Light")}
+                            onChange={(e) => uploadLogo(e,"Light")}
                           />
                           <label htmlFor="upload-logo-light-button">
                             <IconButton
@@ -402,15 +431,15 @@ export default function Whitelabel(props) {
                     InputProps={{
                       endAdornment: (
                         <>
-                          {settingsLoaded.appLogoDark &&
+                          { settingsLoaded.appLogoDark &&
                             <IconButton
                               size="small"
                               color="default"
-                              onClick={() => {
-                                handleSaveSetting("appLogoDark", "");
-                                colorMode.setAppLogoDark(defaultLogoDark);
-                              }
-                              }
+                              onClick={() => { 
+                                  handleSaveSetting("appLogoDark","");
+                                  colorMode.setAppLogoDark(defaultLogoDark);
+                                }
+                              }  
                             >
                               <Delete />
                             </IconButton>
@@ -420,7 +449,7 @@ export default function Whitelabel(props) {
                             id="upload-logo-dark-button"
                             ref={logoDarkInput}
                             className={classes.uploadInput}
-                            onChange={(e) => uploadLogo(e, "Dark")}
+                            onChange={(e) => uploadLogo(e,"Dark")}
                           />
                           <label htmlFor="upload-logo-dark-button">
                             <IconButton
@@ -451,15 +480,15 @@ export default function Whitelabel(props) {
                     InputProps={{
                       endAdornment: (
                         <>
-                          {settingsLoaded.appLogoFavicon &&
+                          { settingsLoaded.appLogoFavicon &&
                             <IconButton
                               size="small"
                               color="default"
-                              onClick={() => {
-                                handleSaveSetting("appLogoFavicon", "");
-                                colorMode.setAppLogoFavicon(defaultLogoFavicon);
-                              }
-                              }
+                              onClick={() => { 
+                                  handleSaveSetting("appLogoFavicon","");
+                                  colorMode.setAppLogoFavicon(defaultLogoFavicon);
+                                }
+                              }  
                             >
                               <Delete />
                             </IconButton>
@@ -469,7 +498,7 @@ export default function Whitelabel(props) {
                             id="upload-logo-favicon-button"
                             ref={logoFaviconInput}
                             className={classes.uploadInput}
-                            onChange={(e) => uploadLogo(e, "Favicon")}
+                            onChange={(e) => uploadLogo(e,"Favicon")}
                           />
                           <label htmlFor="upload-logo-favicon-button">
                             <IconButton

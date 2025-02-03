@@ -33,52 +33,13 @@ class Plan extends Model<Plan> {
   queues: number;
 
   @Column
-  amount: string;   
-
-  @Column
-  useWhatsapp: boolean;   
-
-  @Column
-  useFacebook: boolean;   
-
-  @Column
-  useInstagram: boolean;   
-  
-  @Column
-  useCampaigns: boolean;   
-
-  @Column
-  useSchedules: boolean;   
-
-  @Column
-  useInternalChat: boolean;   
-  
-  @Column
-  useExternalApi: boolean;   
+  value: number;
 
   @CreatedAt
   createdAt: Date;
 
   @UpdatedAt
   updatedAt: Date;
-
-  @Column
-  useKanban: boolean;
-
-  @Column
-  trial: boolean;
-
-  @Column
-  trialDays: number;
-
-  @Column
-  recurrence: string;
-
-  @Column
-  useOpenAi: boolean;
-
-  @Column
-  useIntegrations: boolean;
 
   @Default(true)
   @Column

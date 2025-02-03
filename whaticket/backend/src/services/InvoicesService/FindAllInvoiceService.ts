@@ -1,6 +1,4 @@
-import Company from "../../models/Company";
 import Invoices from "../../models/Invoices";
-import Plan from "../../models/Plan";
 
 interface Request {
   companyId: number;
@@ -8,10 +6,11 @@ interface Request {
 
 const FindAllPlanService = async (companyId: number): Promise<Invoices[]> => {
   const invoice = await Invoices.findAll({
+    attributes: [ "id", "detail", "value", "dueDate", "status", "createdAt", "updatedAt" ],
     where: {
       companyId
-    },
-    order: [["id", "ASC"]],
+    }, 
+    order: [["id", "ASC"]]
   });
   return invoice;
 };

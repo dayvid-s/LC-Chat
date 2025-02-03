@@ -1,115 +1,67 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 import Paper from "@material-ui/core/Paper";
+import Container from "@material-ui/core/Container";
+import Grid from "@material-ui/core/Grid";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import Select from "@material-ui/core/Select";
+import TextField from "@material-ui/core/TextField";
+import FormHelperText from "@material-ui/core/FormHelperText";
 import Typography from "@material-ui/core/Typography";
-// import {  Button, Grid } from "@material-ui/core";
-import { makeStyles } from "@material-ui/core/styles";
-import { useTheme } from "@material-ui/core/styles";
-import { IconButton } from "@mui/material";
-import { Groups, SaveAlt } from "@mui/icons-material";
 
+// ICONS
+import SpeedIcon from "@material-ui/icons/Speed";
+import GroupIcon from "@material-ui/icons/Group";
+import AssignmentIcon from "@material-ui/icons/Assignment";
+import PersonIcon from "@material-ui/icons/Person";
+import TodayIcon from '@material-ui/icons/Today';
 import CallIcon from "@material-ui/icons/Call";
 import RecordVoiceOverIcon from "@material-ui/icons/RecordVoiceOver";
 import GroupAddIcon from "@material-ui/icons/GroupAdd";
 import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
 import CheckCircleIcon from "@material-ui/icons/CheckCircle";
+import ForumIcon from "@material-ui/icons/Forum";
 import FilterListIcon from "@material-ui/icons/FilterList";
 import ClearIcon from "@material-ui/icons/Clear";
 import SendIcon from '@material-ui/icons/Send';
 import MessageIcon from '@material-ui/icons/Message';
 import AccessAlarmIcon from '@material-ui/icons/AccessAlarm';
 import TimerIcon from '@material-ui/icons/Timer';
-import * as XLSX from 'xlsx';
 
+import { makeStyles } from "@material-ui/core/styles";
 import { grey, blue } from "@material-ui/core/colors";
 import { toast } from "react-toastify";
 
-import TabPanel from "../../components/TabPanel"
+import Chart from "./Chart";
+import ButtonWithSpinner from "../../components/ButtonWithSpinner";
+
+import CardCounter from "../../components/Dashboard/CardCounter";
 import TableAttendantsStatus from "../../components/Dashboard/TableAttendantsStatus";
 import { isArray } from "lodash";
 
-import { AuthContext } from "../../context/Auth/AuthContext";
-
 import useDashboard from "../../hooks/useDashboard";
-import useContacts from "../../hooks/useContacts";
-import useMessages from "../../hooks/useMessages";
-import { ChatsUser } from "./ChartsUser";
-import ChartDonut from "./ChartDonut";
+import useCompanies from "../../hooks/useCompanies";
 
-import Filters from "./Filters";
 import { isEmpty } from "lodash";
 import moment from "moment";
-import { ChartsDate } from "./ChartsDate";
-import { Avatar, Button, Card, CardContent, Container, Stack, SvgIcon, Tab, Tabs } from "@mui/material";
 import { i18n } from "../../translate/i18n";
-import Grid2 from "@mui/material/Unstable_Grid2/Grid2";
-import ForbiddenPage from "../../components/ForbiddenPage";
-import { ArrowDownward, ArrowUpward } from "@material-ui/icons";
+import OnlyForSuperUser from "../../components/OnlyForSuperUser";
+import useAuth from "../../hooks/useAuth.js";
+import clsx from "clsx";
+import { loadJSON } from "../../helpers/loadJSON";
+
+import TicketzRegistry from "../../components/TicketzRegistry";
+import config from "../../services/config";
+import api from "../../services/api.js";
+
+const gitinfo = loadJSON('/gitinfo.json');
 
 const useStyles = makeStyles((theme) => ({
-  overline: {
-    fontSize: '0.9rem',
-    fontWeight: 700,
-    color: "grey",
-    letterSpacing: '0.5px',
-    lineHeight: 2.5,
-    textTransform: 'uppercase',
-    fontFamily: "'Plus Jakarta Sans', sans-serif'",
-  },
-  h4: {
-    fontFamily: "'Plus Jakarta Sans', sans-serif'",
-    fontWeight: 500,
-    fontSize: '2rem',
-    lineHeight: 1,
-    color: "grey",
-  },
-  tab: {
-    minWidth: "auto",
-    width: "auto",
-    padding: theme.spacing(0.5, 1),
-    borderRadius: 8,
-    transition: "0.3s",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    marginRight: theme.spacing(0.5),
-    marginLeft: theme.spacing(0.5),
-
-    [theme.breakpoints.down("lg")]: {
-      fontSize: "0.9rem",
-      padding: theme.spacing(0.4, 0.8),
-      marginRight: theme.spacing(0.4),
-      marginLeft: theme.spacing(0.4),
-    },
-    [theme.breakpoints.down("md")]: {
-      fontSize: "0.8rem",
-      padding: theme.spacing(0.3, 0.6),
-      marginRight: theme.spacing(0.3),
-      marginLeft: theme.spacing(0.3),
-    },
-    "&:hover": {
-      backgroundColor: "rgba(6, 81, 131, 0.3)",
-    },
-    "&$selected": {
-      color: "#FFF",
-      backgroundColor: theme.palette.primary.main,
-    },
-  },
-  tabIndicator: {
-    borderWidth: "2px",
-    borderStyle: "solid",
-    height: 6,
-    bottom: 0,
-    color: theme.mode === "light" ? theme.palette.primary.main : "#FFF",
-  },
   container: {
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.padding,
-    maxWidth: "1150px",
-    minWidth: "xs",
-  },
-  nps: {
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.padding,
+    paddingTop: theme.spacing(4),
+    paddingBottom: theme.spacing(4),
   },
   fixedHeightPaper: {
     padding: theme.spacing(2),
@@ -118,6 +70,39 @@ const useStyles = makeStyles((theme) => ({
     height: 240,
     overflowY: "auto",
     ...theme.scrollbarStyles,
+  },
+  pixkey: {
+    fontSize: "9pt",
+  },
+  paymentimg: {
+    maxWidth: "100%",
+    marginTop: "30px",
+  },
+  paymentpix: {
+    maxWidth: "100%",
+    maxHeight: "150px",
+    padding: "5px",
+    backgroundColor: "white",
+    borderColor: "black",
+    borderStyle: "solid",
+    borderWidth: "2px",
+  },
+  supportPaper: {
+    padding: theme.spacing(2),
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
+    backgroundColor: theme.palette.secondary.main,
+    color: theme.palette.secondary.contrastText,
+    ...theme.scrollbarStyles,
+  },
+  supportBox: {
+    backgroundColor: theme.palette.secondary.light,
+    borderRadius: "10px",
+    textAlign: "center",
+    borderColor: theme.palette.secondary.main,
+    borderWidth: "3px",
+    borderStyle: "solid",
   },
   cardAvatar: {
     fontSize: "55px",
@@ -144,93 +129,178 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
     textAlign: "left",
   },
-  iframeDashboard: {
-    width: "100%",
-    height: "calc(100vh - 64px)",
-    border: "none",
-  },
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
-  fixedHeightPaper: {
-    padding: theme.spacing(2),
-    display: "flex",
-    overflow: "auto",
-    flexDirection: "column",
-    height: 240,
-  },
-  customFixedHeightPaper: {
-    padding: theme.spacing(2),
-    display: "flex",
-    overflow: "auto",
-    flexDirection: "column",
-    height: 120,
-  },
-  customFixedHeightPaperLg: {
+  card1: {
     padding: theme.spacing(2),
     display: "flex",
     overflow: "auto",
     flexDirection: "column",
     height: "100%",
+    backgroundColor: "#0094bb",
+    color: "#eee",
   },
-  fixedHeightPaper2: {
+  card2: {
     padding: theme.spacing(2),
     display: "flex",
     overflow: "auto",
     flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#748e9d",
+    color: "#eee",
   },
+  card3: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#7f78e6",
+    color: "#eee",
+  },
+  card4: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#cc991b",
+    color: "#eee",
+  },
+  card5: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#434243",
+    color: "#eee",
+  },
+  card6: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#b87d77",
+    color: "#eee",
+  },
+  card7: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#7bc780",
+    color: "#eee",
+  },
+  card8: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#b05c38",
+    color: "#eee",
+  },
+  card9: {
+    padding: theme.spacing(2),
+    display: "flex",
+    overflow: "auto",
+    flexDirection: "column",
+    height: "100%",
+    backgroundColor: "#bd3c58",
+    color: "#eee",
+  },
+  ticketzProPaper: {
+    padding: theme.spacing(2),
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
+    backgroundColor: theme.palette.ticketzproad.main,
+    color: theme.palette.ticketzproad.contrastText,
+    ...theme.scrollbarStyles,
+  },
+  ticketzRegistryPaper: {
+    padding: theme.spacing(2),
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
+    backgroundColor: theme.palette.background.main,
+    color: theme.palette.background.contrastText,
+    borderColor: theme.palette.primary.main,
+    borderWidth: "3px",
+    borderStyle: "solid",
+    marginBottom: "1em",
+    ...theme.scrollbarStyles,
+  },
+  ticketzProBox: {
+    textAlign: "center",
+    alignContent: "center"
+  },
+  ticketzProTitle: {
+    fontWeight: "bold"
+  },
+  ticketzProScreen: {
+    maxHeight: "300px",
+    maxWidth: "100%"
+  },
+  ticketzProFeatures: {
+    padding: 0,
+    listStyleType: "none"
+  },
+  ticketzProCommand: {
+    fontFamily: "monospace",
+    backgroundColor: "#00000080"
+  },
+  clickpointer: {
+    cursor: "pointer"
+  }
 }));
 
 const Dashboard = () => {
-  const theme = useTheme();
   const classes = useStyles();
   const [counters, setCounters] = useState({});
   const [attendants, setAttendants] = useState([]);
   const [filterType, setFilterType] = useState(1);
   const [period, setPeriod] = useState(0);
-  const [dateFrom, setDateFrom] = useState(moment("1", "D").format("YYYY-MM-DD"));
+  const [companyDueDate, setCompanyDueDate] = useState();
+  const [currentUser, setCurrentUser] = useState({});
+  const [dateFrom, setDateFrom] = useState(
+    moment("1", "D").format("YYYY-MM-DD")
+  );
   const [dateTo, setDateTo] = useState(moment().format("YYYY-MM-DD"));
   const [loading, setLoading] = useState(false);
   const { find } = useDashboard();
-
-  //FILTROS NPS
-  const [tab, setTab] = useState("Indicadores");
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [selectedQueues, setSelectedQueues] = useState([]);
-
-
-
-  let newDate = new Date();
-  let date = newDate.getDate();
-  let month = newDate.getMonth() + 1;
-  let year = newDate.getFullYear();
-  let nowIni = `${year}-${month < 10 ? `0${month}` : `${month}`}-01`;
-
-  let now = `${year}-${month < 10 ? `0${month}` : `${month}`}-${date < 10 ? `0${date}` : `${date}`}`;
-
-  const [showFilter, setShowFilter] = useState(false);
-  const [dateStartTicket, setDateStartTicket] = useState(nowIni);
-  const [dateEndTicket, setDateEndTicket] = useState(now);
-  const [queueTicket, setQueueTicket] = useState(false);
-  const [fetchDataFilter, setFetchDataFilter] = useState(false);
-
-  const { user } = useContext(AuthContext);
-
-
-  const exportarGridParaExcel = () => {
-    const ws = XLSX.utils.table_to_sheet(document.getElementById('grid-attendants'));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'RelatorioDeAtendentes');
-    XLSX.writeFile(wb, 'relatorio-de-atendentes.xlsx');
-  };
-
-  var userQueueIds = [];
-
-  if (user.queues && user.queues.length > 0) {
-    userQueueIds = user.queues.map((q) => q.id);
+  const { finding } = useCompanies();
+  const { getCurrentUserInfo } = useAuth();
+    
+  const [supportBoxOpen, setSupportBoxOpen] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [proInstructionsOpen, setProInstructionsOpen] = useState(false);
+  
+  async function showProInstructions() {
+    if (gitinfo.commitHash) {
+      setProInstructionsOpen(true);
+      return;
+    }
+    
+    window.open("https://pro.ticke.tz", "_blank");
   }
+  
+  useEffect(() => {
+    getCurrentUserInfo().then(
+      (user) => {
+        setCurrentUser(user);
+      }
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  useEffect(async () => {
+    const registry = await api.get("/ticketz/registry");
+
+    setRegistered( registry?.data?.disabled || !!(registry?.data?.whatsapp ) );
+  }, []);
+    
   useEffect(() => {
     async function firstLoad() {
       await fetchData();
@@ -239,7 +309,21 @@ const Dashboard = () => {
       firstLoad();
     }, 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchDataFilter]);
+  }, []);
+
+  async function handleChangePeriod(value) {
+    setPeriod(value);
+  }
+
+  async function handleChangeFilterType(value) {
+    setFilterType(value);
+    if (value === 1) {
+      setPeriod(0);
+    } else {
+      setDateFrom("");
+      setDateTo("");
+    }
+  }
 
   async function fetchData() {
     setLoading(true);
@@ -252,17 +336,17 @@ const Dashboard = () => {
       };
     }
 
-    if (!isEmpty(dateStartTicket) && moment(dateStartTicket).isValid()) {
+    if (!isEmpty(dateFrom) && moment(dateFrom).isValid()) {
       params = {
         ...params,
-        date_from: moment(dateStartTicket).format("YYYY-MM-DD"),
+        date_from: moment(dateFrom).format("YYYY-MM-DD"),
       };
     }
 
-    if (!isEmpty(dateEndTicket) && moment(dateEndTicket).isValid()) {
+    if (!isEmpty(dateTo) && moment(dateTo).isValid()) {
       params = {
         ...params,
-        date_to: moment(dateEndTicket).format("YYYY-MM-DD"),
+        date_to: moment(dateTo).format("YYYY-MM-DD"),
       };
     }
 
@@ -273,6 +357,11 @@ const Dashboard = () => {
     }
 
     const data = await find(params);
+
+    if (!data) {
+      setLoading(false);
+      return;
+    }
 
 
     setCounters(data.counters);
@@ -285,14 +374,25 @@ const Dashboard = () => {
     setLoading(false);
   }
 
-  const handleSelectedUsers = (selecteds) => {
-    const users = selecteds.map((t) => t.id);
-    setSelectedUsers(users);
-  };
-
-
-  const handleChangeTab = (e, newValue) => {
-    setTab(newValue);
+  useEffect(() => {
+    async function fetchData() {
+      await loadCompanies();
+    }
+    fetchData();
+  }, [])
+  //let companyDueDate = localStorage.getItem("companyDueDate");
+  //const companyDueDate = localStorage.getItem("companyDueDate").toString();
+  const companyId = localStorage.getItem("companyId");
+  const loadCompanies = async () => {
+    setLoading(true);
+    try {
+      const companiesList = await finding(companyId);
+      setCompanyDueDate(moment(companiesList.dueDate).format("DD/MM/yyyy"));
+    } catch (e) {
+      console.log("🚀 Console Log : e", e);
+      // toast.error("Não foi possível carregar a lista de registros");
+    }
+    setLoading(false);
   };
 
   function formatTime(minutes) {
@@ -302,880 +402,489 @@ const Dashboard = () => {
       .format("HH[h] mm[m]");
   }
 
-  const GetUsers = () => {
-    let count;
-    let userOnline = 0;
-    attendants.forEach(user => {
-      if (user.online === true) {
-        userOnline = userOnline + 1
-      }
-    })
-    count = userOnline === 0 ? 0 : userOnline;
-    return count;
-  };
-
-  const GetContacts = (all) => {
-    let props = {};
-    if (all) {
-      props = {};
+  function renderFilters() {
+    if (filterType === 1) {
+      return (
+        <>
+          <Grid item xs={12} sm={6} md={4}>
+            <TextField
+              label="Data Inicial"
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className={classes.fullWidth}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <TextField
+              label="Data Final"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className={classes.fullWidth}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+        </>
+      );
     } else {
-      props = {
-        dateStart: dateStartTicket,
-        dateEnd: dateEndTicket,
-      };
+      return (
+        <Grid item xs={12} sm={6} md={4}>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="period-selector-label">Período</InputLabel>
+            <Select
+              labelId="period-selector-label"
+              id="period-selector"
+              value={period}
+              onChange={(e) => handleChangePeriod(e.target.value)}
+            >
+              <MenuItem value={0}>Nenhum selecionado</MenuItem>
+              <MenuItem value={3}>Últimos 3 dias</MenuItem>
+              <MenuItem value={7}>Últimos 7 dias</MenuItem>
+              <MenuItem value={15}>Últimos 15 dias</MenuItem>
+              <MenuItem value={30}>Últimos 30 dias</MenuItem>
+              <MenuItem value={60}>Últimos 60 dias</MenuItem>
+              <MenuItem value={90}>Últimos 90 dias</MenuItem>
+            </Select>
+            <FormHelperText>Selecione o período desejado</FormHelperText>
+          </FormControl>
+        </Grid>
+      );
     }
-    const { count } = useContacts(props);
-    return count;
-  };
-
-  const GetMessages = (all, fromMe) => {
-    let props = {};
-    if (all) {
-      if (fromMe) {
-        props = {
-          fromMe: true
-        };
-      } else {
-        props = {
-          fromMe: false
-        };
-      }
-    } else {
-      if (fromMe) {
-        props = {
-          fromMe: true,
-          dateStart: dateStartTicket,
-          dateEnd: dateEndTicket,
-        };
-      } else {
-        props = {
-          fromMe: false,
-          dateStart: dateStartTicket,
-          dateEnd: dateEndTicket,
-        };
-      }
-    }
-    const { count } = useMessages(props);
-    return count;
-  };
-
-  function toggleShowFilter() {
-    setShowFilter(!showFilter);
   }
 
+  if (currentUser?.profile !== "admin") {
+    return (
+      <div>
+      </div>
+    );
+  }
+      
   return (
-    <>
-      {
-        user.profile === "user" && user.showDashboard === "disabled" ?
-          <ForbiddenPage />
-          :
-          <>
-            <div>
-              <Container maxWidth="lg" className={classes.container}>
-                <Grid2 container spacing={3} className={classes.container}>
+    <div>
+      <Container maxWidth="lg" className={classes.container}>
+        <Grid container spacing={3} justifyContent="flex-end">
 
-                  {/* FILTROS */}
-                  <Grid2 xs={12}>
-                    <Button
-                      onClick={toggleShowFilter}
-                      style={{ float: "right" }}
-                      color="primary"
-                    >
-                      {!showFilter ? (
-                        <FilterListIcon />
-                      ) : (
-                        <ClearIcon />
-                      )}
-                    </Button>
-                  </Grid2>
-
-                  {showFilter && (
-                    <Filters
-                      classes={classes}
-                      setDateStartTicket={setDateStartTicket}
-                      setDateEndTicket={setDateEndTicket}
-                      dateStartTicket={dateStartTicket}
-                      dateEndTicket={dateEndTicket}
-                      setQueueTicket={setQueueTicket}
-                      queueTicket={queueTicket}
-                      fetchData={setFetchDataFilter}
-                    />
-                  )}
-
-                  <Grid2 container width="100%" justifyContent="center">
-                    <Tabs
-                      value={tab}
-                      onChange={handleChangeTab}
-                      variant="fullWidth"
-                      indicatorColor="primary"
-                      textColor="primary"
-                      aria-label="icon label tabs example"
-                      classes={{ indicator: classes.tabIndicator }}
-                      sx={{
-                        borderRadius: "5px",
-                        borderColor: "#aaa",
-                        borderWidth: "1px",
-                        borderStyle: "solid",
-                        fontFamily: '"Plus Jakarta Sans", sans-serif',
-                      }}
-                    >
-                      <Tab classes={{ root: classes.tab }}
-                        style={{ color: theme.mode === "light" ? theme.palette.primary.main : "#FFF" }}
-                        value="Indicadores"
-                        label={i18n.t("dashboard.tabs.indicators")}
-                      />
-                      <Tab classes={{ root: classes.tab }}
-                        style={{ color: theme.mode === "light" ? theme.palette.primary.main : "#FFF" }}
-                        value="NPS"
-                        label={i18n.t("dashboard.tabs.assessments")}
-                      />
-                      <Tab classes={{ root: classes.tab }}
-                        style={{ color: theme.mode === "light" ? theme.palette.primary.main : "#FFF" }}
-                        value="Atendentes"
-                        label={i18n.t("dashboard.tabs.attendants")}
-                      />
-                    </Tabs>
-                  </Grid2>
-                  <TabPanel
-                    className={classes.container}
-                    value={tab}
-                    name={"Indicadores"}
-                  >
-                    <Container maxWidth="xl" >
-                      <Grid2
-                        container
-                        spacing={3}
-                      >
-                        {/* EM ATENDIMENTO */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.inAttendance")}
-                                  </Typography>
-                                  <Typography variant="h4" className={classes.h4}>
-                                    {counters.supportHappening}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#0b708c',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <CallIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* AGUARDANDO */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.waiting")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {counters.supportPending}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#47606e',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <HourglassEmptyIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* FINALIZADOS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.finalized")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {counters.supportFinished}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#5852ab',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <CheckCircleIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* GRUPOS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.groups")}
-                                  </Typography>
-                                  <Typography variant="h4"
-
-                                    className={classes.h4}
-                                  >
-                                    {counters.supportGroups}
-                                  </Typography>
-                                </Stack>
-
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#01BBAC',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <Groups />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* ATENDENTES ATIVOS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.activeAttendants")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {GetUsers()}/{attendants.length}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#805753',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <RecordVoiceOverIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* NOVOS CONTATOS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.newContacts")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {counters.leads}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#8c6b19',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <GroupAddIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* MINHAS MENSAGEM RECEBIDAS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.totalReceivedMessages")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {GetMessages(false, false)}/{GetMessages(true, false)}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#333133',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <MessageIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* MINHAS MENSAGEM ENVIADAS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.totalSentMessages")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {GetMessages(false, true)}/{GetMessages(true, true)}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#558a59',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <SendIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* T.M. DE ATENDIMENTO */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.averageServiceTime")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {formatTime(counters.avgSupportTime)}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#F79009',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <AccessAlarmIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* T.M. DE ESPERA */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.averageWaitingTime")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {formatTime(counters.avgWaitTime)}
-                                  </Typography>
-                                </Stack>
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#8a2c40',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <TimerIcon />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* TICKETS ATIVOS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.activeTickets")}
-                                  </Typography>
-                                  <Typography variant="h4"
-                                    className={classes.h4}
-                                  >
-                                    {counters.activeTickets}
-                                  </Typography>
-                                </Stack>
-
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#EE4512',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <ArrowUpward />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-
-                        {/* TICKETS PASSIVOS */}
-                        <Grid2 xs={12}
-                          sm={6}
-                          lg={4}
-                        >
-                          <Card sx={{
-                            height: "100%",
-                            backgroundColor:
-                              theme.mode === "light"
-                                ? "transparent"
-                                : "rgba(170, 170, 170, 0.2)",
-                          }}>
-                            <CardContent>
-                              <Stack
-                                alignItems="flex-start"
-                                direction="row"
-                                justifyContent="space-between"
-                                spacing={3}
-                              >
-                                <Stack spacing={1}>
-                                  <Typography
-                                    color="primary"
-                                    variant="overline"
-                                    className={classes.overline}
-                                  >
-                                    {i18n.t("dashboard.cards.passiveTickets")}
-                                  </Typography>
-                                  <Typography variant="h4"
-
-                                    className={classes.h4}
-                                  >
-                                    {counters.passiveTickets}
-                                  </Typography>
-                                </Stack>
-
-
-                                <Avatar
-                                  sx={{
-                                    backgroundColor: '#28C037',
-                                    height: 60,
-                                    width: 60
-                                  }}
-                                >
-                                  <SvgIcon>
-                                    <ArrowDownward />
-                                  </SvgIcon>
-                                </Avatar>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        </Grid2>
-                      </Grid2>
-                    </Container>
-                  </TabPanel>
-
-                  <TabPanel
-                    className={classes.container}
-                    value={tab}
-                    name={"NPS"}
-                  >
-                    <Grid2 className={classes.container}>
-                      <Grid2 container width="100%" spacing={2}>
-
-                        <Grid2 xs={12} sm={6} md={3}>
-                          <Paper elevation={3} >
-                            <ChartDonut
-                              data={[`{'name': 'Promotores', 'value': ${counters.npsPromotersPerc | 100}}`,
-                              `{'name': 'Detratores', 'value': ${counters.npsDetractorsPerc | 0}}`,
-                              `{'name': 'Neutros', 'value': ${counters.npsPassivePerc | 0}}`
-                              ]}
-                              value={counters.npsScore | 0}
-                              title="Score"
-                              color={(parseInt(counters.npsPromotersPerc | 0) + parseInt(counters.npsDetractorsPerc | 0) + parseInt(counters.npsPassivePerc | 0)) === 0 ? ["#918F94"] : ["#2EA85A", "#F73A2C", "#F7EC2C"]}
-                            />
-                          </Paper>
-                        </Grid2>
-
-                        <Grid2 xs={12} sm={6} md={3}>
-                          <Paper elevation={3}>
-                            <ChartDonut
-                              title={i18n.t("dashboard.assessments.prosecutors")}
-                              value={counters.npsPromotersPerc | 0}
-                              data={[`{'name': 'Promotores', 'value': 100}`]}
-                              color={["#2EA85A"]}
-                            />
-                          </Paper>
-                        </Grid2>
-
-                        <Grid2 xs={12} sm={6} md={3}>
-                          <Paper elevation={3} >
-                            <ChartDonut
-                              data={[`{'name': 'Neutros', 'value': 100}`]}
-                              title={i18n.t("dashboard.assessments.neutral")}
-                              value={counters.npsPassivePerc | 0}
-                              color={["#F7EC2C"]}
-                            />
-                          </Paper>
-                        </Grid2>
-
-                        <Grid2 xs={12} sm={6} md={3}>
-                          <Paper elevation={3}>
-                            <ChartDonut
-                              data={[`{'name': 'Detratores', 'value': 100}`]}
-                              title={i18n.t("dashboard.assessments.detractors")}
-                              value={counters.npsDetractorsPerc | 0}
-                              color={["#F73A2C"]}
-                            />
-                          </Paper>
-                        </Grid2>
-
-                        <Grid2 xs={12} sm={6} md={12}>
-                          <Paper elevation={3}>
-                            <Typography
-                              component="h3"
-                              variant="h6"
-                              paragraph
-                              style={{ marginLeft: "10px" }}
-                            >
-                              {i18n.t("dashboard.assessments.totalCalls")}: {counters.tickets} <br></br>
-                              {i18n.t("dashboard.assessments.callsWaitRating")}: {counters.waitRating} <br></br>
-                              {i18n.t("dashboard.assessments.callsWithoutRating")}: {counters.withoutRating} <br></br>
-                              {i18n.t("dashboard.assessments.ratedCalls")}: {counters.withRating} <br></br>
-                              {i18n.t("dashboard.assessments.evaluationIndex")}: {Number(counters.percRating / 100).toLocaleString(undefined, { style: 'percent' })} <br></br>
-                            </Typography>
-                          </Paper>
-                        </Grid2>
-
-                      </Grid2>
-                    </Grid2>
-
-                  </TabPanel>
-
-                  <TabPanel
-                    className={classes.container}
-                    value={tab}
-                    name={"Atendentes"}
-                  >
-                    <Container width="100%" className={classes.container}>
-
-                      <IconButton onClick={exportarGridParaExcel} aria-label="Exportar para Excel">
-                        <SaveAlt />
-                      </IconButton>
-
-                      <Grid2 container width="100%">
-                        {/* CARD DE GRAFICO */}
-                        {/* <Grid2 item xs={12}>
-                  <Paper
-                    elevation={6}
-                    className={classes.fixedHeightPaper}
-                  >
-                    <Chart
-                      dateStartTicket={dateStartTicket}
-                      dateEndTicket={dateEndTicket}
-                      queueTicket={queueTicket}
-                    />
+          <OnlyForSuperUser
+            user={currentUser}
+            yes={() => (
+              <Grid item xs={12}>
+                {!registered &&
+                  <Paper className={classes.ticketzRegistryPaper}>
+                    <TicketzRegistry onRegister={setRegistered} />
                   </Paper>
-                </Grid2>  */}
+                }
+                <Paper className={clsx(classes.ticketzProPaper, {
+                  [classes.clickpointer]: !proInstructionsOpen,
+                })} onClick={() => showProInstructions()}>
+                  <Grid container justifyContent="flex-end">
+                    <Grid className={classes.ticketzProBox} item xs={12} md={proInstructionsOpen ? 4 : 6} sm={12}>
+                      <div>
+                        <img className={classes.ticketzProScreen} src="https://pro.ticke.tz/images/0/7/3/0/b/0730b234af7b4b0dac72d09828863bb7cb9193ea-ticketz-computador.png" />
+                      </div>
+                    </Grid>
+                    { !proInstructionsOpen &&
+                    <Grid className={classes.ticketzProBox} item xs={12} md={6} sm={12}>
+                      <Typography className={classes.ticketzProTitle} component="h3" variant="h5" gutterBottom>
+                        Ticketz PRO
+                      </Typography>
+                      <Typography component="h3" variant="h7" gutterBottom>
+                      <ul className={classes.ticketzProFeatures}>
+                        <li>Funcionalidades exclusivas</li>
+                        <li>Suporte Avançado</li>
+                        <li>Migração Facilitada</li>
+                      </ul>
+                      </Typography>
+                      <Typography component="h3" variant="h5">
+                        Assine por R$ 199/mês
+                      </Typography>
+                      <Typography component="h3" variant="h7" gutterBottom>
+                        direto dentro do sistema
+                      </Typography>
+                      { gitinfo.commitHash && 
+                      <Typography component="h3" variant="h5">
+                        Clique para instruções de Upgrade
+                      </Typography>
+                      }
+                      { !gitinfo.commitHash && 
+                      <Typography component="h3" variant="h5">
+                        Clique para visitar o site!
+                      </Typography>
+                      }
+                    </Grid>
+                    }
+                    { proInstructionsOpen &&
+                    <Grid className={classes.ticketzProBox} item xs={12} md={8} sm={12}>
+                      <Typography className={classes.ticketzProTitle} component="h3" variant="h5" gutterBottom>
+                        Instruções de Upgrade
+                      </Typography>
+                      <Typography paragraph>
+                        Se você instalou as imagens disponibilizadas pelo projeto em um
+                        servidor ou VPS utilizando as instruções facilitadas tudo o que
+                        você precisa fazer é acessar seu servidor e digitar o comando abaixo:
+                      </Typography>
+                      <Typography className={classes.ticketzProCommand} paragraph>
+                        curl -sSL update.ticke.tz | sudo bash -s pro
+                      </Typography>
+                      <Typography paragraph>
+                        Em instantes o Ticketz PRO estará instalado com todos os teus dados,
+                        agora só precisa ir até o menu de usuário, clicar em "Assinatura do
+                        Ticketz PRO" e fazer a sua assinatura.
+                      </Typography>
+                      <Typography paragraph>
+                        Se a tua instalação for diferente ou acredita que precisa
+                        de auxílio para instalar o Ticketz
+                        Pro, <a href="https://wa.me/554935670707"> entre
+                        em contato</a> que nós ajudamos!
+                      </Typography>
+                    </Grid>
+                    }
+                  </Grid>
+                </Paper>
+              </Grid>
+            )} />
 
-                        {/* INFO DOS USUARIOS */}
-                        <Grid2 xs={12} id="grid-attendants">
-                          {attendants.length ? (
-                            <TableAttendantsStatus
-                              attendants={attendants}
-                              loading={loading}
-                            />
-                          ) : null}
-                        </Grid2>
 
-                        {/* TOTAL DE ATENDIMENTOS POR USUARIO */}
-                        <Grid2 xs={12} id="grid-attendants">
-                          <Paper className={classes.fixedHeightPaper2}>
-                            <ChatsUser />
-                          </Paper>
-                        </Grid2>
+          <OnlyForSuperUser
+            user={currentUser}
+            yes={() => (
+              <Grid item xs={12}>
+                <Paper className={clsx(classes.supportPaper, {
+                  [classes.clickpointer]: !supportBoxOpen,
+                })} onClick={() => setSupportBoxOpen(true)}>
+                  <Typography component="h2" variant="h6" gutterBottom>
+                    {i18n.t("ticketz.support.title")}
+                  </Typography>
+                  { supportBoxOpen &&
+                  <Grid container justifyContent="flex-end">
+                    <Grid className={classes.supportBox} item xs={12} md={4} sm={12}>
+                      <Typography component="h3" variant="h6" gutterBottom>
+                        PIX
+                      </Typography>
+                      <div>
+                        <img className={classes.paymentpix} src="/ticketzpix.png" />
+                      </div>
+                      <Typography className={classes.pixkey} component="body2" paragraph>
+                        1ab11506-9480-4303-8e1e-988e7c49ed4d
+                      </Typography>
+                    </Grid>
+                    <Grid className={classes.supportBox} item xs={12} md={4} sm={12}>
+                      <Typography component="h3" variant="h6" gutterBottom>
+                        {i18n.t("ticketz.support.mercadopagotitle")}
+                      </Typography>
+                      <Typography component="body2" paragraph>
+                        {i18n.t("ticketz.support.recurringbrl")}
+                      </Typography>
+                      <div><a href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c9380848f1b8ed1018f2b011f90061f" target="_blank">
+                        <img className={classes.paymentimg} src="/mercadopago.png" />
+                      </a></div>
+                    </Grid>
+                    <Grid className={classes.supportBox} item xs={12} md={4} sm={12}>
+                      <Typography component="h3" variant="h6" gutterBottom>
+                        {i18n.t("ticketz.support.paypaltitle")}
+                      </Typography>
+                      <Typography component="body2" paragraph>
+                        {i18n.t("ticketz.support.international")}
+                      </Typography>
+                      <div><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=X6XHVCPMRQEL4" target="_blank">
+                        <img className={classes.paymentimg} src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" />
+                      </a></div>
+                    </Grid>
+                  </Grid>
+                  }
+                </Paper>
+              </Grid>
+            )} />
 
-                        {/* TOTAL DE ATENDIMENTOS */}
-                        <Grid2 xs={12} id="grid-attendants">
-                          <Paper className={classes.fixedHeightPaper2}>
-                            <ChartsDate />
-                          </Paper>
-                        </Grid2>
-                      </Grid2>
-                    </Container>
-                  </TabPanel>
-                </Grid2>
-              </Container >
-            </div >
-          </>
-      }
-    </>
+          {/* DASHBOARD ATENDIMENTOS HOJE */}
+          
+          {/* GRID DO VENCIMENTO */}
+          {/* <Grid item xs={12} sm={6} md={3}>
+            <CardCounter
+              icon={<TodayIcon fontSize="inherit" />}
+              title="Data Vencimento"
+              value={companyDueDate}
+              loading={loading}
+            />
+          </Grid> */}
+
+          {/* DASHBOARD ATENDIMENTOS HOJE */}
+          <Grid item xs={12}>
+            <Paper className={classes.fixedHeightPaper}>
+              <Chart />
+            </Paper>
+          </Grid>
+
+          {/* FILTROS */}
+          <Grid item xs={12} sm={6} md={4}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="period-selector-label">Tipo de Filtro</InputLabel>
+              <Select
+                labelId="period-selector-label"
+                value={filterType}
+                onChange={(e) => handleChangeFilterType(e.target.value)}
+              >
+                <MenuItem value={1}>Filtro por Data</MenuItem>
+                <MenuItem value={2}>Filtro por Período</MenuItem>
+              </Select>
+              <FormHelperText>Selecione o período desejado</FormHelperText>
+            </FormControl>
+          </Grid>
+
+          {renderFilters()}
+
+          {/* BOTAO FILTRAR */}
+          <Grid item xs={12} className={classes.alignRight}>
+            <ButtonWithSpinner
+              loading={loading}
+              onClick={() => fetchData()}
+              variant="contained"
+              color="primary"
+            >
+              Filtrar
+            </ButtonWithSpinner>
+          </Grid>
+
+          {/* ATENDIMENTOS PENDENTES */}
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              className={classes.card1}
+              style={{ overflow: "hidden" }}
+              elevation={4}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={8}>
+                  <Typography
+                    component="h3"
+                    variant="h6"
+                    paragraph
+                  >
+                    Atd. Pendentes
+                  </Typography>
+                  <Grid item>
+                    <Typography
+                      component="h1"
+                      variant="h4"
+                    >
+                      {counters.supportPending}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid item xs={2}>
+                  <CallIcon
+                    style={{
+                      fontSize: 100,
+                      color: "#0b708c",
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* ATENDIMENTOS ACONTECENDO */}
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              className={classes.card2}
+              style={{ overflow: "hidden" }}
+              elevation={6}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={8}>
+                  <Typography
+                    component="h3"
+                    variant="h6"
+                    paragraph
+                  >
+                    Atd. Acontecendo
+                  </Typography>
+                  <Grid item>
+                    <Typography
+                      component="h1"
+                      variant="h4"
+                    >
+                      {counters.supportHappening}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid item xs={4}>
+                  <HourglassEmptyIcon
+                    style={{
+                      fontSize: 100,
+                      color: "#47606e",
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* ATENDIMENTOS REALIZADOS */}
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              className={classes.card3}
+              style={{ overflow: "hidden" }}
+              elevation={6}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={8}>
+                  <Typography
+                    component="h3"
+                    variant="h6"
+                    paragraph
+                  >
+                    Finalizados
+                  </Typography>
+                  <Grid item>
+                    <Typography
+                      component="h1"
+                      variant="h4"
+                    >
+                      {counters.supportFinished}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid item xs={4}>
+                  <CheckCircleIcon
+                    style={{
+                      fontSize: 100,
+                      color: "#5852ab",
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* NOVOS CONTATOS */}
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              className={classes.card4}
+              style={{ overflow: "hidden" }}
+              elevation={6}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={8}>
+                  <Typography
+                    component="h3"
+                    variant="h6"
+                    paragraph
+                  >
+                    Novos Contatos
+                  </Typography>
+                  <Grid item>
+                    <Typography
+                      component="h1"
+                      variant="h4"
+                    >
+                      {counters.leads}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid item xs={4}>
+                  <GroupAddIcon
+                    style={{
+                      fontSize: 100,
+                      color: "#8c6b19",
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* T.M. DE ATENDIMENTO */}
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              className={classes.card8}
+              style={{ overflow: "hidden" }}
+              elevation={6}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={8}>
+                  <Typography
+                    component="h3"
+                    variant="h6"
+                    paragraph
+                  >
+                    T.M. de Atendimento
+                  </Typography>
+                  <Grid item>
+                    <Typography
+                      component="h1"
+                      variant="h4"
+                    >
+                      {formatTime(counters.avgSupportTime)}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid item xs={4}>
+                  <AccessAlarmIcon
+                    style={{
+                      fontSize: 100,
+                      color: "#7a3f26",
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* T.M. DE ESPERA */}
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              className={classes.card9}
+              style={{ overflow: "hidden" }}
+              elevation={6}
+            >
+              <Grid container spacing={3}>
+                <Grid item xs={8}>
+                  <Typography
+                    component="h3"
+                    variant="h6"
+                    paragraph
+                  >
+                    T.M. de Espera
+                  </Typography>
+                  <Grid item>
+                    <Typography
+                      component="h1"
+                      variant="h4"
+                    >
+                      {formatTime(counters.avgWaitTime)}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid item xs={4}>
+                  <TimerIcon
+                    style={{
+                      fontSize: 100,
+                      color: "#8a2c40",
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* USUARIOS ONLINE */}
+          <Grid item xs={12}>
+            {attendants.length ? (
+              <TableAttendantsStatus
+                attendants={attendants}
+                loading={loading}
+              />
+            ) : null}
+          </Grid>
+
+        </Grid>
+      </Container>
+    </div>
   );
 };
 

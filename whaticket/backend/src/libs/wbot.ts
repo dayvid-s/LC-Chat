@@ -1,53 +1,35 @@
 import * as Sentry from "@sentry/node";
 import makeWASocket, {
-  AuthenticationState,
-  Browsers,
-  DisconnectReason,
-  WAMessage,
-  WAMessageKey,
   WASocket,
-  fetchLatestBaileysVersion,
-  fetchLatestWaWebVersion,
-  isJidBroadcast,
-  isJidGroup,
-  jidNormalizedUser,
+  DisconnectReason,
   makeCacheableSignalKeyStore,
   makeInMemoryStore,
+  isJidBroadcast,
+  CacheStore,
+  WAMessageKey,
+  WAMessageContent,
+  proto
 } from "@whiskeysockets/baileys";
-import { FindOptions } from "sequelize/types";
-import Whatsapp from "../models/Whatsapp";
-import logger from "../utils/logger";
-import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
-import { useMultiFileAuthState } from "../helpers/useMultiFileAuthState";
+
 import { Boom } from "@hapi/boom";
+import MAIN_LOGGER from "@whiskeysockets/baileys/lib/Utils/logger";
+import NodeCache from "node-cache";
+import { Op } from "sequelize";
+import Whatsapp from "../models/Whatsapp";
+import { logger } from "../utils/logger";
+import authState from "../helpers/authState";
 import AppError from "../errors/AppError";
 import { getIO } from "./socket";
+import { Store } from "./store";
 import { StartWhatsAppSession } from "../services/WbotServices/StartWhatsAppSession";
 import DeleteBaileysService from "../services/BaileysServices/DeleteBaileysService";
-import cacheLayer from "./cache";
-import ImportWhatsAppMessageService from "../services/WhatsappService/ImportWhatsAppMessageService";
-import { add } from "date-fns";
-import moment from "moment";
-import { getTypeMessage, isValidMsg } from "../services/WbotServices/wbotMessageListener";
-import { addLogs } from "../helpers/addLogs";
-import NodeCache from 'node-cache';
-import { Store } from "./store";
-
-const msgRetryCounterCache = new NodeCache({
-  stdTTL: 600,
-  maxKeys: 1000,
-  checkperiod: 300,
-  useClones: false
-});
-const msgCache = new NodeCache({
-  stdTTL: 60,
-  maxKeys: 1000,
-  checkperiod: 300,
-  useClones: false
-});
+import Contact from "../models/Contact";
+import Ticket from "../models/Ticket";
+import { GitInfo } from "../gitinfo";
+import GetPublicSettingService from "../services/SettingServices/GetPublicSettingService";
 
 const loggerBaileys = MAIN_LOGGER.child({});
-loggerBaileys.level = "error";
+loggerBaileys.level = process.env.BAILEYS_LOG_LEVEL || "error";
 
 type Session = WASocket & {
   id?: number;
@@ -58,33 +40,6 @@ const sessions: Session[] = [];
 
 const retriesQrCodeMap = new Map<number, number>();
 
-export default function msg() {
-  return {
-    get: (key: WAMessageKey) => {
-      const { id } = key;
-      if (!id) return;
-      let data = msgCache.get(id);
-      if (data) {
-        try {
-          let msg = JSON.parse(data as string);
-          return msg?.message;
-        } catch (error) {
-          logger.error(error);
-        }
-      }
-    },
-    save: (msg: WAMessage) => {
-      const { id } = msg.key;
-      const msgtxt = JSON.stringify(msg);
-      try {
-        msgCache.set(id as string, msgtxt);
-      } catch (error) {
-        logger.error(error);
-      }
-    }
-  }
-}
-
 export const getWbot = (whatsappId: number): Session => {
   const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
 
@@ -92,33 +47,6 @@ export const getWbot = (whatsappId: number): Session => {
     throw new AppError("ERR_WAPP_NOT_INITIALIZED");
   }
   return sessions[sessionIndex];
-};
-
-export const restartWbot = async (
-  companyId: number,
-  session?: any
-): Promise<void> => {
-  try {
-    const options: FindOptions = {
-      where: {
-        companyId,
-      },
-      attributes: ["id"],
-    }
-
-    const whatsapp = await Whatsapp.findAll(options);
-
-    whatsapp.map(async c => {
-      const sessionIndex = sessions.findIndex(s => s.id === c.id);
-      if (sessionIndex !== -1) {
-        sessions[sessionIndex].ws.close(undefined);
-      }
-
-    });
-
-  } catch (err) {
-    logger.error(err);
-  }
 };
 
 export const removeWbot = async (
@@ -129,9 +57,11 @@ export const removeWbot = async (
     const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
     if (sessionIndex !== -1) {
       if (isLogout) {
-        sessions[sessionIndex].logout();
-        sessions[sessionIndex].ws.close();
+        await sessions[sessionIndex].logout();
       }
+
+      sessions[sessionIndex].end(null);
+      await sessions[sessionIndex].ws.close();
 
       sessions.splice(sessionIndex, 1);
     }
@@ -140,12 +70,39 @@ export const removeWbot = async (
   }
 };
 
-export var dataMessages: any = {};
+function getGreaterVersion(a, b) {
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    const numA = a[i] || 0;
+    const numB = b[i] || 0;
 
-export const msgDB = msg();
+    if (numA > numB) {
+      return a;
+    }
+    if (numA < numB) {
+      return b;
+    }
+  }
+
+  return a;
+}
+
+const waVersion = [2, 3000, 1019512750];
+
+const getProjectWAVersion = async () => {
+  try {
+    const res = await fetch(
+      "https://raw.githubusercontent.com/ticketz-oss/ticketz/refs/heads/main/backend/src/waversion.json"
+    );
+    const version = await res.json();
+    return version;
+  } catch (error) {
+    logger.warn("Failed to get current WA Version from project repository");
+  }
+  return waVersion;
+};
 
 export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     try {
       (async () => {
         const io = getIO();
@@ -156,13 +113,15 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
 
         if (!whatsappUpdate) return;
 
-        const { id, name, allowGroup, companyId } = whatsappUpdate;
+        const { id, name, provider } = whatsappUpdate;
 
-        // const { version, isLatest } = await fetchLatestWaWebVersion({});
-        const { version, isLatest } = await fetchLatestBaileysVersion();
-        const versionB = [2, 2410, 1];
-        // logger.info(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
-        logger.info(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
+        const autoVersion = await getProjectWAVersion();
+        const isLegacy = provider === "stable";
+
+        const version = getGreaterVersion(autoVersion, waVersion);
+
+        logger.info(`using WA v${version.join(".")}`);
+        logger.info(`isLegacy: ${isLegacy}`);
         logger.info(`Starting session ${name}`);
         let retriesQrCode = 0;
 
@@ -170,236 +129,165 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
         const store = makeInMemoryStore({
           logger: loggerBaileys
         });
-        const { state, saveCreds } = await useMultiFileAuthState(whatsapp);
 
-        wsocket = makeWASocket({
-          // version: [2, 2413, 1],
-          version: version,
-          logger: loggerBaileys,
-          printQRInTerminal: false,
-          // auth: state as AuthenticationState,
-          auth: {
-            creds: state.creds,
-            /** caching makes the store faster to send/recv messages */
-            keys: makeCacheableSignalKeyStore(state.keys, logger),
-          },
-          generateHighQualityLinkPreview: true,
-          linkPreviewImageThumbnailWidth: 192,
-          // shouldIgnoreJid: jid => isJidBroadcast(jid),
-
-          shouldIgnoreJid: (jid) => {
-            //   // const isGroupJid = !allowGroup && isJidGroup(jid)
-            return isJidBroadcast(jid) || (!allowGroup && isJidGroup(jid)) //|| jid.includes('newsletter')
-          },
-          browser: Browsers.appropriate("Desktop"),
-          defaultQueryTimeoutMs: undefined,
-          msgRetryCounterCache,
-          markOnlineOnConnect: false,
-          retryRequestDelayMs: 500,
-          maxMsgRetryCount: 5,
-          emitOwnEvents: true,
-          fireInitQueries: true,
-          transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 3000 },
-          connectTimeoutMs: 25_000,
-          // keepAliveIntervalMs: 60_000,
-          getMessage: msgDB.get,
-        });
-
-
-
-
-        setTimeout(async () => {
-          const wpp = await Whatsapp.findByPk(whatsapp.id);
-          // console.log("Status:::::",wpp.status)
-          if (wpp?.importOldMessages && wpp.status === "CONNECTED") {
-            let dateOldLimit = new Date(wpp.importOldMessages).getTime();
-            let dateRecentLimit = new Date(wpp.importRecentMessages).getTime();
-
-            addLogs({
-              fileName: `preparingImportMessagesWppId${whatsapp.id}.txt`, forceNewFile: true,
-              text: `Aguardando conexão para iniciar a importação de mensagens:
-  Whatsapp nome: ${wpp.name}
-  Whatsapp Id: ${wpp.id}
-  Criação do arquivo de logs: ${moment().format("DD/MM/YYYY HH:mm:ss")}
-  Selecionado Data de inicio de importação: ${moment(dateOldLimit).format("DD/MM/YYYY HH:mm:ss")}
-  Selecionado Data final da importação: ${moment(dateRecentLimit).format("DD/MM/YYYY HH:mm:ss")}
-  `})
-
-            const statusImportMessages = new Date().getTime();
-
-            await wpp.update({
-              statusImportMessages
-            });
-            wsocket.ev.on("messaging-history.set", async (messageSet: any) => {
-              //if(messageSet.isLatest){
-
-              const statusImportMessages = new Date().getTime();
-
-              await wpp.update({
-                statusImportMessages
-              });
-              const whatsappId = whatsapp.id;
-              let filteredMessages = messageSet.messages
-              let filteredDateMessages = []
-              filteredMessages.forEach(msg => {
-                const timestampMsg = Math.floor(msg.messageTimestamp["low"] * 1000)
-                if (isValidMsg(msg) && dateOldLimit < timestampMsg && dateRecentLimit > timestampMsg) {
-                  if (msg.key?.remoteJid.split("@")[1] != "g.us") {
-                    addLogs({
-                      fileName: `preparingImportMessagesWppId${whatsapp.id}.txt`, text: `Adicionando mensagem para pos processamento:
-  Não é Mensagem de GRUPO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  Data e hora da mensagem: ${moment(timestampMsg).format("DD/MM/YYYY HH:mm:ss")}
-  Contato da Mensagem : ${msg.key?.remoteJid}
-  Tipo da mensagem : ${getTypeMessage(msg)}
-
-  `})
-                    filteredDateMessages.push(msg)
-                  } else {
-                    if (wpp?.importOldMessagesGroups) {
-                      addLogs({
-                        fileName: `preparingImportMessagesWppId${whatsapp.id}.txt`, text: `Adicionando mensagem para pos processamento:
-  Mensagem de GRUPO >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  Data e hora da mensagem: ${moment(timestampMsg).format("DD/MM/YYYY HH:mm:ss")}
-  Contato da Mensagem : ${msg.key?.remoteJid}
-  Tipo da mensagem : ${getTypeMessage(msg)}
-
-  `})
-                      filteredDateMessages.push(msg)
-                    }
-                  }
-                }
-
-              });
-
-
-              if (!dataMessages?.[whatsappId]) {
-                dataMessages[whatsappId] = [];
-
-                dataMessages[whatsappId].unshift(...filteredDateMessages);
-              } else {
-                dataMessages[whatsappId].unshift(...filteredDateMessages);
-              }
-
-              setTimeout(async () => {
-                const wpp = await Whatsapp.findByPk(whatsappId);
-
-
-
-
-                io.of(String(companyId))
-                  .emit(`importMessages-${wpp.companyId}`, {
-                    action: "update",
-                    status: { this: -1, all: -1 }
-                  });
-
-
-
-                io.of(String(companyId))
-                  .emit(`company-${companyId}-whatsappSession`, {
-                    action: "update",
-                    session: wpp
-                  });
-                //console.log(JSON.stringify(wpp, null, 2));
-              }, 500);
-
-              setTimeout(async () => {
-
-
-                const wpp = await Whatsapp.findByPk(whatsappId);
-
-                if (wpp?.importOldMessages) {
-                  let isTimeStamp = !isNaN(
-                    new Date(Math.floor(parseInt(wpp?.statusImportMessages))).getTime()
-                  );
-
-                  if (isTimeStamp) {
-                    const ultimoStatus = new Date(
-                      Math.floor(parseInt(wpp?.statusImportMessages))
-                    ).getTime();
-                    const dataLimite = +add(ultimoStatus, { seconds: +45 }).getTime();
-
-                    if (dataLimite < new Date().getTime()) {
-                      //console.log("Pronto para come?ar")
-                      ImportWhatsAppMessageService(wpp.id)
-                      wpp.update({
-                        statusImportMessages: "Running"
-                      })
-
-                    } else {
-                      //console.log("Aguardando inicio")
-                    }
-                  }
-                }
-                io.of(String(companyId))
-                  .emit(`company-${companyId}-whatsappSession`, {
-                    action: "update",
-                    session: wpp
-                  });
-              }, 1000 * 45);
-
-            });
+        async function getMessage(
+          key: WAMessageKey
+        ): Promise<WAMessageContent | undefined> {
+          if (store) {
+            const msg = await store.loadMessage(key.remoteJid!, key.id!);
+            logger.debug(
+              { key, message: JSON.stringify(msg) },
+              `[wbot.ts] getMessage: result of recovering message ${key.remoteJid} ${key.id}`
+            );
+            return msg?.message || undefined;
           }
 
-        }, 2500);
+          // only if store isn't present
+          return proto.Message.fromObject({});
+        }
 
+        const { state, saveState } = await authState(whatsapp);
 
-        wsocket.ev.on("presence.update", async ({ id: remoteJid, presences }) => {
+        const msgRetryCounterCache = new NodeCache();
+        const userDevicesCache: CacheStore = new NodeCache();
+        const internalGroupCache = new NodeCache({
+          stdTTL: 5 * 60,
+          useClones: false
+        });
+        const groupCache: CacheStore = {
+          get: <T>(key: string): T => {
+            logger.debug(`groupCache.get ${key}`);
+            const value = internalGroupCache.get(key);
+            if (!value) {
+              logger.debug(`groupCache.get ${key} not found`);
+              wsocket.groupMetadata(key).then(async metadata => {
+                logger.debug({ key, metadata }, `groupCache.get ${key} set`);
+                internalGroupCache.set(key, metadata);
+              });
+            }
+            return value as T;
+          },
+          set: async (key: string, value: any) => {
+            logger.debug({ key, value }, `groupCache.set ${key}`);
+            return internalGroupCache.set(key, value);
+          },
+          del: async (key: string) => {
+            logger.debug(`groupCache.del ${key}`);
+            return internalGroupCache.del(key);
+          },
+          flushAll: async () => {
+            logger.debug("groupCache.flushAll");
+            return internalGroupCache.flushAll();
+          }
+        };
 
-          console.log('evento de presença', remoteJid, presences)
+        const appName =
+          (await GetPublicSettingService({ key: "appName" })) || "Ticketz";
+        const hostName = process.env.BACKEND_URL?.split("/")[2];
+        const appVersion = GitInfo.tagName || GitInfo.commitHash;
+        const clientName = `${appName} ${appVersion}${
+          hostName ? ` - ${hostName}` : ""
+        }`;
 
-        })
+        wsocket = makeWASocket({
+          logger: loggerBaileys,
+          printQRInTerminal: false,
+          emitOwnEvents: false,
+          browser: [clientName, "Desktop", appVersion],
+          auth: {
+            creds: state.creds,
+            keys: makeCacheableSignalKeyStore(state.keys, loggerBaileys)
+          },
+          version,
+          defaultQueryTimeoutMs: 60000,
+          // retryRequestDelayMs: 250,
+          // keepAliveIntervalMs: 1000 * 60 * 10 * 3,
+          msgRetryCounterCache,
+          // syncFullHistory: true,
+          generateHighQualityLinkPreview: true,
+          userDevicesCache,
+          getMessage,
+          cachedGroupMetadata: async jid => groupCache.get(jid),
+          shouldIgnoreJid: jid =>
+            isJidBroadcast(jid) || jid?.endsWith("@newsletter"),
+          transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 }
+        });
 
+        // wsocket = makeWASocket({
+        //   version,
+        //   logger: loggerBaileys,
+        //   printQRInTerminal: false,
+        //   auth: state as AuthenticationState,
+        //   generateHighQualityLinkPreview: false,
+        //   shouldIgnoreJid: jid => isJidBroadcast(jid),
+        //   browser: ["Chat", "Chrome", "10.15.7"],
+        //   patchMessageBeforeSending: (message) => {
+        //     const requiresPatch = !!(
+        //       message.buttonsMessage ||
+        //       // || message.templateMessage
+        //       message.listMessage
+        //     );
+        //     if (requiresPatch) {
+        //       message = {
+        //         viewOnceMessage: {
+        //           message: {
+        //             messageContextInfo: {
+        //               deviceListMetadataVersion: 2,
+        //               deviceListMetadata: {},
+        //             },
+        //             ...message,
+        //           },
+        //         },
+        //       };
+        //     }
 
-
+        //     return message;
+        //   },
+        // })
 
         wsocket.ev.on(
           "connection.update",
           async ({ connection, lastDisconnect, qr }) => {
             logger.info(
-              `Socket  ${name} Connection Update ${connection || ""} ${lastDisconnect ? lastDisconnect.error.message : ""
-              }`
+              { lastDisconnect },
+              `Socket  ${name} Connection Update ${connection || ""}`
             );
 
             if (connection === "close") {
-              console.log("DESCONECTOU", JSON.stringify(lastDisconnect, null, 2))
-              logger.info(
-                `Socket  ${name} Connection Update ${connection || ""} ${lastDisconnect ? lastDisconnect.error.message : ""
-                }`
-              );
               if ((lastDisconnect?.error as Boom)?.output?.statusCode === 403) {
                 await whatsapp.update({ status: "PENDING", session: "" });
                 await DeleteBaileysService(whatsapp.id);
-                await cacheLayer.delFromPattern(`sessions:${whatsapp.id}:*`);
-                io.of(String(companyId))
-                  .emit(`company-${whatsapp.companyId}-whatsappSession`, {
-                    action: "update",
-                    session: whatsapp
-                  });
+                io.emit(`company-${whatsapp.companyId}-whatsappSession`, {
+                  action: "update",
+                  session: whatsapp
+                });
                 removeWbot(id, false);
               }
               if (
                 (lastDisconnect?.error as Boom)?.output?.statusCode !==
                 DisconnectReason.loggedOut
               ) {
-                removeWbot(id, false);
-                setTimeout(
-                  () => StartWhatsAppSession(whatsapp, whatsapp.companyId),
-                  2000
-                );
+                removeWbot(id, false).then(() => {
+                  logger.info(`Reconnecting ${name} in 2 seconds`);
+                  setTimeout(
+                    () => StartWhatsAppSession(whatsapp, whatsapp.companyId),
+                    2000
+                  );
+                });
               } else {
                 await whatsapp.update({ status: "PENDING", session: "" });
                 await DeleteBaileysService(whatsapp.id);
-                await cacheLayer.delFromPattern(`sessions:${whatsapp.id}:*`);
-                io.of(String(companyId))
-                  .emit(`company-${whatsapp.companyId}-whatsappSession`, {
-                    action: "update",
-                    session: whatsapp
-                  });
-                removeWbot(id, false);
-                setTimeout(
-                  () => StartWhatsAppSession(whatsapp, whatsapp.companyId),
-                  2000
-                );
+                io.emit(`company-${whatsapp.companyId}-whatsappSession`, {
+                  action: "update",
+                  session: whatsapp
+                });
+                removeWbot(id, false).then(() => {
+                  logger.info(`Reconnecting ${name} in 2 seconds`);
+                  setTimeout(
+                    () => StartWhatsAppSession(whatsapp, whatsapp.companyId),
+                    2000
+                  );
+                });
               }
             }
 
@@ -407,18 +295,13 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
               await whatsapp.update({
                 status: "CONNECTED",
                 qrcode: "",
-                retries: 0,
-                number:
-                  wsocket.type === "md"
-                    ? jidNormalizedUser((wsocket as WASocket).user.id).split("@")[0]
-                    : "-"
+                retries: 0
               });
 
-              io.of(String(companyId))
-                .emit(`company-${whatsapp.companyId}-whatsappSession`, {
-                  action: "update",
-                  session: whatsapp
-                });
+              io.emit(`company-${whatsapp.companyId}-whatsappSession`, {
+                action: "update",
+                session: whatsapp
+              });
 
               const sessionIndex = sessions.findIndex(
                 s => s.id === whatsapp.id
@@ -438,12 +321,10 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   qrcode: ""
                 });
                 await DeleteBaileysService(whatsappUpdate.id);
-                await cacheLayer.delFromPattern(`sessions:${whatsapp.id}:*`);
-                io.of(String(companyId))
-                  .emit(`company-${whatsapp.companyId}-whatsappSession`, {
-                    action: "update",
-                    session: whatsappUpdate
-                  });
+                io.emit("whatsappSession", {
+                  action: "update",
+                  session: whatsappUpdate
+                });
                 wsocket.ev.removeAllListeners("connection.update");
                 wsocket.ws.close();
                 wsocket = null;
@@ -455,8 +336,7 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                 await whatsapp.update({
                   qrcode: qr,
                   status: "qrcode",
-                  retries: 0,
-                  number: ""
+                  retries: 0
                 });
                 const sessionIndex = sessions.findIndex(
                   s => s.id === whatsapp.id
@@ -467,19 +347,94 @@ export const initWASocket = async (whatsapp: Whatsapp): Promise<Session> => {
                   sessions.push(wsocket);
                 }
 
-                io.of(String(companyId))
-                  .emit(`company-${whatsapp.companyId}-whatsappSession`, {
-                    action: "update",
-                    session: whatsapp
+                io.emit(`company-${whatsapp.companyId}-whatsappSession`, {
+                  action: "update",
+                  session: whatsapp
+                });
+              }
+            }
+          }
+        );
+        wsocket.ev.on("creds.update", saveState);
+
+        wsocket.ev.on(
+          "presence.update",
+          async ({ id: remoteJid, presences }) => {
+            try {
+              logger.debug(
+                { remoteJid, presences },
+                "Received contact presence"
+              );
+              if (!presences[remoteJid]?.lastKnownPresence) {
+                // ignore presence from groups
+                return;
+              }
+              const contact = await Contact.findOne({
+                where: {
+                  number: remoteJid.replace(/\D/g, ""),
+                  companyId: whatsapp.companyId
+                }
+              });
+              if (!contact) {
+                return;
+              }
+              const ticket = await Ticket.findOne({
+                where: {
+                  contactId: contact.id,
+                  whatsappId: whatsapp.id,
+                  status: {
+                    [Op.or]: ["open", "pending"]
+                  }
+                }
+              });
+
+              if (ticket) {
+                io.to(ticket.id.toString())
+                  .to(`company-${whatsapp.companyId}-${ticket.status}`)
+                  .to(`queue-${ticket.queueId}-${ticket.status}`)
+                  .emit(`company-${whatsapp.companyId}-presence`, {
+                    ticketId: ticket.id,
+                    presence: presences[remoteJid].lastKnownPresence
                   });
+              }
+            } catch (error) {
+              logger.error(
+                { remoteJid, presences },
+                "presence.update: error processing"
+              );
+              if (error instanceof Error) {
+                logger.error(`Error: ${error.name} ${error.message}`);
+              } else {
+                logger.error(`Error was object of type: ${typeof error}`);
               }
             }
           }
         );
 
-        wsocket.ev.on("creds.update", saveCreds);
-        // wsocket.store = store;
-        // store.bind(wsocket.ev);
+        wsocket.ev.on("groups.upsert", groups => {
+          logger.debug("Received new group");
+          groups.forEach(group => {
+            groupCache.set(group.id, group);
+          });
+        });
+
+        wsocket.ev.on("groups.update", async ([event]) => {
+          logger.debug("Received group update");
+          const metadata = await wsocket.groupMetadata(event.id);
+          groupCache.set(event.id, metadata);
+        });
+
+        wsocket.ev.on("group-participants.update", async event => {
+          logger.debug("Received group participants update");
+          try {
+            const metadata = await wsocket.groupMetadata(event.id);
+            groupCache.set(event.id, metadata);
+          } catch (error) {
+            groupCache.del(event.id);
+          }
+        });
+
+        store.bind(wsocket.ev);
       })();
     } catch (error) {
       Sentry.captureException(error);

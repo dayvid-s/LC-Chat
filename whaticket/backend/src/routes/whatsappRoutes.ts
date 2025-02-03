@@ -1,40 +1,48 @@
 import express from "express";
 import isAuth from "../middleware/isAuth";
+import isAdmin from "../middleware/isAdmin";
 
 import * as WhatsAppController from "../controllers/WhatsAppController";
-
-import multer from "multer";
-import uploadConfig from "../config/upload";
-import { mediaUpload } from "../services/WhatsappService/uploadMediaAttachment";
-import { deleteMedia } from "../services/WhatsappService/uploadMediaAttachment";
-
-const upload = multer(uploadConfig);
-
+import * as PrivacyController from "../controllers/PrivacyController";
 
 const whatsappRoutes = express.Router();
 
 whatsappRoutes.get("/whatsapp/", isAuth, WhatsAppController.index);
-whatsappRoutes.get("/whatsapp/filter", isAuth, WhatsAppController.indexFilter);
-whatsappRoutes.get("/whatsapp/all", isAuth, WhatsAppController.listAll);
 
-whatsappRoutes.post("/whatsapp/", isAuth, WhatsAppController.store);
-whatsappRoutes.post("/facebook/", isAuth, WhatsAppController.storeFacebook);
-whatsappRoutes.get("/whatsapp/:whatsappId", isAuth, WhatsAppController.show);
-whatsappRoutes.put("/whatsapp/:whatsappId", isAuth, WhatsAppController.update);
-whatsappRoutes.delete("/whatsapp/:whatsappId", isAuth, WhatsAppController.remove);
-whatsappRoutes.post("/closedimported/:whatsappId", isAuth, WhatsAppController.closedTickets);
+whatsappRoutes.post("/whatsapp/", isAuth, isAdmin, WhatsAppController.store);
 
-//restart
-whatsappRoutes.post("/whatsapp-restart/", isAuth, WhatsAppController.restart);
-whatsappRoutes.post("/whatsapp/:whatsappId/media-upload", isAuth, upload.array("file"), mediaUpload);
+whatsappRoutes.get(
+  "/whatsapp/:whatsappId",
+  isAuth,
+  isAdmin,
+  WhatsAppController.show
+);
 
-whatsappRoutes.delete("/whatsapp/:whatsappId/media-upload", isAuth, deleteMedia);
+whatsappRoutes.put(
+  "/whatsapp/:whatsappId",
+  isAuth,
+  isAdmin,
+  WhatsAppController.update
+);
 
+whatsappRoutes.delete(
+  "/whatsapp/:whatsappId",
+  isAuth,
+  isAdmin,
+  WhatsAppController.remove
+);
 
-whatsappRoutes.delete("/whatsapp-admin/:whatsappId", isAuth, WhatsAppController.remove);
-
-whatsappRoutes.put("/whatsapp-admin/:whatsappId", isAuth, WhatsAppController.updateAdmin);
-
-whatsappRoutes.get("/whatsapp-admin/:whatsappId", isAuth, WhatsAppController.showAdmin);
+whatsappRoutes.get(
+  "/whatsapp/privacy/:whatsappId",
+  isAuth,
+  isAdmin,
+  PrivacyController.show
+);
+whatsappRoutes.put(
+  "/whatsapp/privacy/:whatsappId",
+  isAuth,
+  isAdmin,
+  PrivacyController.update
+);
 
 export default whatsappRoutes;
