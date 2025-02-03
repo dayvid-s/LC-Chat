@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
-import "react-toastify/dist/ReactToastify.css";
 import { QueryClient, QueryClientProvider } from "react-query";
+import "react-toastify/dist/ReactToastify.css";
 
+import { useMediaQuery } from "@material-ui/core";
 import { ptBR } from "@material-ui/core/locale";
 import { createTheme, ThemeProvider } from "@material-ui/core/styles";
-import { useMediaQuery } from "@material-ui/core";
-import ColorModeContext from "./layout/themeContext";
+import Favicon from "react-favicon";
 import { SocketContext, socketManager } from './context/Socket/SocketContext';
 import useSettings from "./hooks/useSettings";
-import Favicon from "react-favicon";
+import ColorModeContext from "./layout/themeContext";
 import { getBackendURL } from "./services/config";
 
 import Routes from "./routes";
@@ -45,10 +45,10 @@ const App = () => {
         setPrimaryColorDark(color);
       },
       setAppLogoLight: (file) => {
-        setAppLogoLight(file); 
+        setAppLogoLight(file);
       },
       setAppLogoDark: (file) => {
-        setAppLogoDark(file); 
+        setAppLogoDark(file);
       },
       setAppLogoFavicon: (file) => {
         setAppLogoFavicon(file);
@@ -145,7 +145,7 @@ const App = () => {
     if (!i18nlocale) {
       return;
     }
-    
+
     const browserLocale =
       i18nlocale.substring(0, 2) + i18nlocale.substring(3, 5);
 
@@ -176,21 +176,21 @@ const App = () => {
       .catch((error) => { console.log("Error reading setting", error); });
     getPublicSetting("appName").then((name) => { setAppName(name || "ticketz") })
       .catch((error) => { console.log("Error reading setting", error); setAppName("whitelabel chat") });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <>
-    <Favicon url={ ((appLogoFavicon) ? theme.appLogoFavicon : defaultLogoFavicon ) } />
-    <ColorModeContext.Provider value={{ colorMode }}>
-      <ThemeProvider theme={theme}>
-        <QueryClientProvider client={queryClient}>
-          <SocketContext.Provider value={socketManager}>
-            <Routes />
-          </SocketContext.Provider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </ColorModeContext.Provider>
+      <Favicon url={((appLogoFavicon) ? theme.appLogoFavicon : defaultLogoFavicon)} />
+      <ColorModeContext.Provider value={{ colorMode }}>
+        <ThemeProvider theme={theme}>
+          <QueryClientProvider client={queryClient}>
+            <SocketContext.Provider value={socketManager}>
+              <Routes />
+            </SocketContext.Provider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </ColorModeContext.Provider>
     </>
   );
 };
