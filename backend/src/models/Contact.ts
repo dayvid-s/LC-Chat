@@ -1,22 +1,23 @@
 import {
-  Table,
+  AllowNull,
+  AutoIncrement,
+  BelongsTo,
   Column,
   CreatedAt,
-  UpdatedAt,
+  Default,
+  ForeignKey,
+  HasMany,
   Model,
   PrimaryKey,
-  AutoIncrement,
-  AllowNull,
+  Table,
   Unique,
-  Default,
-  HasMany,
-  ForeignKey,
-  BelongsTo
+  UpdatedAt
 } from "sequelize-typescript";
-import ContactCustomField from "./ContactCustomField";
-import Ticket from "./Ticket";
 import Company from "./Company";
+import ContactCustomField from "./ContactCustomField";
+import Saler from "./Saler";
 import Schedule from "./Schedule";
+import Ticket from "./Ticket";
 
 @Table
 class Contact extends Model<Contact> {
@@ -52,7 +53,7 @@ class Contact extends Model<Contact> {
 
   @Default(false)
   @Column
-  disableBot: boolean
+  disableBot: boolean;
 
   @Default("available")
   @Column
@@ -76,6 +77,13 @@ class Contact extends Model<Contact> {
 
   @BelongsTo(() => Company)
   company: Company;
+
+  @ForeignKey(() => Saler)
+  @Column
+  salerId: number;
+
+  @BelongsTo(() => Saler)
+  saler: Saler;
 
   @HasMany(() => Schedule, {
     onUpdate: "CASCADE",
