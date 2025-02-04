@@ -1,17 +1,18 @@
-import { Op, fn, where, col, Filterable, Includeable } from "sequelize";
-import { startOfDay, endOfDay, parseISO } from "date-fns";
+import { endOfDay, parseISO, startOfDay } from "date-fns";
+import { col, Filterable, fn, Includeable, Op, where } from "sequelize";
 
 import { intersection } from "lodash";
-import Ticket from "../../models/Ticket";
+import { GetCompanySetting } from "../../helpers/CheckSettings";
 import Contact from "../../models/Contact";
 import Message from "../../models/Message";
 import Queue from "../../models/Queue";
-import User from "../../models/User";
-import ShowUserService from "../UserServices/ShowUserService";
+import Saler from "../../models/Saler";
 import Tag from "../../models/Tag";
+import Ticket from "../../models/Ticket";
 import TicketTag from "../../models/TicketTag";
+import User from "../../models/User";
 import Whatsapp from "../../models/Whatsapp";
-import { GetCompanySetting } from "../../helpers/CheckSettings";
+import ShowUserService from "../UserServices/ShowUserService";
 
 interface Request {
   isSearch?: boolean;
@@ -72,7 +73,38 @@ const ListTicketsService = async ({
     {
       model: Contact,
       as: "contact",
-      attributes: ["id", "name", "number", "email", "profilePicUrl", "presence"]
+      attributes: [
+        "id",
+        "name",
+        "number",
+        "email",
+        "profilePicUrl",
+        "presence"
+      ],
+      include: [
+        {
+          model: Saler,
+          as: "saler",
+          attributes: [
+            "id",
+            "name",
+            "cpf",
+            "branch",
+            "situation",
+            "commercialAssistent",
+            "commercialGroup",
+            "freeBelt",
+            "email",
+            "city",
+            "birthdate",
+            "productionInMonth",
+            "phoneNumberOne",
+            "phoneNumberTwo",
+            "createdAt",
+            "updatedAt"
+          ]
+        }
+      ]
     },
     {
       model: Queue,

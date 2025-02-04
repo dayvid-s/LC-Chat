@@ -1,20 +1,20 @@
-import * as Yup from "yup";
 import { Request, Response } from "express";
+import * as Yup from "yup";
 import { getIO } from "../libs/socket";
 
-import ListContactsService from "../services/ContactServices/ListContactsService";
 import CreateContactService from "../services/ContactServices/CreateContactService";
-import ShowContactService from "../services/ContactServices/ShowContactService";
-import UpdateContactService from "../services/ContactServices/UpdateContactService";
 import DeleteContactService from "../services/ContactServices/DeleteContactService";
 import GetContactService from "../services/ContactServices/GetContactService";
+import ListContactsService from "../services/ContactServices/ListContactsService";
+import ShowContactService from "../services/ContactServices/ShowContactService";
+import UpdateContactService from "../services/ContactServices/UpdateContactService";
 
-import CheckContactNumber from "../services/WbotServices/CheckNumber";
 import AppError from "../errors/AppError";
+import ContactCustomField from "../models/ContactCustomField";
 import SimpleListService, {
   SearchContactParams
 } from "../services/ContactServices/SimpleListService";
-import ContactCustomField from "../models/ContactCustomField";
+import CheckContactNumber from "../services/WbotServices/CheckNumber";
 
 type IndexQuery = {
   searchParam: string;
@@ -33,6 +33,7 @@ interface ExtraInfo extends ContactCustomField {
 interface ContactData {
   name: string;
   number: string;
+  salerId: number;
   email?: string;
   isGroup?: boolean;
   extraInfo?: ExtraInfo[];

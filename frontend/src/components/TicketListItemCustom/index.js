@@ -1,41 +1,39 @@
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 
-import { useHistory, useParams } from "react-router-dom";
-import { parseISO, format, isSameDay } from "date-fns";
 import clsx from "clsx";
+import { format, isSameDay, parseISO } from "date-fns";
+import { useHistory, useParams } from "react-router-dom";
 
-import { makeStyles } from "@material-ui/core/styles";
-import { green, grey, red, blue } from "@material-ui/core/colors";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemAvatar from "@material-ui/core/ListItemAvatar";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
-import Divider from "@material-ui/core/Divider";
 import Badge from "@material-ui/core/Badge";
 import Box from "@material-ui/core/Box";
+import { blue, green, grey, red } from "@material-ui/core/colors";
+import Divider from "@material-ui/core/Divider";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemAvatar from "@material-ui/core/ListItemAvatar";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import ListItemText from "@material-ui/core/ListItemText";
+import { makeStyles } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
 
 import { i18n } from "../../translate/i18n";
 
-import api from "../../services/api";
-import ButtonWithSpinner from "../ButtonWithSpinner";
-import MarkdownWrapper from "../MarkdownWrapper";
 import { Tooltip } from "@material-ui/core";
+import { v4 as uuidv4 } from "uuid";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import toastError from "../../errors/toastError";
-import { v4 as uuidv4 } from "uuid";
+import api from "../../services/api";
+import MarkdownWrapper from "../MarkdownWrapper";
 
-import RoomIcon from '@material-ui/icons/Room';
-import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import AndroidIcon from "@material-ui/icons/Android";
-import VisibilityIcon from "@material-ui/icons/Visibility";
-import TicketMessagesDialog from "../TicketMessagesDialog";
-import DoneIcon from '@material-ui/icons/Done';
 import ClearOutlinedIcon from '@material-ui/icons/ClearOutlined';
+import DoneIcon from '@material-ui/icons/Done';
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
+import TicketMessagesDialog from "../TicketMessagesDialog";
 
 const useStyles = makeStyles((theme) => ({
   ticket: {
@@ -496,7 +494,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
           ></span>
         </Tooltip>
         <ListItemAvatar>
-          <Avatar style={{ backgroundColor: generateColor(ticket?.contact?.number), color: "white", fontWeight: "bold" }} src={ticket?.contact?.profilePicUrl}>{ getInitials(ticket?.contact?.name || "") }</Avatar>
+          <Avatar style={{ backgroundColor: generateColor(ticket?.contact?.number), color: "white", fontWeight: "bold" }} src={ticket?.contact?.profilePicUrl}>{getInitials(ticket?.contact?.name || "")}</Avatar>
         </ListItemAvatar>
         <ListItemText
           disableTypography
@@ -514,6 +512,9 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
                     <WhatsAppIcon fontSize="inherit" style={{ color: grey[700] }} />
                   </Tooltip>
                 )}{' '}
+                {ticket.contact?.saler
+                  ? `CÓD - ${ticket.contact.saler.id} - ` : ''
+                }
                 {ticket.contact.name}
               </Typography>
 
@@ -533,10 +534,10 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
                     {i18n.t(`presence.${ticket.presence}`)}
                   </span>
                 ) : (
-                <>
-                  {ticket.lastMessage?.includes('data:image/png;base64') ? <MarkdownWrapper> Localização</MarkdownWrapper> : <MarkdownWrapper>{ticket.lastMessage.startsWith('{"ticketzvCard"') ? "🪪" : ticket.lastMessage}</MarkdownWrapper>}
-                </>
-              )}
+                  <>
+                    {ticket.lastMessage?.includes('data:image/png;base64') ? <MarkdownWrapper> Localização</MarkdownWrapper> : <MarkdownWrapper>{ticket.lastMessage.startsWith('{"ticketzvCard"') ? "🪪" : ticket.lastMessage}</MarkdownWrapper>}
+                  </>
+                )}
               </Typography>
               <ListItemSecondaryAction style={{ left: 73 }}>
                 <Box className={classes.ticketInfo1}>{renderTicketInfo()}</Box>

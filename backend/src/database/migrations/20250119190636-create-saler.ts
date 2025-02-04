@@ -6,11 +6,19 @@ export default {
       queryInterface.createTable("Salers", {
         id: {
           type: DataTypes.INTEGER,
+          unique: true,
           primaryKey: true,
-          autoIncrement: true,
           allowNull: false
         },
         name: {
+          type: DataTypes.STRING,
+          allowNull: false
+        },
+        phoneNumberOne: {
+          type: DataTypes.STRING,
+          allowNull: false
+        },
+        phoneNumberTwo: {
           type: DataTypes.STRING,
           allowNull: false
         },
@@ -72,6 +80,7 @@ export default {
       })
     ]);
   },
+
   down: (queryInterface: QueryInterface) => {
     return Promise.all([queryInterface.dropTable("Salers")]);
   }

@@ -1,4 +1,4 @@
-import { Sequelize, Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import Contact from "../../models/Contact";
 
 interface Request {
