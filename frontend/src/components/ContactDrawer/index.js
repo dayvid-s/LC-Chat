@@ -9,9 +9,9 @@ import Link from "@material-ui/core/Link";
 import Paper from "@material-ui/core/Paper";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
+import { Group, LocationCity, Person, Star } from "@material-ui/icons";
 import CloseIcon from "@material-ui/icons/Close";
 import CreateIcon from '@material-ui/icons/Create';
-
 import { i18n } from "../../translate/i18n";
 
 import { CardHeader } from "@material-ui/core";
@@ -134,7 +134,16 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
                 avatar={<Avatar src={contact.profilePicUrl} alt="contact_image" style={{ width: 60, height: 60, backgroundColor: generateColor(contact?.number), color: "white", fontWeight: "bold" }}>{getInitials(contact?.name)}</Avatar>}
                 title={
                   <>
-                    <Typography onClick={() => setOpenForm(true)}>
+                    <Typography
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        wordBreak: "break-word",
+                        whiteSpace: "normal",
+                        overflowWrap: "break-word",
+                        maxWidth: "220px",
+                      }}
+                      onClick={() => setOpenForm(true)}>
                       {contact.name}
                       <CreateIcon style={{ fontSize: 16, marginLeft: 5 }} />
                     </Typography>
@@ -146,26 +155,60 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
                       <Link href={`tel:${contact.number}`}>{contact.number}</Link>
                     </Typography>
 
+
                     <div>
-                      {/* <TagIcon></TagIcon> */}
-                      <Typography style={{ fontSize: 12 }}>
-                        <strong>{contact?.saler?.id}</strong>
-                      </Typography>
-                      <Typography style={{ fontSize: 12 }}>
-                        <strong>{contact?.saler?.situation}</strong>
-                      </Typography>
-                      <Typography style={{ fontSize: 12 }}>
-                        <strong>{contact?.saler?.commercialGroup}</strong>
-                      </Typography>
-                      <Typography style={{ fontSize: 12 }}>
-                        <strong>{contact?.saler?.commercialAssistent}</strong>
-                      </Typography>
-                      <Typography style={{ fontSize: 12 }}>
-                        <strong>{contact?.saler?.freeBelt}</strong>
-                      </Typography>
-                      <Typography style={{ fontSize: 12 }}>
-                        <strong>{contact?.saler?.city}</strong>
-                      </Typography>
+                      {contact?.saler?.situation && (
+                        <Typography style={{ fontSize: 16, display: "flex", alignItems: "center" }}>
+                          {/* <Business style={{ marginRight: 5 }} /> */}
+                          <strong>{contact.saler.situation}</strong>
+                        </Typography>
+                      )}
+
+                      {contact?.saler?.id && (
+                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
+                          {/* <Alarm style={{ marginRight: 5 }} /> */}
+                          <strong>Cód {contact.saler.id}</strong>
+                        </Typography>
+                      )}
+
+                      {contact?.saler?.commercialGroup && (
+                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
+                          <Group style={{ marginRight: 5 }} />
+                          <strong>{contact.saler.commercialGroup}</strong>
+                        </Typography>
+                      )}
+
+                      {contact?.saler?.commercialAssistent && (
+                        <Typography
+                          style={{
+                            fontSize: 14,
+                            display: "flex",
+                            alignItems: "center",
+                            wordBreak: "break-word",
+                            whiteSpace: "normal",
+                            overflowWrap: "break-word",
+                            maxWidth: "220px",
+                          }}
+                        >
+                          <Person style={{ marginRight: 5 }} />
+                          <strong>{contact.saler.commercialAssistent}</strong>
+                        </Typography>
+
+                      )}
+
+                      {contact?.saler?.freeBelt && (
+                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
+                          <Star style={{ marginRight: 5 }} />
+                          <strong>{contact.saler.freeBelt}</strong>
+                        </Typography>
+                      )}
+
+                      {contact?.saler?.city && (
+                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
+                          <LocationCity style={{ marginRight: 5 }} />
+                          <strong>{contact.saler.city}</strong>
+                        </Typography>
+                      )}
                     </div>
 
                   </>
