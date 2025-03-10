@@ -1,0 +1,7 @@
+
+FROM redis:latest
+
+
+CMD ["redis-server", "--protected-mode", "no"]
+
+EXPOSE 6379

@@ -11,6 +11,7 @@ import UpdateContactService from "../services/ContactServices/UpdateContactServi
 
 import AppError from "../errors/AppError";
 import ContactCustomField from "../models/ContactCustomField";
+import GetMessagesByContact from "../services/ContactServices/GetMessagesByContact";
 import SimpleListService, {
   SearchContactParams
 } from "../services/ContactServices/SimpleListService";
@@ -201,4 +202,30 @@ export const list = async (req: Request, res: Response): Promise<Response> => {
   const contacts = await SimpleListService({ name, companyId });
 
   return res.json(contacts);
+};
+export const listMessages = async (req: Request, res: Response) => {
+  try {
+    const { contactId, page } = req.query;
+
+    // Verificar se contactId é um número válido
+    if (!contactId || isNaN(Number(contactId))) {
+      return res
+        .status(400)
+        .json({ error: "Invalid contactId. It must be a number." });
+    }
+
+    // Definindo a página como 1 por padrão se não for fornecida
+    const pageNumber = page || "1";
+
+    // Chama o serviço que irá buscar as mensagens
+    const response = await GetMessagesByContact({
+      contactId: Number(contactId), // Converte contactId para número
+      pageNumber: String(pageNumber) // Passa page como string
+    });
+
+    return res.json(response);
+  } catch (error) {
+    console.error("Error fetching messages: ", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
