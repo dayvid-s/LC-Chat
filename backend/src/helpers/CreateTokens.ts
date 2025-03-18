@@ -5,6 +5,7 @@ import User from "../models/User";
 export const createAccessToken = (user: User): string => {
   const { secret, expiresIn } = authConfig;
 
+  // @ts-expect-error saas
   return sign(
     {
       username: user.name,
@@ -22,7 +23,7 @@ export const createAccessToken = (user: User): string => {
 
 export const createRefreshToken = (user: User): string => {
   const { refreshSecret, refreshExpiresIn } = authConfig;
-
+  // @ts-expect-error saas
   return sign(
     { id: user.id, tokenVersion: user.tokenVersion, companyId: user.companyId },
     refreshSecret,
