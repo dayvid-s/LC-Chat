@@ -21,7 +21,7 @@ if (!config) {
 // Função para obter a URL do backend
 export function getBackendURL() {
   return (
-    "https://api.lccomvc.digital/"
+    "https://api.lccomvc.digital"
     // config.REACT_APP_BACKEND_URL ||
     // (config.BACKEND_PROTOCOL ?? "https") + "://" + // Usando https por padrão
     // (config.BACKEND_HOST) + ":" + (config.BACKEND_PORT ?? "8090") + // Usando lccomvc.digital:8090 por padrão
@@ -32,7 +32,7 @@ export function getBackendURL() {
 // Função para obter a URL do WebSocket do backend
 export function getBackendSocketURL() {
   return (
-    "https://api.lccomvc.digital/"
+    "https://api.lccomvc.digital"
 
     // config.REACT_APP_BACKEND_URL ||
     // (config.BACKEND_PROTOCOL ?? "https") + "://" + // Usando https por padrão
