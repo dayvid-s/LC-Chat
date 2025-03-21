@@ -296,13 +296,13 @@ const getContactMessage = async (msg: proto.IWebMessageInfo, wbot: Session) => {
   const rawNumber = msg.key.remoteJid.replace(/\D/g, "");
   return isGroup
     ? {
-        id: getSenderMessage(msg, wbot),
-        name: msg.pushName
-      }
+      id: getSenderMessage(msg, wbot),
+      name: msg.pushName
+    }
     : {
-        id: msg.key.remoteJid,
-        name: msg.key.fromMe ? rawNumber : msg.pushName
-      };
+      id: msg.key.remoteJid,
+      name: msg.key.fromMe ? rawNumber : msg.pushName
+    };
 };
 
 const getUnpackedMessage = (msg: proto.IWebMessageInfo) => {
@@ -626,7 +626,7 @@ export const verifyMediaMessage = async (
   const messageData = {
     id: msg.key.id,
     ticketId: ticket.id,
-    contactId: msg.key.fromMe ? undefined : contact.id,
+    contactId: contact.id,
     body: body || media?.filename,
     fromMe: msg.key.fromMe,
     read: msg.key.fromMe,
@@ -692,7 +692,7 @@ export const verifyMessage = async (
   const messageData = {
     id: msg.key.id,
     ticketId: ticket.id,
-    contactId: msg.key.fromMe ? undefined : contact.id,
+    contactId: contact.id,
     body,
     fromMe: msg.key.fromMe,
     mediaType: getTypeMessage(msg),
@@ -1497,16 +1497,14 @@ const handleChartbot = async (
       if (filePath) {
         optionsMsg.caption = text;
         const sentMessage = await wbot.sendMessage(
-          `${ticket.contact.number}@${
-            ticket.isGroup ? "g.us" : "s.whatsapp.net"
+          `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
           }`,
           { ...optionsMsg }
         );
         await verifyMediaMessage(sentMessage, ticket, ticket.contact);
       } else {
         const sendMsg = await wbot.sendMessage(
-          `${ticket.contact.number}@${
-            ticket.isGroup ? "g.us" : "s.whatsapp.net"
+          `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
           }`,
           { text }
         );
@@ -1532,8 +1530,7 @@ const handleChartbot = async (
 
     if (filePath) {
       const sentMessage = await wbot.sendMessage(
-        `${ticket.contact.number}@${
-          ticket.isGroup ? "g.us" : "s.whatsapp.net"
+        `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
         }`,
         { ...optionsMsg }
       );
@@ -1647,7 +1644,7 @@ const handleMessage = async (
       unreadMessages === 0 &&
       complationMessage &&
       formatBody(complationMessage, lastMessage.ticket).trim().toLowerCase() ===
-        lastMessage?.body.trim().toLowerCase()
+      lastMessage?.body.trim().toLowerCase()
     ) {
       return;
     }
@@ -1700,8 +1697,7 @@ const handleMessage = async (
             const debouncedSentMessage = debounce(
               async () => {
                 await wbot.sendMessage(
-                  `${ticketTracking.ticket.contact.number}@${
-                    ticketTracking.ticket.isGroup ? "g.us" : "s.whatsapp.net"
+                  `${ticketTracking.ticket.contact.number}@${ticketTracking.ticket.isGroup ? "g.us" : "s.whatsapp.net"
                   }`,
                   {
                     text: "\n*Por favor avalie nosso atendimento com uma nota de 1 a 5*"
@@ -1817,8 +1813,7 @@ const handleMessage = async (
                 whatsapp.outOfHoursMessage.trim() ||
                 "Estamos fora do horário de expediente";
               const sentMessage = await wbot.sendMessage(
-                `${ticket.contact.number}@${
-                  ticket.isGroup ? "g.us" : "s.whatsapp.net"
+                `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
                 }`,
                 {
                   text: formatBody(outOfHoursMessage, ticket)
@@ -1858,8 +1853,7 @@ const handleMessage = async (
                 queue.outOfHoursMessage?.trim() ||
                 "Estamos fora do horário de expediente";
               const sentMessage = await wbot.sendMessage(
-                `${ticket.contact.number}@${
-                  ticket.isGroup ? "g.us" : "s.whatsapp.net"
+                `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
                 }`,
                 {
                   text: formatBody(outOfHoursMessage, ticket)
@@ -1920,8 +1914,7 @@ const handleMessage = async (
         const debouncedSentMessage = debounce(
           async () => {
             await wbot.sendMessage(
-              `${ticket.contact.number}@${
-                ticket.isGroup ? "g.us" : "s.whatsapp.net"
+              `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
               }`,
               {
                 text: formatBody(`${whatsapp.greetingMessage}`, ticket)

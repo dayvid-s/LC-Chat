@@ -205,7 +205,7 @@ export const list = async (req: Request, res: Response): Promise<Response> => {
 };
 export const listMessages = async (req: Request, res: Response) => {
   try {
-    const { contactId, page } = req.query;
+    const { contactId, page, companyId } = req.query;
 
     // Verificar se contactId é um número válido
     if (!contactId || isNaN(Number(contactId))) {
@@ -220,6 +220,7 @@ export const listMessages = async (req: Request, res: Response) => {
     // Chama o serviço que irá buscar as mensagens
     const response = await GetMessagesByContact({
       contactId: Number(contactId), // Converte contactId para número
+      companyId: Number(companyId),
       pageNumber: String(pageNumber) // Passa page como string
     });
 

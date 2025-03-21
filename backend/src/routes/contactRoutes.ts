@@ -45,5 +45,5 @@ contactRoutes.delete(
   ContactController.remove
 );
 
-contactRoutes.get("/testing", ContactController.listMessages);
+contactRoutes.get("/messages-from-contact", ContactController.listMessages);
 export default contactRoutes;

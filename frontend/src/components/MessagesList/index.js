@@ -2,16 +2,14 @@ import React, { useState, useEffect, useReducer, useRef, useContext } from "reac
 
 import { isSameDay, parseISO, format } from "date-fns";
 import clsx from "clsx";
-
+import { VisualizeOldMessages } from "../VisualizeOldMessages";
 import { green, blue } from "@material-ui/core/colors";
 import {
   Avatar,
   Button,
-  CircularProgress,
-  Divider,
-  IconButton,
+  CircularProgress, IconButton,
   makeStyles,
-  Typography,
+  Typography
 } from "@material-ui/core";
 
 import {
@@ -43,15 +41,15 @@ import { Mutex } from "async-mutex";
 
 const loadPageMutex = new Mutex();
 
-const useStyles = makeStyles((theme) => ({
+export const useStyles = makeStyles((theme) => ({
   messageContainer: {
     "& a": {
       color: theme.palette.primary.main,
       fontWeight: "bold",
       textDecoration: "none",
-    },    
+    },
   },
-  
+
   messagesListWrapper: {
     overflow: "hidden",
     position: "relative",
@@ -567,7 +565,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
     setContactPresence("available");
 
     currentTicketId.current = ticketId;
-    
+
     await loadPageMutex.runExclusive(async () => {
       loadData();
     });
@@ -669,7 +667,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
     if (!document && message.mediaType === "image") {
       return (
         <>
-          { <ModalImageCors imageUrl={message.mediaUrl} isDeleted={message.isDeleted} /> }
+          {<ModalImageCors imageUrl={message.mediaUrl} isDeleted={message.isDeleted} />}
           <>
             <div className={[clsx({
               [classes.textContentItemDeleted]: message.isDeleted,
@@ -716,7 +714,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
               target="_blank"
               href={message.mediaUrl.replace(/%/g, '%25')}
             >
-             { document?.fileName || message.body}
+              {document?.fileName || message.body}
             </Button>
           </div>
           {message.body !== document?.fileName &&
@@ -725,7 +723,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
                 [classes.textContentItemDeleted]: message.isDeleted,
               }),]}>
                 <MarkdownWrapper>
-                  { message.body }
+                  {message.body}
                 </MarkdownWrapper>
               </div>
             </>
@@ -829,14 +827,14 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
     if (isVCard(quotedMsg.body)) {
       return "🪪";
     }
-    
+
     return quotedMsg.body;
   }
-    
+
 
   const renderQuotedMessage = (message) => {
     const data = JSON.parse(message.quotedMsg.dataJson);
-    
+
     const thumbnail = data?.message?.imageMessage?.jpegThumbnail;
     const mediaUrl = message.quotedMsg?.mediaUrl;
     const imageUrl = thumbnail ? "data:image/png;base64, " + thumbnail : mediaUrl;
@@ -869,22 +867,22 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
 
   const renderLinkPreview = (message) => {
     const data = JSON.parse(message.dataJson);
-    
+
     const title = data?.message?.extendedTextMessage?.title;
     const description = data?.message?.extendedTextMessage?.description;
     const canonicalUrl = data?.message?.extendedTextMessage?.canonicalUrl;
     const url = canonicalUrl && new URL(
       canonicalUrl,
     );
-    
+
     if (!title && !description && !url) {
       return (<></>);
     }
-    
+
     const thumbnail = data?.message?.extendedTextMessage?.jpegThumbnail;
     const imageUrl = thumbnail ? "data:image/png;base64, " + thumbnail : "";
     return (
-      <a href={canonicalUrl} className={classes.linkPreviewAnchor} target="_blank">
+      <a href={canonicalUrl} className={classes.linkPreviewAnchor} target="_blank" rel="noreferrer">
         <div
           className={clsx(classes.quotedContainerLeft, {
             [classes.quotedContainerRight]: message.fromMe,
@@ -916,7 +914,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
   };
 
   const formatVCardN = (n) => {
-    return(
+    return (
       (n[3] ? n[3] + " " : "") +
       (n[1] ? n[1] + " " : "") +
       (n[2] ? n[2] + " " : "") +
@@ -928,7 +926,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
   const isVCard = (message) => {
     return message.startsWith('{"ticketzvCard":');
   };
-  
+
   const stringOrFirstElement = (data) => {
     if (!data) {
       return "";
@@ -941,7 +939,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
 
   const renderVCard = (vcardJson) => {
     const cardArray = JSON.parse(vcardJson)?.ticketzvCard;
-    
+
     if (!cardArray || !Array.isArray(cardArray)) {
       return <div>Invalid VCARD data</div>;
     }
@@ -952,8 +950,8 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
         return <></>;
       }
       const parsedVCard = vCard.parse(message);
-      console.debug("vCard data:", { message , parsedVCard });
-      
+      console.debug("vCard data:", { message, parsedVCard });
+
       const name = stringOrFirstElement(
         parsedVCard['X-WA-BIZ-NAME']?.[0]?.value ||
         parsedVCard.fn?.[0]?.value ||
@@ -962,11 +960,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
         parsedVCard['X-WA-BIZ-DESCRIPTION']?.[0]?.value || "");
       const number = stringOrFirstElement(parsedVCard?.tel?.[0]?.value);
       const metaNumber = parsedVCard?.tel?.[0]?.meta?.waid?.[0] || number || "unknown";
-      
+
       return (
         <div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 20 }}>
-            <Avatar style={{ backgroundColor: generateColor(metaNumber), marginRight: 10, marginLeft: 20, width: 60, height: 60, color: "white", fontWeight: "bold" }}>{ getInitials(name)}</Avatar>
+            <Avatar style={{ backgroundColor: generateColor(metaNumber), marginRight: 10, marginLeft: 20, width: 60, height: 60, color: "white", fontWeight: "bold" }}>{getInitials(name)}</Avatar>
             <div style={{ width: 350 }}>
               <div>
                 <Typography
@@ -1038,7 +1036,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
         <a
           style={{ fontWeight: '700', color: 'gray' }}
           target="_blank"
-          href={message.split('|')[1]}> Clique para ver localização</a>
+          href={message.split('|')[1]} rel="noreferrer"> Clique para ver localização</a>
         <span className={classes.timestamp}>
           {format(parseISO(createdAt), "HH:mm")}
         </span>
@@ -1125,7 +1123,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
                       {format(parseISO(message.createdAt), "HH:mm")}
                     </span>
                   </div>)}
-                  {message.mediaUrl && !data?.message?.extendedTextMessage && checkMessageMedia(message, data)}
+              {message.mediaUrl && !data?.message?.extendedTextMessage && checkMessageMedia(message, data)}
             </div>
           </React.Fragment>
         );
@@ -1153,7 +1151,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
 
               {message.thumbnailUrl && (
                 <img className={classes.previewThumbnail} src={message.thumbnailUrl} />
-              )}                                
+              )}
 
               <div
                 className={clsx(classes.textContentItem, {
@@ -1215,6 +1213,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
         onScroll={handleScroll}
         ref={scrollRef}
       >
+        {!isGroup &&
+          <VisualizeOldMessages
+            contact={ticket.contact}
+          />
+
+        }
         {messagesList.length > 0 ? renderMessages() : []}
         {contactPresence === "composing" && (
           <div className={classes.messageLeft}>
