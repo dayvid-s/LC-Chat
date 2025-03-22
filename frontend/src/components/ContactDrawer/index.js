@@ -9,7 +9,7 @@ import Link from "@material-ui/core/Link";
 import Paper from "@material-ui/core/Paper";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
-import { Group, LocationCity, Person, Star } from "@material-ui/icons";
+import { Group, LocationCity, Person, ExpandMore, Star } from "@material-ui/icons";
 import CloseIcon from "@material-ui/icons/Close";
 import CreateIcon from '@material-ui/icons/Create';
 import { i18n } from "../../translate/i18n";
@@ -169,6 +169,24 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
                           {/* <Alarm style={{ marginRight: 5 }} /> */}
                           <strong>Cód {contact.saler.id}</strong>
                         </Typography>
+                      )}
+
+                      {contact?.saler?.name && (
+                        <Typography
+                          style={{
+                            fontSize: 14,
+                            display: "flex",
+                            alignItems: "center",
+                            wordBreak: "break-word",
+                            whiteSpace: "normal",
+                            overflowWrap: "break-word",
+                            maxWidth: "220px",
+                          }}
+                        >
+                          <ExpandMore style={{ marginRight: 5 }} />
+                          <strong>{contact.saler.name}</strong>
+                        </Typography>
+
                       )}
 
                       {contact?.saler?.commercialGroup && (
