@@ -1215,7 +1215,13 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
       >
         {!isGroup &&
           <VisualizeOldMessages
+            ticketId={ticketId}
+            ticket={ticket}
             contact={ticket.contact}
+            isGroup={isGroup}
+            handleOpenMessageOptionsMenu={handleOpenMessageOptionsMenu}
+            loading={loading}
+            setLoading={setLoading}
           />
 
         }

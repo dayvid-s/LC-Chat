@@ -28,50 +28,37 @@ import toastError from "../../errors/toastError";
 import { i18n } from "../../translate/i18n";
 import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useStyles } from "../MessagesList";
 
-export function VisualizeOldMessages(contact, isGroup, handleOpenMessageOptionsMenu) {
-  const [loading, setLoading] = useState(true);
+export function VisualizeOldMessages({ ticketId, ticket, contact, isGroup, handleOpenMessageOptionsMenu, loading, setLoading }) {
+
   const [messagesList, setMessagesList] = useState([]);
   const [pageNumber, setPageNumber] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
 
   useEffect(() => {
     setMessagesList([])
+    setHasMore(true)
+    setPageNumber(1)
   }, [contact])
 
   async function searchForOldMessages(pageNumber) {
     const companyId = localStorage.getItem("companyId");
-    // console.log("o id que ta vomndp ", contact.contact.id)
 
     setLoading(true);
     try {
       const response = await api.get("/messages-from-contact", {
         params: {
-          contactId: contact?.contact?.id ? contact?.contact?.id : 1, // Presumo que ticketId seja o contato
+          contactId: ticket.contactId,
           page: pageNumber,
-          companyId: companyId
+          companyId: companyId,
+          ticketId: ticketId
         }
       });
 
       const messages = response.data.records;
+      setHasMore(response.data.hasMore)
       setMessagesList((prevMessages) => [...messages, ...prevMessages]);
     } catch (err) {
       toastError(err);
@@ -79,126 +66,6 @@ export function VisualizeOldMessages(contact, isGroup, handleOpenMessageOptionsM
       setLoading(false);
     }
   }
-
-  // useEffect(() => { searchForOldMessages(1) }, [])
-
-
-  // const messagesList = [
-  //   {
-  //     "mediaUrl": "http://localhost:8090/public/media/1/14/5/wdhqk-1742517435711.ogg",
-  //     "thumbnailUrl": null,
-  //     "id": "439BF058D5B430CB1E5D43FCF631D585",
-  //     "remoteJid": "559885034371@s.whatsapp.net",
-  //     "participant": null,
-  //     "dataJson": "{\"key\":{\"remoteJid\":\"559885034371@s.whatsapp.net\",\"fromMe\":false,\"id\":\"439BF058D5B430CB1E5D43FCF631D585\"},\"messageTimestamp\":1742517435,\"pushName\":\"Francisca Carneiro\",\"broadcast\":false,\"message\":{\"audioMessage\":{\"url\":\"https://mmg.whatsapp.net/v/t62.7117-24/13155634_693206456468865_5669860962830477063_n.enc?ccb=11-4&oh=01_Q5AaIeok1HxPJrIQnL5ktcN3dIMh3zsG2y7JUSlWLb61vQSQ&oe=68042F42&_nc_sid=5e03e0&mms3=true\",\"mimetype\":\"audio/ogg; codecs=opus\",\"fileSha256\":\"gsUfIXjbc4bnd/8Y2ddMf+sOUizN2FemtGEKAZy/2lE=\",\"fileLength\":\"57268\",\"seconds\":24,\"ptt\":true,\"mediaKey\":\"klJa/mamz3ih29niAxEO6L2AmbIls2tVpBS9svlyPZs=\",\"fileEncSha256\":\"C6vjh5eDgipULzBPF53UWbttqUOgBePge5KB4B6TpNM=\",\"directPath\":\"/v/t62.7117-24/13155634_693206456468865_5669860962830477063_n.enc?ccb=11-4&oh=01_Q5AaIeok1HxPJrIQnL5ktcN3dIMh3zsG2y7JUSlWLb61vQSQ&oe=68042F42&_nc_sid=5e03e0\",\"mediaKeyTimestamp\":\"1742517411\",\"waveform\":\"AERdU10AV1JFQiMAGAZEQE8HASshU1BVJRBQTGFLEFMAK0YiXVQ4TVNMEgEJHUcoUlRUQ1hOXEA+KGERDicISw==\"},\"messageContextInfo\":{\"deviceListMetadata\":{\"recipientKeyHash\":\"eHJ6Wef5dLeB2w==\",\"recipientTimestamp\":\"1742514149\"},\"deviceListMetadataVersion\":2,\"messageSecret\":\"moK85klDSI3cSYYpHZXtzH3Y2vxG1pCwsYGhLaB2A/Y=\"}}}",
-  //     "ack": 0,
-  //     "read": true,
-  //     "fromMe": false,
-  //     "channel": "whatsapp",
-  //     "body": "Áudio",
-  //     "mediaType": "audio",
-  //     "isDeleted": false,
-  //     "isEdited": false,
-  //     "createdAt": "2025-03-21T00:37:15.715Z",
-  //     "updatedAt": "2025-03-21T00:39:53.368Z",
-  //     "quotedMsgId": null,
-  //     "ticketId": 5,
-  //     "contactId": 14,
-  //     "companyId": 1,
-  //     "queueId": 1
-  //   },
-  //   {
-  //     "mediaUrl": "http://localhost:8090/public/media/1/14/5/iDpky-1742517260133.ogg",
-  //     "thumbnailUrl": null,
-  //     "id": "6F9E5DB427976305C3F7F8299556A7B2",
-  //     "remoteJid": "559885034371@s.whatsapp.net",
-  //     "participant": null,
-  //     "dataJson": "{\"key\":{\"remoteJid\":\"559885034371@s.whatsapp.net\",\"fromMe\":false,\"id\":\"6F9E5DB427976305C3F7F8299556A7B2\"},\"messageTimestamp\":1742517259,\"pushName\":\"Francisca Carneiro\",\"broadcast\":false,\"message\":{\"audioMessage\":{\"url\":\"https://mmg.whatsapp.net/v/t62.7117-24/29390442_668734275659938_1145072193117989758_n.enc?ccb=11-4&oh=01_Q5AaIUHE3luwcdgS0EzzsIxZGMQ85xkPvV-LL9s4sLfj5XGT&oe=68041B80&_nc_sid=5e03e0&mms3=true\",\"mimetype\":\"audio/ogg; codecs=opus\",\"fileSha256\":\"v+ZXOYtrmKAOcJA4Wlz0HBtKEBbmDse+/aNuHB2ayoY=\",\"fileLength\":\"10808\",\"seconds\":4,\"ptt\":true,\"mediaKey\":\"F3GA+ep3HNIDhv7vnwHK659Fk1yYGDKya9T+QPX8rm4=\",\"fileEncSha256\":\"9mFt3mF63091oyKRxQoVGMkzejGzpSc52vSixLUX4Y0=\",\"directPath\":\"/v/t62.7117-24/29390442_668734275659938_1145072193117989758_n.enc?ccb=11-4&oh=01_Q5AaIUHE3luwcdgS0EzzsIxZGMQ85xkPvV-LL9s4sLfj5XGT&oe=68041B80&_nc_sid=5e03e0\",\"mediaKeyTimestamp\":\"1742517256\",\"waveform\":\"ABEqNBsAAAAAAAAAAAAGGx8qGxkoLCkuNC8yJiQQEA8nKzYtKh4aLiQfITE4Piw0FR4uODgpMCcvNjg7JCA7OQ==\"},\"messageContextInfo\":{\"deviceListMetadata\":{\"recipientKeyHash\":\"eHJ6Wef5dLeB2w==\",\"recipientTimestamp\":\"1742514149\"},\"deviceListMetadataVersion\":2,\"messageSecret\":\"n0RDPgQF03A72bW+4B9i44WrO3C1CnQyQAuUnBxuYRw=\"}}}",
-  //     "ack": 4,
-  //     "read": true,
-  //     "fromMe": false,
-  //     "channel": "whatsapp",
-  //     "body": "Áudio",
-  //     "mediaType": "audio",
-  //     "isDeleted": false,
-  //     "isEdited": false,
-  //     "createdAt": "2025-03-21T00:34:20.151Z",
-  //     "updatedAt": "2025-03-21T00:35:24.378Z",
-  //     "quotedMsgId": null,
-  //     "ticketId": 5,
-  //     "contactId": 14,
-  //     "companyId": 1,
-  //     "queueId": 1
-  //   },
-  //   {
-  //     "mediaUrl": null,
-  //     "thumbnailUrl": null,
-  //     "id": "14C46B5A1C67B56259D9AF8474468968",
-  //     "remoteJid": "559885034371@s.whatsapp.net",
-  //     "participant": null,
-  //     "dataJson": "{\"key\":{\"remoteJid\":\"559885034371@s.whatsapp.net\",\"fromMe\":false,\"id\":\"14C46B5A1C67B56259D9AF8474468968\"},\"messageTimestamp\":1741546333,\"pushName\":\"Francisca Carneiro\",\"broadcast\":false,\"message\":{\"conversation\":\".\",\"messageContextInfo\":{\"deviceListMetadata\":{\"recipientKeyHash\":\"U1qfzNK5TCwQvg==\",\"recipientTimestamp\":\"1741529249\"},\"deviceListMetadataVersion\":2,\"messageSecret\":\"PQ448tkP/pEcdMbEo8gDeFkaPArg7y7tSNxDiCtn7SM=\"}}}",
-  //     "ack": 0,
-  //     "read": true,
-  //     "fromMe": false,
-  //     "channel": "whatsapp",
-  //     "body": ".",
-  //     "mediaType": "conversation",
-  //     "isDeleted": false,
-  //     "isEdited": false,
-  //     "createdAt": "2025-03-09T18:52:13.411Z",
-  //     "updatedAt": "2025-03-10T01:40:09.342Z",
-  //     "quotedMsgId": null,
-  //     "ticketId": 5,
-  //     "contactId": 14,
-  //     "companyId": 1,
-  //     "queueId": 1
-  //   },
-  //   {
-  //     "mediaUrl": null,
-  //     "thumbnailUrl": null,
-  //     "id": "BAFE71CAA2B33D0CE20E9FFDE73453F3",
-  //     "remoteJid": "559885034371@s.whatsapp.net",
-  //     "participant": null,
-  //     "dataJson": "{\"key\":{\"remoteJid\":\"559885034371@s.whatsapp.net\",\"fromMe\":false,\"id\":\"BAFE71CAA2B33D0CE20E9FFDE73453F3\"},\"messageTimestamp\":1741530357,\"pushName\":\"Francisca Carneiro\",\"broadcast\":false,\"message\":{\"conversation\":\"<>\",\"messageContextInfo\":{\"deviceListMetadata\":{\"recipientKeyHash\":\"U1qfzNK5TCwQvg==\",\"recipientTimestamp\":\"1741529249\"},\"deviceListMetadataVersion\":2,\"messageSecret\":\"AS6PIrlrxreJeIbqkHFmTdYmSQAvhxeAVJXQ0egyINk=\"}}}",
-  //     "ack": 0,
-  //     "read": true,
-  //     "fromMe": false,
-  //     "channel": "whatsapp",
-  //     "body": "<>",
-  //     "mediaType": "conversation",
-  //     "isDeleted": false,
-  //     "isEdited": false,
-  //     "createdAt": "2025-03-09T14:25:58.220Z",
-  //     "updatedAt": "2025-03-09T14:26:03.263Z",
-  //     "quotedMsgId": null,
-  //     "ticketId": 5,
-  //     "contactId": 14,
-  //     "companyId": 1,
-  //     "queueId": null
-  //   },
-  //   {
-  //     "mediaUrl": null,
-  //     "thumbnailUrl": null,
-  //     "id": "82F64905DD9D2E652B2CC0EA1EBEEBDC",
-  //     "remoteJid": "559885034371@s.whatsapp.net",
-  //     "participant": null,
-  //     "dataJson": "{\"key\":{\"remoteJid\":\"559885034371@s.whatsapp.net\",\"fromMe\":false,\"id\":\"82F64905DD9D2E652B2CC0EA1EBEEBDC\"},\"messageTimestamp\":1741530334,\"pushName\":\"Francisca Carneiro\",\"broadcast\":false,\"message\":{\"extendedTextMessage\":{\"text\":\".\",\"previewType\":\"NONE\",\"contextInfo\":{\"entryPointConversionSource\":\"global_search_new_chat\",\"entryPointConversionApp\":\"whatsapp\",\"entryPointConversionDelaySeconds\":3},\"inviteLinkGroupTypeV2\":\"DEFAULT\"},\"messageContextInfo\":{\"deviceListMetadata\":{\"recipientKeyHash\":\"U1qfzNK5TCwQvg==\",\"recipientTimestamp\":\"1741529249\"},\"deviceListMetadataVersion\":2,\"messageSecret\":\"+ajnXq43KYYh3O9n2jOjmfUUD7RoazDRNQykAh0Bs94=\"}}}",
-  //     "ack": 0,
-  //     "read": true,
-  //     "fromMe": false,
-  //     "channel": "whatsapp",
-  //     "body": ".",
-  //     "mediaType": "extendedTextMessage",
-  //     "isDeleted": false,
-  //     "isEdited": false,
-  //     "createdAt": "2025-03-09T14:25:34.571Z",
-  //     "updatedAt": "2025-03-09T14:25:42.785Z",
-  //     "quotedMsgId": null,
-  //     "ticketId": 4,
-  //     "contactId": 14,
-  //     "companyId": 1,
-  //     "queueId": null
-  //   }]
 
   const classes = useStyles();
 
@@ -765,25 +632,28 @@ export function VisualizeOldMessages(contact, isGroup, handleOpenMessageOptionsM
     // >
     <>
 
-      <button
-        onClick={() => {
-          setPageNumber(pageNumber + 1)
-          searchForOldMessages(pageNumber)
-        }
-        }
-        style={{
-          marginTop: 10,
-          padding: "8px 16px",
-          backgroundColor: "#007bff",
-          color: "#fff",
-          border: "none",
-          borderRadius: 4,
-          cursor: "pointer",
-          alignSelf: "center",
-        }}
-      >
-        Carregar Mais Mensagens
-      </button>
+      {!loading && hasMore === true &&
+
+        <button
+          onClick={() => {
+            setPageNumber(pageNumber + 1)
+            searchForOldMessages(pageNumber)
+          }
+          }
+          style={{
+            marginTop: 10,
+            padding: "8px 16px",
+            backgroundColor: "#007bff",
+            color: "#fff",
+            border: "none",
+            borderRadius: 4,
+            cursor: "pointer",
+            alignSelf: "center",
+          }}
+        >
+          Buscar De tickets Anteriores
+        </button>
+      }
 
       {messagesList.length > 0 ? renderMessages() : []}
 

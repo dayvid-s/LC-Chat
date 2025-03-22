@@ -205,23 +205,15 @@ export const list = async (req: Request, res: Response): Promise<Response> => {
 };
 export const listMessages = async (req: Request, res: Response) => {
   try {
-    const { contactId, page, companyId } = req.query;
+    const { contactId, page, companyId, ticketId } = req.query;
 
-    // Verificar se contactId é um número válido
-    if (!contactId || isNaN(Number(contactId))) {
-      return res
-        .status(400)
-        .json({ error: "Invalid contactId. It must be a number." });
-    }
-
-    // Definindo a página como 1 por padrão se não for fornecida
     const pageNumber = page || "1";
 
-    // Chama o serviço que irá buscar as mensagens
     const response = await GetMessagesByContact({
-      contactId: Number(contactId), // Converte contactId para número
+      contactId: Number(contactId),
       companyId: Number(companyId),
-      pageNumber: String(pageNumber) // Passa page como string
+      ticketId: Number(ticketId),
+      pageNumber: String(pageNumber)
     });
 
     return res.json(response);
