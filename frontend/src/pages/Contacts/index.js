@@ -39,6 +39,10 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import { i18n } from "../../translate/i18n";
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons';
+
+
 const reducer = (state, action) => {
   if (action.type === "LOAD_CONTACTS") {
     const contacts = action.payload;
@@ -233,6 +237,33 @@ const Contacts = () => {
     }
   };
 
+
+  const importCsv = async () => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".csv";
+    fileInput.click();
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("contacts", file);
+      try {
+        api.post("/contacts/importCsv", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }).then(() => {
+          toast.success(i18n.t("contacts.toasts.imported"));
+        }).catch((err) => {
+          toastError(err);
+        });
+      } catch (err) {
+        toastError(err);
+      }
+    };
+  }
+
+
   return (
     <MainContainer className={classes.mainContainer}>
       <NewTicketModal
@@ -283,6 +314,15 @@ const Contacts = () => {
               ),
             }}
           />
+
+
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={(e) => importCsv()}
+          >
+            &nbsp;<FontAwesomeIcon icon={faCloudArrowUp} />&nbsp;
+          </Button>
           <Button
             variant="contained"
             color="primary"
