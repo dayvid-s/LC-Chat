@@ -6,3 +6,5 @@
 /.externalToolBuilders/
 /.project
 /.settings/
+backend.log
+restart.log
