@@ -4,7 +4,6 @@ module.exports = {
       name: "LC Chat Backend",
       script: "npm",
       args: "start",
-      watch: true,
       autorestart: false,
       env: {
         NODE_ENV: "production"
