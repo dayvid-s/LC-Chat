@@ -81,7 +81,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     name: Yup.string().required(),
     number: Yup.string()
       .required()
-      .matches(/^\d+$/, "Invalid number format. Only numbers is allowed.")
+      .matches(/^\d+$/, "Contato inválido. Apenas números são permitidos.")
   });
 
   try {
@@ -91,9 +91,21 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   }
 
   if (!newContact.isGroup) {
-    const validNumber = await CheckContactNumber(newContact.number, companyId);
-    const number = validNumber.jid.replace(/\D/g, "");
-    newContact.number = number;
+    try {
+      const validNumber = await CheckContactNumber(
+        newContact.number,
+        companyId
+      );
+
+      if (!validNumber || !validNumber.jid) {
+        throw new Error("O número informado não é um WhatsApp válido.");
+      }
+
+      const number = validNumber.jid.replace(/\D/g, "");
+      newContact.number = number;
+    } catch (error) {
+      throw new Error("O número informado não é um WhatsApp válido.");
+    }
   }
 
   /**
