@@ -1,7 +1,7 @@
 import Redis from "ioredis";
-import { REDIS_URI_CONNECTION } from "../config/redis";
 import util from "util";
 import * as crypto from "crypto";
+import { REDIS_URI_CONNECTION } from "../config/redis";
 
 const redis = new Redis(REDIS_URI_CONNECTION);
 
@@ -40,17 +40,16 @@ export function set(
   option?: string,
   optionValue?: string | number
 ) {
-  const setPromisefy = util.promisify(redis.set).bind(redis);
   if (option !== undefined && optionValue !== undefined) {
-    return setPromisefy(key, value, option, optionValue);
+    // @ts-expect-error does not exist on type 'Redis'
+    return redis.set(key, value, option, optionValue);
   }
 
-  return setPromisefy(key, value);
+  return redis.set(key, value);
 }
 
 export function get(key: string) {
-  const getPromisefy = util.promisify(redis.get).bind(redis);
-  return getPromisefy(key);
+  return redis.get(key);
 }
 
 export function getKeys(pattern: string) {
@@ -65,7 +64,7 @@ export function del(key: string) {
 
 export async function delFromPattern(pattern: string) {
   const all = await getKeys(pattern);
-  for (let item of all) {
+  for (const item of all) {
     del(item);
   }
 }

@@ -98,13 +98,15 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
       );
 
       if (!validNumber || !validNumber.jid) {
-        throw new Error("O número informado não é um WhatsApp válido.");
+        throw new AppError(
+          "O número informado não está registrado no WhatsApp."
+        );
       }
 
       const number = validNumber.jid.replace(/\D/g, "");
       newContact.number = number;
     } catch (error) {
-      throw new Error("O número informado não é um WhatsApp válido.");
+      throw new AppError("O número informado não está registrado no WhatsApp.");
     }
   }
 
