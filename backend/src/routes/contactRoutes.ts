@@ -41,6 +41,13 @@ contactRoutes.get(
   ContactController.show
 );
 
+contactRoutes.get(
+  "/messages-from-contact",
+  apiTokenAuth,
+  isAuth,
+  ContactController.listMessages
+);
+
 contactRoutes.post("/contacts", apiTokenAuth, isAuth, ContactController.store);
 
 contactRoutes.put(
