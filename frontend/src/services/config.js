@@ -1,38 +1,42 @@
 import { loadJSON } from "../helpers/loadJSON";
 
-// If config.json is not found and the hostname is localhost or 127.0.0 load config-dev.json
+// Tenta carregar o arquivo de configuração principal (config.json)
 let config = loadJSON("/config.json");
 
-if (!config && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
-  config = loadJSON("/config-dev.json");
-  if (!config) {
-    config = {
-      "BACKEND_PROTOCOL": "http",
-      "BACKEND_HOST": "localhost",
-      "BACKEND_PORT": "8090",
-      "LOG_LEVEL": "debug"
-    };
-  }
-}
+// Se não encontrar o config.json e o hostname for localhost ou 127.0.0.1, carrega o arquivo config-dev.json
+// if (!config && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+//   config = loadJSON("/config-dev.json");
+// }
 
+// Se não encontrar nenhum arquivo de configuração, utiliza as configurações padrão para o backend
 if (!config) {
-  throw new Error("Config not found");
+  config = {
+    "BACKEND_PROTOCOL": "https",  // Alterado para https
+    "BACKEND_HOST": "api.lccomvc.digital",
+    "BACKEND_PORT": "8090",
+    "LOG_LEVEL": "debug"
+  };
 }
 
+// Função para obter a URL do backend
 export function getBackendURL() {
   return (
-    config.REACT_APP_BACKEND_URL ||
-    (config.BACKEND_PROTOCOL ?? "https") + "://" +
-    (config.BACKEND_HOST) + ":" + (config.BACKEND_PORT ?? 443) +
-    (config.BACKEND_PATH ?? "")
+    "https://api.lccomvc.digital"
+    // config.REACT_APP_BACKEND_URL ||
+    // (config.BACKEND_PROTOCOL ?? "https") + "://" + // Usando https por padrão
+    // (config.BACKEND_HOST) + ":" + (config.BACKEND_PORT ?? "8090") + // Usando lccomvc.digital:8090 por padrão
+    // (config.BACKEND_PATH ?? "")
   );
 }
 
+// Função para obter a URL do WebSocket do backend
 export function getBackendSocketURL() {
   return (
-    config.REACT_APP_BACKEND_URL ||
-    (config.BACKEND_PROTOCOL ?? "https") + "://" +
-    (config.BACKEND_HOST) + ":" + (config.BACKEND_PORT ?? 443)
+    "https://api.lccomvc.digital"
+
+    // config.REACT_APP_BACKEND_URL ||
+    // (config.BACKEND_PROTOCOL ?? "https") + "://" + // Usando https por padrão
+    // (config.BACKEND_HOST) + ":" + (config.BACKEND_PORT ?? "8090") // Usando lccomvc.digital:8090 por padrão
   );
 }
 
