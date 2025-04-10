@@ -36,6 +36,8 @@ import UserRating from "../models/UserRating";
 import UserSocketSession from "../models/UserSocketSession";
 import Whatsapp from "../models/Whatsapp";
 import WhatsappQueue from "../models/WhatsappQueue";
+import TransmissionContact from "../models/TransmissionContact";
+import TransmissionList from "../models/TransmissionList";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const dbConfig = require("../config/database");
@@ -79,7 +81,9 @@ const models = [
   ChatMessage,
   Invoices,
   Subscriptions,
-  Saler
+  Saler,
+  TransmissionList,
+  TransmissionContact
 ];
 
 sequelize.addModels(models);

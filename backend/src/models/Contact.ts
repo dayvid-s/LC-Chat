@@ -2,6 +2,7 @@ import {
   AllowNull,
   AutoIncrement,
   BelongsTo,
+  BelongsToMany,
   Column,
   CreatedAt,
   Default,
@@ -18,6 +19,8 @@ import ContactCustomField from "./ContactCustomField";
 import Saler from "./Saler";
 import Schedule from "./Schedule";
 import Ticket from "./Ticket";
+import TransmissionContact from "./TransmissionContact";
+import TransmissionList from "./TransmissionList";
 
 @Table
 class Contact extends Model<Contact> {
@@ -91,6 +94,9 @@ class Contact extends Model<Contact> {
     hooks: true
   })
   schedules: Schedule[];
+
+  @BelongsToMany(() => TransmissionList, () => TransmissionContact)
+  transmissionLists: TransmissionList[];
 }
 
 export default Contact;

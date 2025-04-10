@@ -31,6 +31,8 @@ import userRoutes from "./userRoutes";
 import versionRoutes from "./versionRoutes";
 import whatsappRoutes from "./whatsappRoutes";
 import whatsappSessionRoutes from "./whatsappSessionRoutes";
+import transmissionListRoutes from "./transmissionListRoutes";
+import transmissionContactRoutes from "./ transmissionContactRoutes";
 
 const routes = Router();
 
@@ -66,5 +68,7 @@ routes.use(pwaRoutes);
 routes.use(versionRoutes);
 routes.use(ticketzOSSRoutes);
 routes.use(salerRoutes);
+routes.use(transmissionListRoutes);
+routes.use(transmissionContactRoutes);
 
 export default routes;
