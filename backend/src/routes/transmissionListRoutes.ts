@@ -25,4 +25,9 @@ transmissionListRoutes.delete(
   TransmissionListController.remove
 );
 
+transmissionListRoutes.put(
+  "/transmission-lists/:id",
+  isAuth,
+  TransmissionListController.update
+);
 export default transmissionListRoutes;

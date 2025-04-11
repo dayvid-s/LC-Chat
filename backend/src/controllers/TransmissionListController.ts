@@ -3,15 +3,16 @@ import CreateTransmissionListService from "../services/TransmissionListService/C
 import DeleteTransmissionListService from "../services/TransmissionListService/DeleteTransmissionListService";
 import ListTransmissionListsService from "../services/TransmissionListService/ListTransmissionListsService";
 import ShowTransmissionListService from "../services/TransmissionListService/ShowTransmissionListService";
+import UpdateTransmissionListService from "../services/TransmissionListService/UpdateTransmissionListService";
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
-  const { name, whatsappId, userId, companyId } = req.body;
+  const { name, userId, companyId, contactIds } = req.body;
 
   const list = await CreateTransmissionListService({
     name,
-    whatsappId,
     userId,
-    companyId
+    companyId,
+    contactIds
   });
 
   return res.status(201).json(list);
@@ -31,6 +32,22 @@ export const show = async (req: Request, res: Response): Promise<Response> => {
   const list = await ShowTransmissionListService(Number(id));
 
   return res.status(200).json(list);
+};
+
+export const update = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { id } = req.params;
+  const { name, contactIds } = req.body;
+
+  const updatedList = await UpdateTransmissionListService({
+    id: Number(id),
+    name,
+    contactIds
+  });
+
+  return res.status(200).json(updatedList);
 };
 
 export const remove = async (

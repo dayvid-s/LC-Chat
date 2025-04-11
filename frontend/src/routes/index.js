@@ -32,6 +32,7 @@ import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import ToDoList from "../pages/ToDoList/";
 import Subscription from "../pages/Subscription/";
+import TransmissionList from "../pages/TransmissionList";
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -119,8 +120,9 @@ const Routes = () => {
                   component={Subscription}
                   isPrivate
                 />
-                
                 <Route exact path="/chats/:id?" component={Chat} isPrivate />
+                <Route exact path="/transmissionLists/:id?" component={TransmissionList} isPrivate />
+
                 {showCampaigns && (
                   <>
                     <Route
@@ -153,7 +155,7 @@ const Routes = () => {
                       component={CampaignsConfig}
                       isPrivate
                     />
-                    
+
                   </>
                 )}
               </LoggedInLayout>

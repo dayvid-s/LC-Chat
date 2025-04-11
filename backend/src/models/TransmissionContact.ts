@@ -24,6 +24,9 @@ class TransmissionContact extends Model<TransmissionContact> {
   @Column
   contactId: number;
 
+  @BelongsTo(() => Contact)
+  contact: Contact;
+
   @CreatedAt
   createdAt: Date;
 

@@ -4,26 +4,35 @@ import TransmissionList from "../../models/TransmissionList";
 interface Request {
   id: number;
   name?: string;
-  whatsappId?: number;
+  contactIds?: number[];
 }
 
 const UpdateTransmissionListService = async ({
   id,
   name,
-  whatsappId
+  contactIds = []
 }: Request): Promise<TransmissionList> => {
   const list = await TransmissionList.findByPk(id);
 
   if (!list) {
-    throw new AppError("Lista de transmissão não encontrada.");
+    throw new AppError("Lista de transmissão não encontrada");
   }
 
   if (name) list.name = name;
-  if (whatsappId) list.whatsappId = whatsappId;
-
   await list.save();
 
-  return list;
+  // @ts-expect-error dont infer
+  await list.setContacts(contactIds);
+
+  const updatedList = await TransmissionList.findByPk(id, {
+    include: ["whatsapp", "user", "company", "contacts"]
+  });
+
+  if (!updatedList) {
+    throw new AppError("Erro ao atualizar lista");
+  }
+
+  return updatedList;
 };
 
 export default UpdateTransmissionListService;
