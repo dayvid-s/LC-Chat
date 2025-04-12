@@ -1,7 +1,11 @@
 import { Router } from "express";
+import multer from "multer";
 import * as TransmissionListController from "../controllers/TransmissionListController";
 import isAuth from "../middleware/isAuth";
 
+import uploadConfig from "../config/upload";
+
+const upload = multer(uploadConfig);
 const transmissionListRoutes = Router();
 
 transmissionListRoutes.post(
@@ -23,6 +27,12 @@ transmissionListRoutes.delete(
   "/transmission-lists/:id",
   isAuth,
   TransmissionListController.remove
+);
+transmissionListRoutes.post(
+  "/transmission-lists/:listId/send-media",
+  isAuth,
+  upload.single("media"),
+  TransmissionListController.sendMediaToList
 );
 
 transmissionListRoutes.put(

@@ -38,11 +38,12 @@ const processRecordedAudio = async (audio: string): Promise<Readable> => {
 };
 
 export const getMessageOptions = async (
-  fileName: string,
+  body: string,
   pathMedia: string,
   mimetype?: string
 ): Promise<AnyMediaMessageContent> => {
   mimetype = mimetype || mime.lookup(pathMedia) || "application/octet-stream";
+  const fileName = path.basename(pathMedia);
 
   try {
     let options: AnyMediaMessageContent;
@@ -50,7 +51,8 @@ export const getMessageOptions = async (
     if (mimetype.startsWith("video/")) {
       options = {
         fileName,
-        video: { stream: fs.createReadStream(pathMedia) }
+        video: { stream: fs.createReadStream(pathMedia) },
+        caption: body
       };
     } else if (mimetype === "audio/ogg") {
       options = {
@@ -74,13 +76,15 @@ export const getMessageOptions = async (
     } else if (supportedImages.includes(mimetype)) {
       options = {
         fileName,
-        image: { stream: fs.createReadStream(pathMedia) }
+        image: { stream: fs.createReadStream(pathMedia) },
+        caption: body
       };
     } else {
       options = {
         fileName,
         document: { stream: fs.createReadStream(pathMedia) },
-        mimetype
+        mimetype,
+        caption: body
       };
     }
 

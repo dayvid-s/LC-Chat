@@ -2,9 +2,10 @@ module.exports = {
   apps: [
     {
       name: "LC Chat Backend",
-      script: "npm",
-      args: "start",
-      autorestart: false,
+      script: "dist/server.js",
+      interpreter: "node",
+      autorestart: true,
+      watch: false,
       env: {
         NODE_ENV: "production"
       },
@@ -13,8 +14,7 @@ module.exports = {
     },
     {
       name: "LC Chat Monitor",
-      script: "node",
-      args: "monitor.js",
+      script: "monitor.js",
       watch: false,
       autorestart: true
     }

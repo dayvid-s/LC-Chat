@@ -4,6 +4,12 @@ import DeleteTransmissionListService from "../services/TransmissionListService/D
 import ListTransmissionListsService from "../services/TransmissionListService/ListTransmissionListsService";
 import ShowTransmissionListService from "../services/TransmissionListService/ShowTransmissionListService";
 import UpdateTransmissionListService from "../services/TransmissionListService/UpdateTransmissionListService";
+import AppError from "../errors/AppError";
+import Contact from "../models/Contact";
+import TransmissionContact from "../models/TransmissionContact";
+import TransmissionList from "../models/TransmissionList";
+
+import GetDefaultWhatsApp from "../helpers/GetDefaultWhatsApp";
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { name, userId, companyId, contactIds } = req.body;
@@ -59,4 +65,87 @@ export const remove = async (
   await DeleteTransmissionListService(Number(id));
 
   return res.status(200).json({ message: "Lista de transmissão excluida" });
+};
+
+export const sendMediaToList = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { listId } = req.params;
+  const { body, saveOnTicket } = req.body;
+  const { companyId } = req.user;
+
+  if (!listId || listId === "undefined" || listId === "null") {
+    throw new AppError("O ID da lista (listId) é obrigatório.", 400);
+  }
+
+  const media = (req.file || req.files?.[0]) as Express.Multer.File | undefined;
+
+  if (!body) {
+    throw new AppError("A mensagem (body) é obrigatória.", 400);
+  }
+
+  const transmissionList = await TransmissionList.findByPk(listId, {
+    include: [
+      {
+        model: TransmissionContact,
+        include: [Contact]
+      }
+    ]
+  });
+
+  if (!transmissionList) {
+    throw new AppError("Lista de transmissão não encontrada.", 404);
+  }
+
+  let defaultWhatsapp;
+  try {
+    defaultWhatsapp = await GetDefaultWhatsApp(companyId);
+  } catch (err) {
+    throw new AppError("Nenhum WhatsApp padrão configurado.", 500);
+  }
+
+  const queue = req.app.get("queues").messageQueue;
+
+  try {
+    const jobs = transmissionList.transmissionContacts.map(async (tc: any) => {
+      const { contact } = tc;
+      if (!contact || !contact.number) return;
+
+      const dataToSend: any = {
+        number: contact.number,
+        body,
+        saveOnTicket: saveOnTicket === "true"
+      };
+
+      if (media) {
+        dataToSend.mediaPath = media.path;
+        dataToSend.fileName = media.originalname;
+      }
+
+      await queue.add(
+        "SendMessage",
+        {
+          whatsappId: defaultWhatsapp.id,
+          data: dataToSend
+        },
+        {
+          removeOnComplete: true,
+          attempts: 3
+        }
+      );
+    });
+
+    await Promise.all(jobs);
+
+    return res.status(200).json({
+      message: "Mensagens adicionadas à fila com sucesso."
+    });
+  } catch (error) {
+    console.error("Erro ao enviar mensagens para a fila:", error);
+    throw new AppError(
+      "Erro interno ao processar a lista de transmissão.",
+      500
+    );
+  }
 };

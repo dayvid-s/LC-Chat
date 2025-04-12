@@ -25,6 +25,7 @@ import {
   AccordionDetails,
 } from "@material-ui/core";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import SendToTransmissionListModal from "./SendToTransmissionListModal";
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -51,7 +52,11 @@ function TransmissionList(props) {
 
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+
   const [listToEdit, setListToEdit] = useState(null);
+  const [sendListId, setSendListId] = useState(null);
+
 
   const fetchLists = async () => {
     try {
@@ -144,6 +149,25 @@ function TransmissionList(props) {
                     </Typography>
                   </div>
                   <div>
+
+
+                    {list.contacts?.length > 0 ? (
+
+                      <Button
+
+                        variant="outlined"
+                        color="primary"
+                        onClick={(e) => {
+                          setSendListId(list.id)
+                          setMessageModalOpen(true)
+                          e.stopPropagation();
+
+                        }}
+                      >
+                        Enviar Mensagem
+                      </Button>
+                    ) : null
+                    }
                     <IconButton
                       edge="end"
                       aria-label="edit"
@@ -198,13 +222,18 @@ function TransmissionList(props) {
             ))}
           </List>
         )}
-      </Paper>
+      </Paper >
 
       <TransmissionListModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         list={listToEdit}
         onSaved={fetchLists}
+      />
+      <SendToTransmissionListModal
+        open={messageModalOpen}
+        onClose={() => setMessageModalOpen(false)}
+        listId={sendListId}
       />
     </>
   );

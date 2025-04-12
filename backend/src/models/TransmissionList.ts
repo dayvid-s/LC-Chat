@@ -10,7 +10,8 @@ import {
   Default,
   BeforeCreate,
   BelongsToMany,
-  AutoIncrement
+  AutoIncrement,
+  HasMany
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
 
@@ -50,6 +51,9 @@ class TransmissionList extends Model<TransmissionList> {
 
   @BelongsTo(() => Company)
   company: Company;
+
+  @HasMany(() => TransmissionContact, { as: "transmissionContacts" })
+  transmissionContacts: TransmissionContact[];
 
   @BelongsToMany(() => Contact, () => TransmissionContact)
   contacts: Contact[];

@@ -44,7 +44,7 @@ const TransmissionListModal = ({ open, onClose, list, onSaved }) => {
             pageNumber: 1,
           },
         });
-        setContactOptions(data.contacts);
+        setContactOptions(data.contacts.filter((contact) => !contact.isGroup));
       } catch (err) {
         console.error("Erro ao buscar contatos", err);
       } finally {

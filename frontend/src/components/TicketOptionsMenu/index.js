@@ -119,9 +119,11 @@ const TicketOptionsMenu = ({ ticket, menuOpen, handleClose, anchorEl, showTabGro
           role={user.profile}
           perform="ticket-options:deleteTicket"
           yes={() => ( */}
-        <MenuItem onClick={handleOpenTransmissionListModal}>
-          Adicionar em lista
-        </MenuItem>
+        {!ticket.isGroup &&
+          <MenuItem onClick={handleOpenTransmissionListModal}>
+            Adicionar em lista
+          </MenuItem>
+        }
         {/* )} */}
         {/* /> */}
       </Menu>
