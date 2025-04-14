@@ -173,6 +173,9 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
                 variant="body2"
                 color="textPrimary"
               >
+                {ticket.contact?.saler
+                  ? `CÓD - ${ticket.contact.saler.id} - ` : ''
+                }
                 {ticket.contact.name}
               </Typography>
               {ticket.status === "closed" && (

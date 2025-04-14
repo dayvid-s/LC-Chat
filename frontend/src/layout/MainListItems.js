@@ -306,7 +306,7 @@ const MainListItems = (props) => {
                 }
               />
 
-              {/* <ListItemLink
+              <ListItemLink
                 to="/transmissionLists"
                 primary={"Lista de Transmissão"}
                 icon={
@@ -314,7 +314,7 @@ const MainListItems = (props) => {
                     <ListIcon />
                   </Badge>
                 }
-              /> */}
+              />
               <ListItemLink
                 to="/helps"
                 primary={i18n.t("mainDrawer.listItems.helps")}

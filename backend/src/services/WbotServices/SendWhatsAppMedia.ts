@@ -50,11 +50,14 @@ const processAudioFile = async (audio: string): Promise<string> => {
 };
 
 export const getMessageOptions = async (
-  fileName: string,
-  pathMedia: string
-): Promise<any> => {
-  const mimeType = mime.lookup(pathMedia) || "application/octet-stream";
+  caption: string,
+  pathMedia: string,
+  mimeType?: string,
+  customFileName?: string
+): Promise<AnyMessageContent> => {
+  mimeType = mimeType || mime.lookup(pathMedia) || "application/octet-stream";
   const typeMessage = mimeType.split("/")[0];
+  const fileName = customFileName || path.basename(pathMedia);
 
   try {
     if (!mimeType) {
@@ -65,44 +68,41 @@ export const getMessageOptions = async (
     if (typeMessage === "video") {
       options = {
         video: fs.readFileSync(pathMedia),
-        // caption: fileName,
+        caption,
         fileName
         // gifPlayback: true
       };
     } else if (typeMessage === "audio") {
       const typeAudio = fileName.includes("audio-record-site");
-      const convert = await processAudio(pathMedia);
-      if (typeAudio) {
-        options = {
-          audio: fs.readFileSync(convert),
-          mimetype: typeAudio ? "audio/mp4" : mimeType,
-          ptt: true
-        };
-      } else {
-        options = {
-          audio: fs.readFileSync(convert),
-          mimetype: typeAudio ? "audio/mp4" : mimeType,
-          ptt: true
-        };
-      }
-    } else if (typeMessage === "document") {
+
+      // Escolha o processador de áudio apropriado com base no tipo
+      const convert = typeAudio
+        ? await processAudio(pathMedia)
+        : await processAudioFile(pathMedia);
+
+      options = {
+        audio: fs.readFileSync(convert),
+        mimetype: typeAudio ? "audio/mp4" : mimeType,
+        ptt: typeAudio // ptt (push to talk) é verdadeiro apenas para gravações
+      };
+    } else if (typeMessage === "document" || typeMessage === "text") {
       options = {
         document: fs.readFileSync(pathMedia),
-        caption: fileName,
+        caption,
         fileName,
         mimetype: mimeType
       };
     } else if (typeMessage === "application") {
       options = {
         document: fs.readFileSync(pathMedia),
-        caption: fileName,
+        caption,
         fileName,
         mimetype: mimeType
       };
     } else {
       options = {
         image: fs.readFileSync(pathMedia),
-        caption: fileName
+        caption
       };
     }
 
@@ -121,11 +121,9 @@ const SendWhatsAppMedia = async ({
 }: Request): Promise<WAMessage> => {
   try {
     const wbot = await GetTicketWbot(ticket);
-
     const pathMedia = media.path;
-    const typeMessage = media.mimetype.split("/")[0];
-    let options: AnyMessageContent;
 
+    // Converte o nome do arquivo original para UTF-8
     let originalNameUtf8 = "";
     try {
       originalNameUtf8 = iconv.decode(
@@ -136,49 +134,13 @@ const SendWhatsAppMedia = async ({
       console.error("Error converting filename to UTF-8:", error);
     }
 
-    if (typeMessage === "video") {
-      options = {
-        video: fs.readFileSync(pathMedia),
-        caption: body,
-        fileName: originalNameUtf8
-        // gifPlayback: true
-      };
-    } else if (typeMessage === "audio") {
-      const typeAudio = originalNameUtf8.includes("audio-record-site");
-      if (typeAudio) {
-        const convert = await processAudio(media.path);
-        options = {
-          audio: fs.readFileSync(convert),
-          mimetype: typeAudio ? "audio/mp4" : media.mimetype,
-          ptt: true
-        };
-      } else {
-        const convert = await processAudioFile(media.path);
-        options = {
-          audio: fs.readFileSync(convert),
-          mimetype: typeAudio ? "audio/mp4" : media.mimetype
-        };
-      }
-    } else if (typeMessage === "document" || typeMessage === "text") {
-      options = {
-        document: fs.readFileSync(pathMedia),
-        caption: body,
-        fileName: originalNameUtf8,
-        mimetype: media.mimetype
-      };
-    } else if (typeMessage === "application") {
-      options = {
-        document: fs.readFileSync(pathMedia),
-        caption: body,
-        fileName: originalNameUtf8,
-        mimetype: media.mimetype
-      };
-    } else {
-      options = {
-        image: fs.readFileSync(pathMedia),
-        caption: body
-      };
-    }
+    // Usando a função getMessageOptions para obter as opções de mensagem
+    const options = await getMessageOptions(
+      body || "", // Caption
+      pathMedia, // Caminho do arquivo
+      media.mimetype, // MIME type
+      originalNameUtf8 // Nome do arquivo convertido para UTF-8
+    );
 
     const sentMessage = await wbot.sendMessage(
       `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
@@ -186,6 +148,7 @@ const SendWhatsAppMedia = async ({
         ...options
       }
     );
+
     await verifyMediaMessage(sentMessage, ticket, ticket.contact);
     return sentMessage;
   } catch (err) {
