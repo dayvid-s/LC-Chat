@@ -1,4 +1,4 @@
-import { WAMessage, AnyMediaMessageContent } from "@whiskeysockets/baileys";
+import { WAMessage, AnyMessageContent } from "@whiskeysockets/baileys";
 import * as Sentry from "@sentry/node";
 import fs from "fs";
 import { exec } from "child_process";
@@ -6,7 +6,6 @@ import path from "path";
 import ffmpegPath from "@ffmpeg-installer/ffmpeg";
 import mime from "mime-types";
 import iconv from "iconv-lite";
-import { Readable } from "stream";
 import AppError from "../../errors/AppError";
 import GetTicketWbot from "../../helpers/GetTicketWbot";
 import Ticket from "../../models/Ticket";
@@ -22,69 +21,88 @@ const publicFolder = __dirname.endsWith("/dist")
   ? path.resolve(__dirname, "..", "public")
   : path.resolve(__dirname, "..", "..", "..", "public");
 
-const supportedImages = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
-
-const processRecordedAudio = async (audio: string): Promise<Readable> => {
-  const outputAudio = `${publicFolder}/${new Date().getTime()}.ogg`;
+const processAudio = async (audio: string): Promise<string> => {
+  const outputAudio = `${publicFolder}/${new Date().getTime()}.mp3`;
   return new Promise((resolve, reject) => {
     exec(
-      `${ffmpegPath.path} -i "${audio}" -vn -ar 16000 -ac 1 -c:a libopus -b:a 0 ${outputAudio}`,
+      `${ffmpegPath.path} -i ${audio} -vn -ab 128k -ar 44100 -f ipod ${outputAudio} -y`,
       (error, _stdout, _stderr) => {
         if (error) reject(error);
-        resolve(fs.createReadStream(outputAudio));
+        fs.unlinkSync(audio);
+        resolve(outputAudio);
+      }
+    );
+  });
+};
+
+const processAudioFile = async (audio: string): Promise<string> => {
+  const outputAudio = `${publicFolder}/${new Date().getTime()}.mp3`;
+  return new Promise((resolve, reject) => {
+    exec(
+      `${ffmpegPath.path} -i ${audio} -vn -ar 44100 -ac 2 -b:a 192k ${outputAudio}`,
+      (error, _stdout, _stderr) => {
+        if (error) reject(error);
+        fs.unlinkSync(audio);
+        resolve(outputAudio);
       }
     );
   });
 };
 
 export const getMessageOptions = async (
-  body: string,
-  pathMedia: string,
-  mimetype?: string
-): Promise<AnyMediaMessageContent> => {
-  mimetype = mimetype || mime.lookup(pathMedia) || "application/octet-stream";
-  const fileName = path.basename(pathMedia);
+  fileName: string,
+  pathMedia: string
+): Promise<any> => {
+  const mimeType = mime.lookup(pathMedia) || "application/octet-stream";
+  const typeMessage = mimeType.split("/")[0];
 
   try {
-    let options: AnyMediaMessageContent;
+    if (!mimeType) {
+      throw new Error("Invalid mimetype");
+    }
+    let options: AnyMessageContent;
 
-    if (mimetype.startsWith("video/")) {
+    if (typeMessage === "video") {
       options = {
-        fileName,
-        video: { stream: fs.createReadStream(pathMedia) },
-        caption: body
+        video: fs.readFileSync(pathMedia),
+        // caption: fileName,
+        fileName
+        // gifPlayback: true
       };
-    } else if (mimetype === "audio/ogg") {
+    } else if (typeMessage === "audio") {
+      const typeAudio = fileName.includes("audio-record-site");
+      const convert = await processAudio(pathMedia);
+      if (typeAudio) {
+        options = {
+          audio: fs.readFileSync(convert),
+          mimetype: typeAudio ? "audio/mp4" : mimeType,
+          ptt: true
+        };
+      } else {
+        options = {
+          audio: fs.readFileSync(convert),
+          mimetype: typeAudio ? "audio/mp4" : mimeType,
+          ptt: true
+        };
+      }
+    } else if (typeMessage === "document") {
       options = {
+        document: fs.readFileSync(pathMedia),
+        caption: fileName,
         fileName,
-        audio: { stream: fs.createReadStream(pathMedia) },
-        mimetype: "audio/ogg; codecs=opus",
-        ptt: true
+        mimetype: mimeType
       };
-    } else if (mimetype.startsWith("audio/")) {
-      const needConvert = fileName.includes("audio-record-site");
+    } else if (typeMessage === "application") {
       options = {
+        document: fs.readFileSync(pathMedia),
+        caption: fileName,
         fileName,
-        audio: {
-          stream: needConvert
-            ? await processRecordedAudio(pathMedia)
-            : fs.createReadStream(pathMedia)
-        },
-        mimetype: needConvert ? "audio/ogg; codecs=opus" : mimetype,
-        ptt: needConvert
-      };
-    } else if (supportedImages.includes(mimetype)) {
-      options = {
-        fileName,
-        image: { stream: fs.createReadStream(pathMedia) },
-        caption: body
+        mimetype: mimeType
       };
     } else {
       options = {
-        fileName,
-        document: { stream: fs.createReadStream(pathMedia) },
-        mimetype,
-        caption: body
+        image: fs.readFileSync(pathMedia),
+        caption: fileName
       };
     }
 
@@ -105,10 +123,12 @@ const SendWhatsAppMedia = async ({
     const wbot = await GetTicketWbot(ticket);
 
     const pathMedia = media.path;
+    const typeMessage = media.mimetype.split("/")[0];
+    let options: AnyMessageContent;
 
-    let fileName = "";
+    let originalNameUtf8 = "";
     try {
-      fileName = iconv.decode(
+      originalNameUtf8 = iconv.decode(
         Buffer.from(media.originalname, "binary"),
         "utf8"
       );
@@ -116,23 +136,56 @@ const SendWhatsAppMedia = async ({
       console.error("Error converting filename to UTF-8:", error);
     }
 
-    const options = await getMessageOptions(
-      fileName,
-      pathMedia,
-      media.mimetype
-    );
+    if (typeMessage === "video") {
+      options = {
+        video: fs.readFileSync(pathMedia),
+        caption: body,
+        fileName: originalNameUtf8
+        // gifPlayback: true
+      };
+    } else if (typeMessage === "audio") {
+      const typeAudio = originalNameUtf8.includes("audio-record-site");
+      if (typeAudio) {
+        const convert = await processAudio(media.path);
+        options = {
+          audio: fs.readFileSync(convert),
+          mimetype: typeAudio ? "audio/mp4" : media.mimetype,
+          ptt: true
+        };
+      } else {
+        const convert = await processAudioFile(media.path);
+        options = {
+          audio: fs.readFileSync(convert),
+          mimetype: typeAudio ? "audio/mp4" : media.mimetype
+        };
+      }
+    } else if (typeMessage === "document" || typeMessage === "text") {
+      options = {
+        document: fs.readFileSync(pathMedia),
+        caption: body,
+        fileName: originalNameUtf8,
+        mimetype: media.mimetype
+      };
+    } else if (typeMessage === "application") {
+      options = {
+        document: fs.readFileSync(pathMedia),
+        caption: body,
+        fileName: originalNameUtf8,
+        mimetype: media.mimetype
+      };
+    } else {
+      options = {
+        image: fs.readFileSync(pathMedia),
+        caption: body
+      };
+    }
 
     const sentMessage = await wbot.sendMessage(
       `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"}`,
       {
-        caption: body || undefined,
-        fileName,
         ...options
-      } as AnyMediaMessageContent
+      }
     );
-
-    // wbot.cacheMessage(sentMessage);
-
     await verifyMediaMessage(sentMessage, ticket, ticket.contact);
     return sentMessage;
   } catch (err) {
