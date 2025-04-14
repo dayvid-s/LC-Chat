@@ -1213,18 +1213,16 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead }) => {
         onScroll={handleScroll}
         ref={scrollRef}
       >
-        {!isGroup &&
-          <VisualizeOldMessages
-            ticketId={ticketId}
-            ticket={ticket}
-            contact={ticket.contact}
-            isGroup={isGroup}
-            handleOpenMessageOptionsMenu={handleOpenMessageOptionsMenu}
-            loading={loading}
-            setLoading={setLoading}
-          />
+        <VisualizeOldMessages
+          ticketId={ticketId}
+          ticket={ticket}
+          contact={ticket.contact}
+          isGroup={isGroup}
+          handleOpenMessageOptionsMenu={handleOpenMessageOptionsMenu}
+          loading={loading}
+          setLoading={setLoading}
+        />
 
-        }
         {messagesList.length > 0 ? renderMessages() : []}
         {contactPresence === "composing" && (
           <div className={classes.messageLeft}>
