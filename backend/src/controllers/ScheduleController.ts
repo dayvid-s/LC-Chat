@@ -1,4 +1,8 @@
 import { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
+import mime from "mime-types";
+import { v4 as uuidv4 } from "uuid";
 import { getIO } from "../libs/socket";
 
 import AppError from "../errors/AppError";
@@ -36,13 +40,31 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   const { body, sendAt, contactId, userId, saveMessage } = req.body;
   const { companyId } = req.user;
 
+  const media = (req.file || req.files?.[0]) as Express.Multer.File | undefined;
+
+  let mediaPath: string | undefined;
+  let fileName: string | undefined;
+
+  if (media) {
+    const extension = mime.extension(media.mimetype) || "bin";
+    fileName = `${uuidv4()}.${extension}`;
+    const uploadsFolder = path.resolve("uploads");
+    const finalPath = path.join(uploadsFolder, fileName);
+
+    fs.renameSync(media.path, finalPath);
+
+    mediaPath = `uploads/${fileName}`;
+  }
+
   const schedule = await CreateService({
     body,
     sendAt,
     contactId,
     companyId,
     userId,
-    saveMessage: !!saveMessage
+    saveMessage: !!saveMessage,
+    mediaPath,
+    fileName
   });
 
   const io = getIO();

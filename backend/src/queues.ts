@@ -135,9 +135,9 @@ async function handleSendScheduledMessage(job) {
 
     const message = await SendMessage(whatsapp, {
       number: schedule.contact.number,
-      body: schedule.body
+      body: schedule.body,
+      mediaPath: schedule.mediaPath
     });
-
     if (schedule.saveMessage) {
       handleMessage(
         message,
@@ -630,9 +630,8 @@ async function handleInvoiceCreate() {
       if (dias < 20) {
         const plan = await Plan.findByPk(c.planId);
 
-        const sql = `SELECT COUNT(*) mycount FROM "Invoices" WHERE "companyId" = ${
-          c.id
-        } AND "dueDate"::text LIKE '${moment(dueDate).format("yyyy-MM-DD")}%';`;
+        const sql = `SELECT COUNT(*) mycount FROM "Invoices" WHERE "companyId" = ${c.id
+          } AND "dueDate"::text LIKE '${moment(dueDate).format("yyyy-MM-DD")}%';`;
         const invoice: { mycount: number }[] = await sequelize.query(sql, {
           type: QueryTypes.SELECT
         });

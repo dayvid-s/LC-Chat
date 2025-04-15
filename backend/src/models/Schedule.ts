@@ -70,6 +70,12 @@ class Schedule extends Model<Schedule> {
 
   @BelongsTo(() => Company)
   company: Company;
+
+  @Column(DataType.STRING)
+  mediaPath: string;
+
+  @Column(DataType.STRING)
+  fileName: string;
 }
 
 export default Schedule;

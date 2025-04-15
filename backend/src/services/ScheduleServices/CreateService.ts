@@ -1,5 +1,4 @@
 import * as Yup from "yup";
-
 import AppError from "../../errors/AppError";
 import Schedule from "../../models/Schedule";
 import Contact from "../../models/Contact";
@@ -11,6 +10,8 @@ interface Request {
   companyId: number;
   userId?: number;
   saveMessage?: boolean;
+  mediaPath?: string;
+  fileName?: string;
 }
 
 const CreateService = async ({
@@ -19,7 +20,9 @@ const CreateService = async ({
   contactId,
   companyId,
   userId,
-  saveMessage
+  saveMessage,
+  mediaPath,
+  fileName
 }: Request): Promise<Schedule> => {
   const schema = Yup.object().shape({
     body: Yup.string().required().min(5),
@@ -39,7 +42,9 @@ const CreateService = async ({
     companyId,
     userId,
     saveMessage,
-    status: "PENDENTE"
+    status: "PENDENTE",
+    mediaPath,
+    fileName
   });
 
   await schedule.reload({

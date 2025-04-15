@@ -9,6 +9,7 @@
     "watch": "tsc -w",
     "pm2:start": "npm run build && pm2 start ecosystem.config.js && pm2 logs",
     "dev": "ts-node-dev --trace-warnings --inspect --respawn --transpile-only --ignore node_modules src/server.ts",
+    "migration:create": "npx sequelize migration:generate --name",
     "migration:run": "npx sequelize db:migrate",
     "db:seed": "sequelize db:seed:all",
     "pretest": "NODE_ENV=test sequelize db:migrate && NODE_ENV=test sequelize db:seed:all",
