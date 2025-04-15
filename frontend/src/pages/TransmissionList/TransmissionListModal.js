@@ -104,7 +104,7 @@ const TransmissionListModal = ({ open, onClose, list, onSaved }) => {
           multiple
           options={contactOptions}
           value={selectedContacts}
-          getOptionLabel={(option) => `${option.name} (${option.number})`}
+          getOptionLabel={(option) => `${option?.salerId ? `CÓD - ${option.salerId} - ` : ''}${option.name} (${option.number})`}
           filterSelectedOptions
           onChange={(e, newValue) => setSelectedContacts(newValue)}
           onInputChange={(e, newInputValue) => setSearchText(newInputValue)}
