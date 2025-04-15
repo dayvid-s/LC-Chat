@@ -7,7 +7,10 @@ import {
   List,
   ListItem,
   ListItemText, CircularProgress,
-  Button
+  Button,
+  Avatar,
+  Badge,
+  Tooltip
 } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
@@ -26,6 +29,7 @@ import {
 } from "@material-ui/core";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import SendToTransmissionListModal from "./SendToTransmissionListModal";
+import GroupIcon from '@material-ui/icons/Group';
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -40,6 +44,20 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: theme.spacing(2),
+  },
+  contactInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(2),
+    width: '100%',
+  },
+  avatar: {
+    width: theme.spacing(4),
+    height: theme.spacing(4),
+  },
+  groupBadge: {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.primary.contrastText,
   },
 }));
 
@@ -196,10 +214,32 @@ function TransmissionList(props) {
                     <List style={{ width: "100%" }} dense>
                       {list.contacts.map((contact) => (
                         <ListItem key={contact.id} className={classes.listItem}>
-                          <ListItemText
-                            primary={`${contact?.salerId ? `CÓD - ${contact.salerId} - ` : ''}${contact.name}`}
-                            secondary={contact.number}
-                          />
+                          <div className={classes.contactInfo}>
+                            <Tooltip title={contact.isGroup ? "Grupo" : "Contato"}>
+                              <Badge
+                                overlap="circular"
+                                anchorOrigin={{
+                                  vertical: 'bottom',
+                                  horizontal: 'right',
+                                }}
+                                badgeContent={contact.isGroup ?
+                                  <GroupIcon fontSize="small" className={classes.groupBadge} />
+                                  : null
+                                }
+                              >
+                                <Avatar
+                                  src={contact.profilePicUrl}
+                                  className={classes.avatar}
+                                >
+                                  {!contact.profilePicUrl && contact.name[0]}
+                                </Avatar>
+                              </Badge>
+                            </Tooltip>
+                            <ListItemText
+                              primary={`${contact?.salerId ? `CÓD - ${contact.salerId} - ` : ''}${contact.name}`}
+                              secondary={contact.number}
+                            />
+                          </div>
                           <Button
                             style={{ marginLeft: "auto" }}
                             variant="outlined"
