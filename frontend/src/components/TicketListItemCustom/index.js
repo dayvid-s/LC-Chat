@@ -289,30 +289,28 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
               />
             </Tooltip>
           )}
-          {profile === "admin" && (
-            <Tooltip title="Espiar Conversa">
-              <VisibilityIcon
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenTicketMessageDialog(true)
-                }}
-                fontSize="small"
-                style={{
-                  padding: 2,
-                  height: 23,
-                  width: 23,
-                  fontSize: 12,
-                  color: '#fff',
-                  cursor: "pointer",
-                  backgroundColor: blue[700],
-                  borderRadius: 50,
-                  position: 'absolute',
-                  right: 28,
-                  top: -8
-                }}
-              />
-            </Tooltip>
-          )}
+          <Tooltip title="Espiar Conversa">
+            <VisibilityIcon
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenTicketMessageDialog(true)
+              }}
+              fontSize="small"
+              style={{
+                padding: 2,
+                height: 23,
+                width: 23,
+                fontSize: 12,
+                color: '#fff',
+                cursor: "pointer",
+                backgroundColor: blue[700],
+                borderRadius: 50,
+                position: 'absolute',
+                right: 28,
+                top: -8
+              }}
+            />
+          </Tooltip>
           {ticket.chatbot && (
             <Tooltip title="Chatbot">
               <AndroidIcon
