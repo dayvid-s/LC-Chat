@@ -132,9 +132,12 @@ async function handleSendScheduledMessage(job) {
 
   try {
     const whatsapp = await GetDefaultWhatsApp(schedule.companyId);
+    const jid = schedule.contact.isGroup
+      ? `${schedule.contact.number}@g.us`
+      : `${schedule.contact.number}@c.us`;
 
     const message = await SendMessage(whatsapp, {
-      number: schedule.contact.number,
+      number: jid,
       body: schedule.body,
       mediaPath: schedule.mediaPath
     });
