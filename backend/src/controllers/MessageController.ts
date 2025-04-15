@@ -68,9 +68,15 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
 
   if (medias) {
     if (channel === "whatsapp") {
+      const mediaCaptions = req.body.mediaCaptions || [];
+      const captions = Array.isArray(mediaCaptions)
+        ? mediaCaptions
+        : [mediaCaptions];
+
       await Promise.all(
-        medias.map(async (media: Express.Multer.File) => {
-          await SendWhatsAppMedia({ media, ticket });
+        medias.map(async (media: Express.Multer.File, i: number) => {
+          const caption = captions[i] || "";
+          await SendWhatsAppMedia({ media, ticket, body: caption });
           fs.unlinkSync(media.path);
         })
       );

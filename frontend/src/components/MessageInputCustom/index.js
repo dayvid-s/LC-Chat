@@ -481,8 +481,8 @@ const MessageInputCustom = (props) => {
   const { setReplyingMessage, replyingMessage } =
     useContext(ReplyMessageContext);
   const { setEditingMessage, editingMessage } = useContext(
-		EditMessageContext
-	);  
+    EditMessageContext
+  );
   const { user } = useContext(AuthContext);
 
   const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
@@ -490,18 +490,15 @@ const MessageInputCustom = (props) => {
   useEffect(() => {
     if (editingMessage) {
       if (signMessage && editingMessage.body.startsWith(`*${user.name}:*\n`)) {
-        setInputMessage(editingMessage.body.substr(editingMessage.body.indexOf("\n")+1));
+        setInputMessage(editingMessage.body.substr(editingMessage.body.indexOf("\n") + 1));
       } else {
         setInputMessage(editingMessage.body);
       }
     }
-    
     if (replyingMessage || editingMessage) {
       inputRef.current.focus();
     }
-    
   }, [replyingMessage, editingMessage, signMessage, user.name]);
-  
   useEffect(() => {
     inputRef.current.focus();
     return () => {
@@ -527,12 +524,15 @@ const MessageInputCustom = (props) => {
   };
 
   const handleChangeMedias = (e) => {
-    if (!e.target.files) {
-      return;
-    }
+    if (!e.target.files) return;
 
-    const selectedMedias = Array.from(e.target.files);
-    setMedias(selectedMedias);
+    const selectedFiles = Array.from(e.target.files);
+    const mediaObjects = selectedFiles.map(file => ({
+      file,
+      caption: ""
+    }));
+
+    setMedias(mediaObjects);
   };
 
   const handleInputPaste = (e) => {
@@ -548,77 +548,52 @@ const MessageInputCustom = (props) => {
     const formData = new FormData();
     formData.append("fromMe", true);
 
-    medias.forEach(async (media, idx) => {
+    await Promise.all(
+      medias.map(async ({ file, caption }, idx) => {
+        if (!file) return;
 
-      const file = media;
+        const isImage = file.type.split("/")[0] === "image";
 
-      if (!file) { return; }
+        if (isImage) {
+          await new Promise((resolve) => {
+            new Compressor(file, {
+              quality: 0.7,
+              async success(compressedFile) {
+                formData.append("medias", compressedFile);
+                formData.append("mediaCaptions", caption || "");
+                resolve(true);
+              },
+              error(err) {
+                console.error("Erro ao comprimir:", err.message);
+                resolve(false);
+              }
+            });
+          });
+        } else {
+          formData.append("medias", file);
+          formData.append("mediaCaptions", caption || "");
+        }
+      })
+    );
 
-      if (media?.type.split('/')[0] == 'image') {
-        new Compressor(file, {
-          quality: 0.7,
-
-          async success(media) {
-            //const formData = new FormData();
-            // The third parameter is required for server
-            //formData.append('file', result, result.name);
-
-            formData.append("medias", media);
-            formData.append("body", media.name);
-
-          },
-          error(err) {
-            alert('erro')
-            console.log(err.message);
-          },
-
-        });
-      } else {
-        formData.append("medias", media);
-        formData.append("body", media.name);
-
-      }
-
-
-    },);
-
-    setTimeout(async()=> {
-
+    setTimeout(async () => {
       try {
         await api.post(`/messages/${ticketId}`, formData, {
           onUploadProgress: (event) => {
-            let progress = Math.round(
-              (event.loaded * 100) / event.total
-            );
+            let progress = Math.round((event.loaded * 100) / event.total);
             setPercentLoading(progress);
-            console.log(
-              `A imagem  está ${progress}% carregada... `
-            );
           },
-        })
-          .then((response) => {
-            setLoading(false)
-            setMedias([])
-            setPercentLoading(0);
-            console.log(
-              `A imagem á foi enviada para o servidor!`
+        });
 
-            );
-          })
-          .catch((err) => {
-            console.error(
-              `Houve um problema ao realizar o upload da imagem.`
-            );
-            console.log(err);
-          });
+        setLoading(false);
+        setMedias([]);
+        setPercentLoading(0);
       } catch (err) {
         toastError(err);
+        setLoading(false);
       }
-
-
-    },2000)
-
-  }
+    }, 2000);
+  };
 
   const handleSendMessage = async () => {
     if (inputMessage.trim() === "") return;
@@ -651,7 +626,7 @@ const MessageInputCustom = (props) => {
   };
 
   const handleStartRecording = async () => {
-    if(disableOption)return;
+    if (disableOption) return;
     setLoading(true);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -716,7 +691,7 @@ const MessageInputCustom = (props) => {
                 {i18n.t("messagesInput.replying")} {message.contact?.name}
               </span>
               <MarkdownWrapper>
-                { message.body.startsWith('{"ticketzvCard":') ? "🪪" : message.body }
+                {message.body.startsWith('{"ticketzvCard":') ? "🪪" : message.body}
               </MarkdownWrapper>
             </div>
           )}
@@ -736,9 +711,9 @@ const MessageInputCustom = (props) => {
           component="span"
           disabled={disableOption}
           onClick={() => {
-              setReplyingMessage(null);
-              setEditingMessage(null);
-              setInputMessage("");
+            setReplyingMessage(null);
+            setEditingMessage(null);
+            setInputMessage("");
           }}
         >
           <ClearIcon className={classes.sendMessageIcons} />
@@ -749,36 +724,154 @@ const MessageInputCustom = (props) => {
 
   if (medias.length > 0)
     return (
-      <Paper elevation={0} square className={classes.viewMediaInputWrapper}>
-        <IconButton
-          aria-label="cancel-upload"
-          component="span"
-          disabled={disableOption}
-          onClick={(e) => setMedias([])}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(0,0,0,0.5)",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 16
+        }}
+      >
+        <Paper
+          elevation={3}
+          className={classes.viewMediaInputWrapper}
+          style={{
+            width: "100%",
+            maxWidth: 600,
+            maxHeight: "90vh",
+            overflowY: "auto",
+            padding: 24,
+            borderRadius: 16,
+            backgroundColor: "#fefefe",
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+          }}
         >
-          <CancelIcon className={classes.sendMessageIcons} />
-        </IconButton>
-
-        {loading ? (
-          <div>
-            {/*<CircularProgress className={classes.circleLoading} />*/}
-            <LinearWithValueLabel progress={percentLoading} />
+          {/* Header com botão de fechar tudo */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <strong style={{ fontSize: 18 }}>Pré-visualização das mídias</strong>
+            <IconButton
+              aria-label="cancel-upload"
+              component="span"
+              disabled={disableOption}
+              onClick={() => setMedias([])}
+            >
+              <CancelIcon />
+            </IconButton>
           </div>
-        ) : (
-          <span>
-            {medias[0]?.name}
-            {/* <img src={media.preview} alt=""></img> */}
-          </span>
-        )}
-        <IconButton
-          aria-label="send-upload"
-          component="span"
-          onClick={handleUploadMedia}
-          disabled={disableOption}
-        >
-          <SendIcon className={classes.sendMessageIcons} />
-        </IconButton>
-      </Paper>
+
+          {/* Barra de progresso ou lista de mídias */}
+          {loading ? (
+            <LinearWithValueLabel progress={percentLoading} />
+          ) : (
+            medias.map((mediaObj, index) => {
+              const isImage = mediaObj.file.type.startsWith("image");
+
+              return (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: 10,
+                    border: "1px solid #ccc",
+                    borderRadius: 10,
+                    backgroundColor: "#fff",
+                  }}
+                >
+                  {isImage ? (
+                    <img
+                      src={URL.createObjectURL(mediaObj.file)}
+                      alt="preview"
+                      style={{
+                        width: 60,
+                        height: 60,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        border: "1px solid #ccc"
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: 60,
+                      height: 60,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "#eee",
+                      borderRadius: 8,
+                      fontSize: 24
+                    }}>
+                      📎
+                    </div>
+                  )}
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>{mediaObj.file.name}</div>
+                    <input
+                      type="text"
+                      placeholder="Legenda..."
+                      value={mediaObj.caption}
+                      onChange={(e) => {
+                        const updated = [...medias];
+                        updated[index].caption = e.target.value;
+                        setMedias(updated);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "6px 10px",
+                        marginTop: 6,
+                        fontSize: 14,
+                        borderRadius: 6,
+                        border: "1px solid #ccc",
+                        background: "#fafafa",
+                        outline: "none",
+                      }}
+                    />
+                  </div>
+
+                  <IconButton
+                    aria-label="remove-media"
+                    onClick={() => {
+                      const updated = medias.filter((_, i) => i !== index);
+                      setMedias(updated);
+                    }}
+                  >
+                    <CancelIcon fontSize="small" />
+                  </IconButton>
+                </div>
+              );
+            })
+          )}
+
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <IconButton
+              aria-label="send-upload"
+              component="span"
+              onClick={handleUploadMedia}
+              disabled={disableOption}
+              style={{
+                backgroundColor: "#25D366",
+                color: "white",
+                borderRadius: 8,
+                padding: 10,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)"
+              }}
+            >
+              <SendIcon />
+            </IconButton>
+          </div>
+        </Paper>
+      </div>
     );
   else {
     return (
@@ -806,7 +899,7 @@ const MessageInputCustom = (props) => {
           <CustomInput
             loading={loading}
             inputRef={inputRef}
-            ticketStatus={(isGroup && "open" ) || ticketStatus}
+            ticketStatus={(isGroup && "open") || ticketStatus}
             inputMessage={inputMessage}
             setInputMessage={setInputMessage}
             // handleChangeInput={handleChangeInput}
