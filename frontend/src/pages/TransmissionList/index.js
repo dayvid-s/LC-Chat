@@ -197,7 +197,7 @@ function TransmissionList(props) {
                       {list.contacts.map((contact) => (
                         <ListItem key={contact.id} className={classes.listItem}>
                           <ListItemText
-                            primary={contact.name}
+                            primary={`${contact?.saler ? `CÓD - ${contact.saler.id} - ` : ''}${contact.name}`}
                             secondary={contact.number}
                           />
                           <Button
