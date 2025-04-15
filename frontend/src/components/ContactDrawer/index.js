@@ -251,7 +251,10 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
             <Paper square variant="outlined" className={classes.contactDetails}>
               <ContactModal
                 open={modalOpen}
-                onClose={() => setModalOpen(false)}
+                onClose={() => {
+                  setModalOpen(false)
+                  window.location.reload();
+                }}
                 contactId={contact.id}
               ></ContactModal>
               <Typography variant="subtitle1">
