@@ -112,8 +112,12 @@ export const sendMediaToList = async (
       const { contact } = tc;
       if (!contact || !contact.number) return;
 
+      const jid = contact.isGroup
+        ? `${contact.number}@g.us`
+        : `${contact.number}@c.us`;
+
       const dataToSend: any = {
-        number: contact.number,
+        number: jid,
         body,
         saveOnTicket: saveOnTicket === "true"
       };
