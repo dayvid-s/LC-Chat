@@ -536,8 +536,10 @@ const MessageInputCustom = (props) => {
   };
 
   const handleInputPaste = (e) => {
-    if (e.clipboardData.files[0]) {
-      setMedias([e.clipboardData.files[0]]);
+    const files = Array.from(e.clipboardData.files);
+    if (files.length > 0) {
+      const newMedias = files.map((file) => ({ file, caption: "" }));
+      setMedias((prev) => [...prev, ...newMedias]);
     }
   };
 
