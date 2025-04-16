@@ -13,6 +13,12 @@ const upload = multer(uploadConfig);
 messageRoutes.get("/messages/:ticketId", isAuth, MessageController.index);
 
 messageRoutes.post(
+  "/messages/forward",
+  isAuth,
+  MessageController.forwardMessage
+);
+
+messageRoutes.post(
   "/messages/:ticketId",
   isAuth,
   upload.array("medias"),

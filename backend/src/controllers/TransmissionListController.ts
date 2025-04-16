@@ -72,7 +72,7 @@ export const sendMediaToList = async (
   res: Response
 ): Promise<Response> => {
   const { listId } = req.params;
-  const { body, saveOnTicket } = req.body;
+  const { body } = req.body;
   const { companyId } = req.user;
 
   if (!listId || listId === "undefined" || listId === "null") {
@@ -119,14 +119,13 @@ export const sendMediaToList = async (
       const dataToSend: any = {
         number: jid,
         body,
-        saveOnTicket: saveOnTicket === "true"
+        saveOnTicket: true
       };
 
       if (media) {
         dataToSend.mediaPath = media.path;
         dataToSend.fileName = media.originalname;
       }
-
       await queue.add(
         "SendMessage",
         {

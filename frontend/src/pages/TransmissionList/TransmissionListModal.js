@@ -5,7 +5,9 @@ import {
   DialogTitle,
   Button,
   TextField,
-  CircularProgress
+  CircularProgress,
+  Avatar,
+  Typography
 } from "@material-ui/core";
 import { Autocomplete } from "@material-ui/lab";
 import { useState, useEffect, useContext } from "react";
@@ -104,11 +106,33 @@ const TransmissionListModal = ({ open, onClose, list, onSaved }) => {
           multiple
           options={contactOptions}
           value={selectedContacts}
-          getOptionLabel={(option) => `${option?.salerId ? `CÓD - ${option.salerId} - ` : ''}${option.name} (${option.number})`}
+          getOptionLabel={(option) => {
+            return `${option?.salerId ? `CÓD - ${option.salerId} - ` : ''}${option.name || option.number}`
+          }}
           filterSelectedOptions
           onChange={(e, newValue) => setSelectedContacts(newValue)}
           onInputChange={(e, newInputValue) => setSearchText(newInputValue)}
           loading={loadingContacts}
+          renderOption={(option) => {
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 8 }}>
+                <Avatar
+                  src={option.profilePicUrl}
+                  style={{ width: 24, height: 24 }}
+                >
+                  {!option.profilePicUrl && (option.name?.[0] || option.number?.[0])}
+                </Avatar>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="body2">
+                    {option?.salerId ? `CÓD - ${option.salerId} - ` : ''}{option.name || option.number}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {option.isGroup ? '📱 Grupo' : '👤 Contato'} • {option.number}
+                  </Typography>
+                </div>
+              </div>
+            )
+          }}
           renderInput={(params) => (
             <TextField
               {...params}

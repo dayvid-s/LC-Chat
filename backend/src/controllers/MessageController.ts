@@ -18,6 +18,7 @@ import EditWhatsAppMessage from "../services/WbotServices/EditWhatsAppMessage";
 
 import { logger } from "../utils/logger";
 import { MessageData } from "../helpers/SendMessage";
+import ForwardMessageService from "../services/ForwardMessageService/ForwardMessageService";
 
 type IndexQuery = {
   pageNumber: string;
@@ -208,4 +209,42 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
     }
     throw new AppError("ERR_INTERNAL_ERROR", 500);
   }
+};
+
+export const forwardMessage = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { messageId, contactIds, listId } = req.body;
+  const { companyId } = req.user;
+
+  if (!messageId) {
+    throw new AppError("ID da mensagem é obrigatório.", 400);
+  }
+
+  if ((!contactIds && !listId) || (contactIds && listId)) {
+    throw new AppError(
+      "Forneça apenas contatos OU lista de transmissão, não ambos.",
+      400
+    );
+  }
+
+  if (contactIds && (!Array.isArray(contactIds) || contactIds.length === 0)) {
+    throw new AppError("Lista de contatos inválida.", 400);
+  }
+
+  const queue = req.app.get("queues").messageQueue;
+
+  const response = await ForwardMessageService({
+    messageId,
+    contactIds,
+    listId,
+    companyId,
+    queue
+  });
+
+  return res.status(200).json({
+    message: "Encaminhamento iniciado com sucesso.",
+    result: response
+  });
 };
