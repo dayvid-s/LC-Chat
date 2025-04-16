@@ -155,7 +155,7 @@ export const update = async (
       is: false,
       then: Yup.string().matches(
         /^\d+$/,
-        "Invalid number format. Only numbers is allowed."
+        "Contato inválido. Apenas números são permitidos."
       ),
       otherwise: Yup.string()
     })
