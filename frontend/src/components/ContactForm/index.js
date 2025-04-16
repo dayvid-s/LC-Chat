@@ -12,7 +12,7 @@ import TextField from "@material-ui/core/TextField";
 
 import { i18n } from "../../translate/i18n";
 
-import { Grid } from "@material-ui/core";
+import { Grid, Tooltip } from "@material-ui/core";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
 
@@ -119,17 +119,24 @@ export function ContactForm({ initialContact, onSave, onCancel }) {
               />
             </Grid>
             <Grid item xs={12}>
-              <Field
-                as={TextField}
-                label={i18n.t("contactModal.form.number")}
-                name="number"
-                error={touched.number && Boolean(errors.number)}
-                helperText={touched.number && errors.number}
-                placeholder="5513912344321"
-                variant="outlined"
-                margin="dense"
-                fullWidth
-              />
+              <Tooltip
+                title={contact.isGroup ? "Não é possível editar número de grupos" : ""}
+                placement="top"
+              >
+                <span>
+                  <Field
+                    as={TextField}
+                    disabled={contact.isGroup}
+                    label={i18n.t("contactModal.form.number")}
+                    name="number"
+                    error={touched.number && Boolean(errors.number)}
+                    helperText={touched.number && errors.number}
+                    placeholder="5513912344321"
+                    variant="outlined"
+                    margin="dense"
+                  />
+                </span>
+              </Tooltip>
             </Grid>
             <Grid item xs={12}>
               <Field

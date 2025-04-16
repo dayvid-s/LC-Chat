@@ -21,6 +21,7 @@ import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import { Tooltip } from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -180,17 +181,24 @@ const ContactListItemModal = ({
                   margin="dense"
                   className={classes.textField}
                 />
-                <Field
-                  as={TextField}
-                  label={i18n.t("contactModal.form.number")}
-                  name="number"
-                  error={touched.number && Boolean(errors.number)}
-                  helperText={touched.number && errors.number}
-                  placeholder="5513912344321"
-                  variant="outlined"
-                  margin="dense"
-                />
-                <div>
+                <Tooltip
+                  title={contact.isGroup ? "Não é possível editar número de grupos" : ""}
+                  placement="top"
+                >
+                  <span>
+                    <Field
+                      as={TextField}
+                      disabled={contact.isGroup}
+                      label={i18n.t("contactModal.form.number")}
+                      name="number"
+                      error={touched.number && Boolean(errors.number)}
+                      helperText={touched.number && errors.number}
+                      placeholder="5513912344321"
+                      variant="outlined"
+                      margin="dense"
+                    />
+                  </span>
+                </Tooltip>                <div>
                   <Field
                     as={TextField}
                     label={i18n.t("contactModal.form.email")}

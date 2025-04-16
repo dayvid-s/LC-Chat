@@ -23,6 +23,7 @@ import { i18n } from "../../translate/i18n";
 
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
+import { Tooltip } from "@material-ui/core";
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -155,17 +156,24 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
                   margin="dense"
                   className={classes.textField}
                 />
-                <Field
-                  as={TextField}
-                  label={i18n.t("contactModal.form.number")}
-                  name="number"
-                  error={touched.number && Boolean(errors.number)}
-                  helperText={touched.number && errors.number}
-                  placeholder="5513912344321"
-                  variant="outlined"
-                  margin="dense"
-                />
-
+                <Tooltip
+                  title={contact.isGroup ? "Não é possível editar número de grupos" : ""}
+                  placement="top"
+                >
+                  <span>
+                    <Field
+                      as={TextField}
+                      disabled={contact.isGroup}
+                      label={i18n.t("contactModal.form.number")}
+                      name="number"
+                      error={touched.number && Boolean(errors.number)}
+                      helperText={touched.number && errors.number}
+                      placeholder="5513912344321"
+                      variant="outlined"
+                      margin="dense"
+                    />
+                  </span>
+                </Tooltip>
 
                 <div>
                   <Field

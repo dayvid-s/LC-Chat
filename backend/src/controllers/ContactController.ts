@@ -151,10 +151,14 @@ export const update = async (
 
   const schema = Yup.object().shape({
     name: Yup.string(),
-    number: Yup.string().matches(
-      /^\d+$/,
-      "Invalid number format. Only numbers is allowed."
-    )
+    number: Yup.string().when("isGroup", {
+      is: false,
+      then: Yup.string().matches(
+        /^\d+$/,
+        "Invalid number format. Only numbers is allowed."
+      ),
+      otherwise: Yup.string()
+    })
   });
 
   try {
