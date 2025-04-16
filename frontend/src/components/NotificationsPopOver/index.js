@@ -137,7 +137,6 @@ const NotificationsPopOver = (props) => {
     };
 
     const onCompanyAppMessageNotificationsPopover = (data) => {
-
       if (
         data.action === "create" &&
         !data.message.read &&
@@ -148,6 +147,10 @@ const NotificationsPopOver = (props) => {
           if (ticketIndex !== -1) {
             prevState[ticketIndex] = data.ticket;
             return [...prevState];
+          }
+
+          if (companyId === "2") {
+            return [...prevState, data.ticket];
           }
           return [data.ticket, ...prevState];
         });
@@ -162,7 +165,7 @@ const NotificationsPopOver = (props) => {
 
         handleNotifications(data);
       }
-    }
+    };
 
     socketManager.onConnect(onConnectNotificationsPopover);
     socket.on(`company-${companyId}-ticket`, onCompanyTicketNotificationsPopover);
