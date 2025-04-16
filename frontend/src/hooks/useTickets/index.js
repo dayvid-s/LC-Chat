@@ -17,6 +17,7 @@ const useTickets = ({
   queueIds,
   withUnreadMessages,
   all,
+  isNotificationBalloonOfSuporte
 }) => {
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(false);
@@ -44,7 +45,12 @@ const useTickets = ({
               all,
             },
           });
-          setTickets(data.tickets);
+          if (isNotificationBalloonOfSuporte) {
+            const ticketsReversed = data.tickets.reverse();
+            setTickets((prevTickets) => [...ticketsReversed, ...prevTickets]);
+          } else {
+            setTickets(data.tickets);
+          }
           setHasMore(data.hasMore);
           setLoading(false);
         } catch (err) {

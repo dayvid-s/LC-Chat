@@ -137,7 +137,7 @@ const reducer = (state, action) => {
     }
     return [...state];
   }
-  
+
   if (action.type === "UPDATE_TICKET_PRESENCE") {
     const data = action.payload;
     const ticketIndex = state.findIndex((t) => t.id === data.ticketId);
@@ -235,7 +235,7 @@ const TicketsListCustom = (props) => {
         socket.emit("joinNotification");
       }
     }
-    
+
     const onCompanyTicket = (data) => {
       if (data.action === "updateUnread") {
         dispatch({
@@ -250,7 +250,7 @@ const TicketsListCustom = (props) => {
           payload: data.ticket,
         });
       }
-      
+
       if (groups && data.action === "update" && data.ticket.isGroup && shouldUpdateTicket(data.ticket)) {
         dispatch({
           type: "UPDATE_TICKET",
@@ -264,7 +264,7 @@ const TicketsListCustom = (props) => {
 
       if (data.action === "delete") {
         dispatch({ type: "DELETE_TICKET", payload: data?.ticketId });
-        
+
       }
 
       if (data.action === "removeFromList") {
@@ -272,9 +272,9 @@ const TicketsListCustom = (props) => {
       }
 
     }
-    
+
     const onCompanyAppMessage = (data) => {
-	  console.debug("appMessage event received", data);
+      console.debug("appMessage event received", data);
       if (showTabGroups && !!data.ticket?.isGroup !== !!groups) {
         return;
       }
@@ -301,7 +301,7 @@ const TicketsListCustom = (props) => {
       }
     }
 
-	const onCompanyContact = (data) => {
+    const onCompanyContact = (data) => {
       if (data.action === "update") {
         dispatch({
           type: "UPDATE_TICKET_CONTACT",
@@ -309,13 +309,13 @@ const TicketsListCustom = (props) => {
         });
       }
     }
-    
-	socketManager.onConnect(onConnectTicketList);
-	
+
+    socketManager.onConnect(onConnectTicketList);
+
     socket.on(`company-${companyId}-ticket`, onCompanyTicket);
     socket.on(`company-${companyId}-appMessage`, onCompanyAppMessage);
-    socket.on(`company-${companyId}-contact`, onCompanyContact );
-    
+    socket.on(`company-${companyId}-contact`, onCompanyContact);
+
     socket.on(`company-${companyId}-presence`, (data) => {
       dispatch({
         type: "UPDATE_TICKET_PRESENCE",
@@ -331,7 +331,7 @@ const TicketsListCustom = (props) => {
       }
       socket.disconnect();
     };
-    
+
   }, [status, showAll, groups, showTabGroups, user, selectedQueueIds, tags, users, profile, queues, socketManager]);
 
   useEffect(() => {
