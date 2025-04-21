@@ -78,7 +78,15 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
         medias.map(async (media: Express.Multer.File, i: number) => {
           const caption = captions[i] || "";
           await SendWhatsAppMedia({ media, ticket, body: caption });
-          fs.unlinkSync(media.path);
+
+          try {
+            fs.unlinkSync(media.path);
+          } catch (err) {
+            console.error(
+              `Erro ao remover arquivo ${media.path}:`,
+              err.message
+            );
+          }
         })
       );
     }

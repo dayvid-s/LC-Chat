@@ -164,7 +164,7 @@ export const update = async (
   try {
     await schema.validate(contactData);
   } catch (err: any) {
-    throw new AppError(err.message);
+    throw new AppError("O número informado não está registrado no WhatsApp.");
   }
 
   if (!contactData.isGroup) {
