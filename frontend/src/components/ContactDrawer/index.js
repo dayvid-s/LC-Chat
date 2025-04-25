@@ -9,7 +9,7 @@ import Link from "@material-ui/core/Link";
 import Paper from "@material-ui/core/Paper";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
-import { Group, LocationCity, Person, ExpandMore, Star } from "@material-ui/icons";
+import { Group, LocationCity, Person, Star } from "@material-ui/icons";
 import CloseIcon from "@material-ui/icons/Close";
 import CreateIcon from '@material-ui/icons/Create';
 import { i18n } from "../../translate/i18n";
@@ -150,87 +150,11 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
                   </>
                 }
                 subheader={
-                  <>
-                    <Typography style={{ fontSize: 12 }}>
-                      <Link href={`tel:${contact.number}`}>{contact.number}</Link>
-                    </Typography>
-
-
-                    <div>
-                      {contact?.saler?.situation && (
-                        <Typography style={{ fontSize: 16, display: "flex", alignItems: "center" }}>
-                          {/* <Business style={{ marginRight: 5 }} /> */}
-                          <strong>{contact.saler.situation}</strong>
-                        </Typography>
-                      )}
-
-                      {contact?.saler?.id && (
-                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
-                          {/* <Alarm style={{ marginRight: 5 }} /> */}
-                          <strong>Cód {contact.saler.id}</strong>
-                        </Typography>
-                      )}
-
-                      {contact?.saler?.name && (
-                        <Typography
-                          style={{
-                            fontSize: 14,
-                            display: "flex",
-                            alignItems: "center",
-                            wordBreak: "break-word",
-                            whiteSpace: "normal",
-                            overflowWrap: "break-word",
-                            maxWidth: "220px",
-                          }}
-                        >
-                          <ExpandMore style={{ marginRight: 5 }} />
-                          <strong>{contact.saler.name}</strong>
-                        </Typography>
-
-                      )}
-
-                      {contact?.saler?.commercialGroup && (
-                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
-                          <Group style={{ marginRight: 5 }} />
-                          <strong>{contact.saler.commercialGroup}</strong>
-                        </Typography>
-                      )}
-
-                      {contact?.saler?.commercialAssistent && (
-                        <Typography
-                          style={{
-                            fontSize: 14,
-                            display: "flex",
-                            alignItems: "center",
-                            wordBreak: "break-word",
-                            whiteSpace: "normal",
-                            overflowWrap: "break-word",
-                            maxWidth: "220px",
-                          }}
-                        >
-                          <Person style={{ marginRight: 5 }} />
-                          <strong>{contact.saler.commercialAssistent}</strong>
-                        </Typography>
-
-                      )}
-
-                      {contact?.saler?.freeBelt && (
-                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
-                          <Star style={{ marginRight: 5 }} />
-                          <strong>{contact.saler.freeBelt}</strong>
-                        </Typography>
-                      )}
-
-                      {contact?.saler?.city && (
-                        <Typography style={{ fontSize: 14, display: "flex", alignItems: "center" }}>
-                          <LocationCity style={{ marginRight: 5 }} />
-                          <strong>{contact.saler.city}</strong>
-                        </Typography>
-                      )}
-                    </div>
-
-                  </>
+                  <Typography style={{ fontSize: 12 }}>
+                    <Link href={`tel:${contact.number}`}>{contact.number}</Link>
+                  </Typography>
                 }
+
               />
               <Button
                 variant="outlined"
@@ -242,6 +166,192 @@ const ContactDrawer = ({ open, handleDrawerClose, contact, ticket, loading }) =>
               </Button>
               {(contact.id && openForm) && <ContactForm initialContact={contact} onCancel={() => setOpenForm(false)} />}
             </Paper>
+
+            {contact?.saler?.situation && (
+              <Paper
+                square
+                variant="outlined"
+                className={classes.contactDetails}
+                style={{
+                  background: contact.saler.situation === 'Ativo'
+                    ? 'linear-gradient(45deg, #4CAF50 30%, #81C784 90%)'
+                    : 'linear-gradient(45deg, #f44336 30%, #ef5350 90%)',
+                  color: 'white',
+                  padding: '20px',
+                  marginBottom: '16px',
+                  borderRadius: '4px',
+                  boxShadow: contact.saler.situation === 'Ativo'
+                    ? '0 3px 5px 2px rgba(76, 175, 80, .3)'
+                    : '0 3px 5px 2px rgba(244, 67, 54, .3)'
+                }}
+              >
+                <div style={{ textAlign: 'center' }}>
+                  <Typography
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 'bold',
+                      marginBottom: '8px',
+                      color: 'white'
+                    }}
+                  >
+                    Parceiro {contact.saler.situation}
+                  </Typography>
+                  {contact?.saler?.name && (
+                    <Typography
+                      style={{
+                        fontSize: 18,
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        marginBottom: '8px'
+                      }}
+                    >
+                      {contact.saler.name}
+                    </Typography>
+                  )}
+                  {contact?.saler?.id && (
+                    <Typography
+                      style={{
+                        fontSize: 16,
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        display: 'inline-block'
+                      }}
+                    >
+                      Código: {contact.saler.id}
+                    </Typography>
+                  )}
+                </div>
+              </Paper>
+            )}
+
+            {(contact?.saler?.commercialGroup || contact?.saler?.commercialAssistent) && (
+              <Paper
+                square
+                variant="outlined"
+                className={classes.contactDetails}
+                style={{
+                  background: 'linear-gradient(45deg, #673AB7 30%, #9575CD 90%)',
+                  color: 'white',
+                  padding: '20px',
+                  marginBottom: '16px',
+                  borderRadius: '4px',
+                  boxShadow: '0 3px 5px 2px rgba(103, 58, 183, .3)'
+                }}
+              >
+                {contact?.saler?.commercialGroup && (
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                    <Group style={{ marginRight: 8 }} />
+                    <div>
+                      <Typography style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Grupo Comercial
+                      </Typography>
+                      <Typography style={{ fontSize: 16, fontWeight: 'bold' }}>
+                        {contact.saler.commercialGroup}
+                      </Typography>
+                    </div>
+                  </div>
+                )}
+
+                {contact?.saler?.commercialAssistent && (
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Person style={{ marginRight: 8 }} />
+                    <div>
+                      <Typography style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Assistente Comercial
+                      </Typography>
+                      <Typography style={{ fontSize: 16, fontWeight: 'bold' }}>
+                        {contact.saler.commercialAssistent}
+                      </Typography>
+                    </div>
+                  </div>
+                )}
+              </Paper>
+            )}
+
+            {(contact?.saler?.city || contact?.saler?.freeBelt) && (
+              <Paper
+                square
+                variant="outlined"
+                className={classes.contactDetails}
+                style={{
+                  background: 'linear-gradient(45deg, #FF9800 30%, #FFB74D 90%)',
+                  color: 'white',
+                  padding: '20px',
+                  marginBottom: '16px',
+                  borderRadius: '4px',
+                  boxShadow: '0 3px 5px 2px rgba(255, 152, 0, .3)'
+                }}
+              >
+                {contact?.saler?.city && (
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+                    <LocationCity style={{ marginRight: 8 }} />
+                    <div>
+                      <Typography style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Cidade
+                      </Typography>
+                      <Typography style={{ fontSize: 16, fontWeight: 'bold' }}>
+                        {contact.saler.city}
+                      </Typography>
+                    </div>
+                  </div>
+                )}
+
+                {contact?.saler?.freeBelt && (
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Star style={{ marginRight: 8 }} />
+                    <div>
+                      <Typography style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)' }}>
+                        Categoria
+                      </Typography>
+                      <Typography style={{ fontSize: 16, fontWeight: 'bold' }}>
+                        {contact.saler.freeBelt}
+                      </Typography>
+                    </div>
+                  </div>
+                )}
+              </Paper>
+            )}
+
+            {contact?.saler?.id && (
+              <Paper
+                square
+                variant="outlined"
+                className={classes.contactDetails}
+                style={{
+                  background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                  color: 'white',
+                  padding: '20px',
+                  borderRadius: '4px',
+                  boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)'
+                }}
+              >
+                <div style={{ textAlign: 'center' }}>
+                  <Typography
+                    style={{
+                      fontSize: 16,
+                      marginBottom: '8px',
+                      color: 'rgba(255, 255, 255, 0.8)'
+                    }}
+                  >
+                    Produção no mês atual
+                  </Typography>
+                  <Typography
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 'bold',
+                      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+                    }}
+                  >
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL'
+                    }).format(contact.saler.productionInActualMonth || 0)}
+                  </Typography>
+                </div>
+              </Paper>
+            )}
+
             <Paper square variant="outlined" className={classes.contactDetails}>
               <Typography variant="subtitle1" style={{ marginBottom: 10 }}>
                 {i18n.t("ticketOptionsMenu.appointmentsModal.title")}
