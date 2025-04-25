@@ -78,7 +78,7 @@ class Saler extends Model<Saler> {
   birthdate: string;
 
   @Column({
-    type: DataType.BIGINT,
+    type: DataType.DECIMAL,
     defaultValue: 0
   })
   productionInMonth: number;
