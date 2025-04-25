@@ -35,12 +35,6 @@ class Saler extends Model<Saler> {
   })
   phoneNumberTwo: string;
 
-  @Column({
-    type: DataType.STRING,
-    defaultValue: "Desconhecido"
-  })
-  phoneNumberThree: string;
-
   @Column
   branch: string;
 
