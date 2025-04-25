@@ -2,14 +2,21 @@ import { DataTypes, QueryInterface } from "sequelize";
 
 export default {
   up: async (queryInterface: QueryInterface) => {
-    // Renomear coluna
+    // Renomear a coluna
     await queryInterface.renameColumn(
       "Salers",
       "productionInMonth",
       "productionInActualMonth"
     );
 
-    // Adicionar colunas com tipos apropriados
+    // Alterar o tipo após renomear
+    await queryInterface.changeColumn("Salers", "productionInActualMonth", {
+      type: DataTypes.DECIMAL(15, 2),
+      allowNull: false,
+      defaultValue: 0
+    });
+
+    // Adicionar novas colunas
     await Promise.all([
       queryInterface.addColumn("Salers", "productionInLastMonth", {
         type: DataTypes.DECIMAL(15, 2),
@@ -40,6 +47,7 @@ export default {
   },
 
   down: async (queryInterface: QueryInterface) => {
+    // Reverter nome da coluna
     await queryInterface.renameColumn(
       "Salers",
       "productionInActualMonth",
