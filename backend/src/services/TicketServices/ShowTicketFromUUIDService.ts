@@ -43,7 +43,7 @@ const ShowTicketUUIDService = async (uuid: string): Promise<Ticket> => {
               "email",
               "city",
               "birthdate",
-              "productionInMonth",
+              "productionInActualMonth",
               "createdAt",
               "updatedAt"
             ]

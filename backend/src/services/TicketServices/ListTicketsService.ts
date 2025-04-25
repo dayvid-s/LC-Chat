@@ -97,7 +97,7 @@ const ListTicketsService = async ({
             "email",
             "city",
             "birthdate",
-            "productionInMonth",
+            "productionInActualMonth",
             "phoneNumberOne",
             "phoneNumberTwo",
             "createdAt",

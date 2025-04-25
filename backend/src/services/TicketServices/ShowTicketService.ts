@@ -47,7 +47,7 @@ const ShowTicketService = async (
               "email",
               "city",
               "birthdate",
-              "productionInMonth",
+              "productionInActualMonth",
               "createdAt",
               "updatedAt"
             ]

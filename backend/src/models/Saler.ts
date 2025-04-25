@@ -35,6 +35,12 @@ class Saler extends Model<Saler> {
   })
   phoneNumberTwo: string;
 
+  @Column({
+    type: DataType.STRING,
+    defaultValue: "Desconhecido"
+  })
+  phoneNumberThree: string;
+
   @Column
   branch: string;
 
@@ -78,10 +84,40 @@ class Saler extends Model<Saler> {
   birthdate: string;
 
   @Column({
-    type: DataType.DECIMAL,
+    type: DataType.DECIMAL(15, 2),
     defaultValue: 0
   })
-  productionInMonth: number;
+  productionInActualMonth: number;
+
+  @Column({
+    type: DataType.DECIMAL(15, 2),
+    defaultValue: 0
+  })
+  productionInLastMonth: number;
+
+  @Column({
+    type: DataType.DECIMAL(15, 2),
+    defaultValue: 0
+  })
+  digitationInActualMonth: number;
+
+  @Column({
+    type: DataType.DECIMAL(15, 2),
+    defaultValue: 0
+  })
+  digitationInLastMonth: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    defaultValue: 0
+  })
+  paidContractsInMonth: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    defaultValue: 0
+  })
+  typedContractsInMonth: number;
 
   @CreatedAt
   createdAt: Date;
@@ -89,4 +125,5 @@ class Saler extends Model<Saler> {
   @UpdatedAt
   updatedAt: Date;
 }
+
 export default Saler;
