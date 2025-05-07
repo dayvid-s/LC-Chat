@@ -289,11 +289,16 @@ const NotificationsPopOver = (props) => {
               <ListItemText>{i18n.t("notifications.noTickets")}</ListItemText>
             </ListItem>
           ) : (
-            notifications.map((ticket) => (
-              <NotificationTicket key={ticket.id}>
-                <TicketListItem ticket={ticket} groupActionButtons={!showTabGroups} />
-              </NotificationTicket>
-            ))
+            notifications.map((ticket) =>
+              ticket.status !== "closed" && (
+                <NotificationTicket key={ticket.id}>
+                  <TicketListItem
+                    ticket={ticket}
+                    groupActionButtons={!showTabGroups}
+                  />
+                </NotificationTicket>
+              )
+            )
           )}
         </List>
       </Popover>
