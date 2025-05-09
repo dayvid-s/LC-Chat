@@ -4,6 +4,7 @@ module.exports = {
       name: "LC Chat Backend",
       script: "dist/server.js",
       interpreter: "node",
+      interpreter_args: "--max-old-space-size=14336",
       autorestart: true,
       watch: false,
       env: {
