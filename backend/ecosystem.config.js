@@ -5,8 +5,8 @@ module.exports = {
       script: "dist/server.js",
       interpreter: "node",
       interpreter_args: "--max-old-space-size=14336",
-      instances: "max",
-      exec_mode: "cluster",
+      instances: 1,
+      exec_mode: "fork",
       autorestart: true,
       watch: false,
       env: {
