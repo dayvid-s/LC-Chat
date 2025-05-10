@@ -14,4 +14,11 @@ module.exports = {
   password: process.env.DB_PASS,
   logging: process.env.DB_DEBUG && console.log,
   seederStorage: "sequelize",
+  pool: {
+    max: 30,
+    min: 5,
+    acquire: 30000,
+    idle: 10000,
+    evict: 1000
+  }
 };
