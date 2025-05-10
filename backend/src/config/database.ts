@@ -5,6 +5,22 @@ module.exports = {
     charset: "utf8mb4",
     collate: "utf8mb4_bin"
   },
+  options: {
+    requestTimeout: 60000
+  },
+  retry: {
+    match: [
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
+      /SequelizeConnectionTimedOutError/
+    ],
+    max: 100,
+    backoffBase: 1000,
+    backoffExponent: 1.5
+  },
   dialect: process.env.DB_DIALECT || "mysql",
   timezone: process.env.DB_TIMEZONE || "-03:00",
   host: process.env.DB_HOST,
