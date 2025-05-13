@@ -32,9 +32,9 @@ module.exports = {
   seederStorage: "sequelize",
   pool: {
     max: 30,
-    min: 5,
-    acquire: 30000,
-    idle: 10000,
-    evict: 1000
+    min: 10,
+    acquire: 60000,
+    idle: 5000,
+    evict: 30000
   }
 };
