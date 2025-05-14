@@ -72,7 +72,8 @@ export const sendMediaToList = async (
   res: Response
 ): Promise<Response> => {
   const { listId } = req.params;
-  const { body } = req.body;
+  const { body, saveOnTicket = false } = req.body;
+
   const { companyId } = req.user;
 
   if (!listId || listId === "undefined" || listId === "null") {
@@ -115,11 +116,10 @@ export const sendMediaToList = async (
       const jid = contact.isGroup
         ? `${contact.number}@g.us`
         : `${contact.number}@c.us`;
-
       const dataToSend: any = {
         number: jid,
         body,
-        saveOnTicket: true
+        saveOnTicket: saveOnTicket === "true"
       };
 
       if (media) {

@@ -9,13 +9,14 @@ import {
   IconButton,
   CircularProgress,
   Typography,
-  Box
+  Box,
+  Checkbox,
+  FormControlLabel
 } from "@material-ui/core";
 import { Close, CloudUpload } from "@material-ui/icons";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
 import { toast } from "react-toastify";
-
 
 const SendToTransmissionListModal = ({
   open,
@@ -26,6 +27,7 @@ const SendToTransmissionListModal = ({
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [saveOnTicket, setSaveOnTicket] = useState(false);
 
   const handleFileChange = (e) => {
     const selected = e.target.files?.[0];
@@ -40,7 +42,7 @@ const SendToTransmissionListModal = ({
 
     const formData = new FormData();
     formData.append("body", text);
-    formData.append("saveOnTicket", String(true));
+    formData.append("saveOnTicket", String(saveOnTicket));
 
     if (file) formData.append("media", file);
 
@@ -61,6 +63,7 @@ const SendToTransmissionListModal = ({
       setText("");
       setFile(null);
       setPreview(null);
+      setSaveOnTicket(false);
     } catch (err) {
       console.error("Erro ao enviar:", err);
       toastError("Erro ao enviar mensagem");
@@ -89,14 +92,24 @@ const SendToTransmissionListModal = ({
           variant="outlined"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          style={{ marginBottom: 2 }}
+          style={{ marginBottom: 16 }}
         />
-
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={saveOnTicket}
+              onChange={(e) => setSaveOnTicket(e.target.checked)}
+              color="primary"
+            />
+          }
+          label="Salvar mensagens no ticket"
+        />
         <Button
           variant="outlined"
           component="label"
           startIcon={<CloudUpload />}
           fullWidth
+          style={{ marginTop: 16 }}
         >
           Selecionar imagem ou vídeo
           <input type="file" hidden accept="image/*,video/*" onChange={handleFileChange} />
