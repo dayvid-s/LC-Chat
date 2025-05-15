@@ -290,7 +290,7 @@ const NotificationsPopOver = (props) => {
             </ListItem>
           ) : (
             notifications.map((ticket) =>
-              ticket.status !== "closed" && (
+              ticket.status === "pending" && (
                 <NotificationTicket key={ticket.id}>
                   <TicketListItem
                     ticket={ticket}
