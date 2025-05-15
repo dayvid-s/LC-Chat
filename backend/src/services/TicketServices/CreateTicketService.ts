@@ -22,7 +22,7 @@ const CreateTicketService = async ({
 }: Request): Promise<Ticket> => {
   const defaultWhatsapp = await GetDefaultWhatsApp(companyId);
 
-  await CheckContactOpenTickets(contactId);
+  await CheckContactOpenTickets(contactId, companyId);
 
   const { isGroup } = await ShowContactService(contactId, companyId);
 

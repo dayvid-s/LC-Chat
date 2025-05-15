@@ -29,15 +29,15 @@ interface Request {
   ticketId: number;
   companyId?: number | undefined;
   tokenData?:
-    | {
-        id: string;
-        username: string;
-        profile: string;
-        companyId: number;
-        iat: number;
-        exp: number;
-      }
-    | undefined;
+  | {
+    id: string;
+    username: string;
+    profile: string;
+    companyId: number;
+    iat: number;
+    exp: number;
+  }
+  | undefined;
 }
 
 interface Response {
@@ -103,7 +103,7 @@ const UpdateTicketService = async ({
     const oldQueueId = ticket.queueId;
 
     if (oldStatus === "closed") {
-      await CheckContactOpenTickets(ticket.contact.id);
+      await CheckContactOpenTickets(ticket.contact.id, companyId);
       chatbot = null;
       queueOptionId = null;
     }
@@ -193,8 +193,7 @@ const UpdateTicketService = async ({
         if (!ticket.isGroup) {
           if (transferMessage?.trim()) {
             const queueChangedMessage = await wbot.sendMessage(
-              `${ticket.contact.number}@${
-                ticket.isGroup ? "g.us" : "s.whatsapp.net"
+              `${ticket.contact.number}@${ticket.isGroup ? "g.us" : "s.whatsapp.net"
               }`,
               {
                 text: `${transferMessage}`
