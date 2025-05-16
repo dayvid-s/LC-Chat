@@ -24,10 +24,10 @@ import { Can } from "../Can";
 import TicketsQueueSelect from "../TicketsQueueSelect";
 import { Button } from "@material-ui/core";
 import { TagsFilter } from "../TagsFilter";
+import { PartnerFilter } from "../PartnerFilter";
 import { UsersFilter } from "../UsersFilter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
-import api from "../../services/api";
 import useSettings from "../../hooks/useSettings";
 
 const useStyles = makeStyles((theme) => ({
@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
 
   tabsHeader: {
     flex: "none",
-   // backgroundColor: "#eee",
+    // backgroundColor: "#eee",
   },
 
   settingsIcon: {
@@ -128,6 +128,8 @@ const TicketsManagerTabs = () => {
   const [selectedQueueIds, setSelectedQueueIds] = useState(userQueueIds || []);
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedSaler, setSelectedSaler] = useState(null);
+
 
   const { getSetting } = useSettings();
   const [showTabGroups, setShowTabGroups] = useState(false);
@@ -197,12 +199,15 @@ const TicketsManagerTabs = () => {
     setSelectedUsers(users);
   };
 
+  const handleSelectedSaler = (saler) => {
+    setSelectedSaler(saler);
+  };
+
   return (
     <Paper elevation={0} variant="outlined" className={classes.ticketsWrapper}>
       <NewTicketModal
         modalOpen={newTicketModalOpen}
         onClose={(ticket) => {
-       
           handleCloseOrOpenTicket(ticket);
         }}
       />
@@ -222,7 +227,7 @@ const TicketsManagerTabs = () => {
             classes={{ root: showTabGroups ? classes.tabWithGroups : classes.tab }}
           />
 
-          { showTabGroups && (
+          {showTabGroups && (
             <Tab
               value={"groups"}
               icon={<FontAwesomeIcon className={classes.icon24} icon={faPeopleGroup} />}
@@ -267,28 +272,28 @@ const TicketsManagerTabs = () => {
             >
               {i18n.t("ticketsManager.buttons.newTicket")}
             </Button>
-            { tab === "open" && (
-            <Can
-              role={user.profile}
-              perform="tickets-manager:showall"
-              yes={() => (
-                <FormControlLabel
-                  label={i18n.t("tickets.buttons.showAll")}
-                  labelPlacement="start"
-                  control={
-                    <Switch
-                      size="small"
-                      checked={showAllTickets}
-                      onChange={() =>
-                        setShowAllTickets((prevState) => !prevState)
-                      }
-                      name="showAllTickets"
-                      color="primary"
-                    />
-                  }
-                />
-              )}
-            />
+            {tab === "open" && (
+              <Can
+                role={user.profile}
+                perform="tickets-manager:showall"
+                yes={() => (
+                  <FormControlLabel
+                    label={i18n.t("tickets.buttons.showAll")}
+                    labelPlacement="start"
+                    control={
+                      <Switch
+                        size="small"
+                        checked={showAllTickets}
+                        onChange={() =>
+                          setShowAllTickets((prevState) => !prevState)
+                        }
+                        name="showAllTickets"
+                        color="primary"
+                      />
+                    }
+                  />
+                )}
+              />
             )}
           </>
         )}
@@ -358,7 +363,7 @@ const TicketsManagerTabs = () => {
           showAll={true}
           selectedQueueIds={selectedQueueIds}
           showTabGroups={showTabGroups}
-          />
+        />
       </TabPanel>
       <TabPanel value={tab} name="groups" className={classes.ticketsWrapper}>
         <TicketsList
@@ -370,6 +375,7 @@ const TicketsManagerTabs = () => {
       </TabPanel>
       <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
         <TagsFilter onFiltered={handleSelectedTags} />
+        <PartnerFilter onFiltered={handleSelectedSaler} />
         {profile === "admin" && (
           <UsersFilter onFiltered={handleSelectedUsers} />
         )}
@@ -381,6 +387,7 @@ const TicketsManagerTabs = () => {
           users={selectedUsers}
           selectedQueueIds={selectedQueueIds}
           showTabGroups={showTabGroups}
+          saler={selectedSaler}
         />
       </TabPanel>
     </Paper>

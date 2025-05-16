@@ -30,6 +30,7 @@ interface Request {
   tags: number[];
   users: number[];
   companyId: number;
+  salerId?: string;
 }
 
 interface Response {
@@ -53,7 +54,8 @@ const ListTicketsService = async ({
   userId,
   withUnreadMessages,
   all,
-  companyId
+  companyId,
+  salerId
 }: Request): Promise<Response> => {
   const groupsTab =
     !isSearch &&
@@ -174,6 +176,7 @@ const ListTicketsService = async ({
           )
         },
         { "$contact.number$": { [Op.like]: `%${sanitizedSearchParam}%` } },
+        { "$contact.saler.id$": { [Op.like]: `%${sanitizedSearchParam}%` } }, // Adiciona busca pelo ID do parceiro
         {
           "$message.body$": where(
             fn("LOWER", col("body")),
@@ -216,6 +219,13 @@ const ListTicketsService = async ({
     if (groupsTab) {
       whereCondition.isGroup = groups === "true";
     }
+  }
+
+  if (salerId) {
+    whereCondition = {
+      ...whereCondition,
+      "$contact.saler.id$": salerId
+    };
   }
 
   if (Array.isArray(tags) && tags.length > 0) {

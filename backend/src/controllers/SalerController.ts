@@ -1,12 +1,39 @@
 import { Request, Response } from "express";
+import { Op } from "sequelize";
 import SalerService from "../services/SalerService/SalerService";
+import Saler from "../models/Saler";
 
 class SalerController {
   static async getAll(req: Request, res: Response): Promise<Response> {
     try {
-      const salers = await SalerService.getAll();
+      const { salerId } = req.query;
+
+      if (!salerId) {
+        return res.status(200).json([]);
+      }
+
+      const searchTerm = String(salerId);
+
+      const salers = await Saler.findAll({
+        where: {
+          id: {
+            [Op.and]: [
+              {
+                [Op.gte]: parseInt(searchTerm, 10)
+              },
+              {
+                [Op.lt]: parseInt(searchTerm, 10) + 1
+              }
+            ]
+          }
+        },
+        limit: 10,
+        order: [["id", "ASC"]]
+      });
+
       return res.status(200).json(salers);
     } catch (error) {
+      console.error("Erro ao buscar vendedores:", error);
       return res.status(500).json({ error: error.message });
     }
   }

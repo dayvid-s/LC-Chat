@@ -175,7 +175,8 @@ const TicketsListCustom = (props) => {
     updateCount,
     style,
     setTabOpen,
-    showTabGroups
+    showTabGroups,
+    saler
   } = props;
   const classes = useStyles();
   const [pageNumber, setPageNumber] = useState(1);
@@ -184,13 +185,12 @@ const TicketsListCustom = (props) => {
   const [ticketsListUpdated, setTicketsListUpdated] = useState([]);
   const { user } = useContext(AuthContext);
   const { profile, queues } = user;
-
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
     dispatch({ type: "RESET" });
     setPageNumber(1);
-  }, [status, searchParam, dispatch, showAll, tags, users, selectedQueueIds]);
+  }, [status, searchParam, dispatch, showAll, tags, users, saler, selectedQueueIds]);
 
   const { tickets, hasMore, loading } = useTickets({
     pageNumber,
@@ -202,6 +202,7 @@ const TicketsListCustom = (props) => {
     tags: JSON.stringify(tags),
     users: JSON.stringify(users),
     queueIds: JSON.stringify(selectedQueueIds),
+    saler
   });
 
   useEffect(() => {
@@ -332,7 +333,7 @@ const TicketsListCustom = (props) => {
       socket.disconnect();
     };
 
-  }, [status, showAll, groups, showTabGroups, user, selectedQueueIds, tags, users, profile, queues, socketManager]);
+  }, [status, showAll, groups, showTabGroups, user, selectedQueueIds, tags, users, saler, profile, queues, socketManager]);
 
   useEffect(() => {
     if (typeof updateCount === "function") {
