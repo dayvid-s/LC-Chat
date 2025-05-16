@@ -41,7 +41,9 @@ import { i18n } from "../../translate/i18n";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCloudArrowUp } from '@fortawesome/free-solid-svg-icons';
-
+import CodeIcon from "@material-ui/icons/Code";
+import SwapHorizIcon from "@material-ui/icons/SwapHoriz";
+import { Tooltip } from "@material-ui/core";
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_CONTACTS") {
@@ -96,6 +98,48 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+
+const SearchInput = ({ searchParam, handleSearch, searchMode, toggleSearchMode }) => {
+  return (
+    <TextField
+      style={{ width: "330px", }}
+      placeholder={
+        searchMode === "contact"
+          ? i18n.t("contacts.searchPlaceholder")
+          : "Código do Parceiro"
+      }
+      type="search"
+      value={searchParam}
+      onChange={handleSearch}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <Tooltip title={searchMode === "contact" ? "Buscar Contato" : "Código do Parceiro"}>
+              {searchMode === "contact" ? (
+                <SearchIcon style={{ color: "gray" }} />
+              ) : (
+                <CodeIcon style={{ color: "#1976d2" }} />
+              )}
+            </Tooltip>
+          </InputAdornment>
+        ),
+        endAdornment: (
+          <InputAdornment position="end">
+            <IconButton
+              onClick={toggleSearchMode}
+              title={searchMode === "contact" ? "Buscar por Código" : "Buscar por Contato"}
+              style={{ color: searchMode === "code" ? "#1976d2" : "gray" }}
+            >
+              <SwapHorizIcon />
+            </IconButton>
+          </InputAdornment>
+        ),
+      }}
+    />
+  );
+};
+
+
 const Contacts = () => {
   const classes = useStyles();
   const history = useHistory();
@@ -113,7 +157,7 @@ const Contacts = () => {
   const [deletingContact, setDeletingContact] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-
+  const [searchMode, setSearchMode] = useState("contact");
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
@@ -126,20 +170,37 @@ const Contacts = () => {
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
         try {
-          const { data } = await api.get("/contacts/", {
-            params: { searchParam, pageNumber },
-          });
+          const params = {
+            pageNumber
+          };
+
+          if (searchParam) {
+            if (searchMode === "code") {
+              params.salerCod = searchParam;
+            } else {
+              params.searchParam = searchParam;
+            }
+          }
+
+          const { data } = await api.get("/contacts/", { params });
+
+          if (pageNumber === 1) {
+            dispatch({ type: "RESET" });
+          }
+
           dispatch({ type: "LOAD_CONTACTS", payload: data.contacts });
           setHasMore(data.hasMore);
-          setLoading(false);
         } catch (err) {
           toastError(err);
+        } finally {
+          setLoading(false);
         }
       };
       fetchContacts();
     }, 500);
+
     return () => clearTimeout(delayDebounceFn);
-  }, [searchParam, pageNumber]);
+  }, [searchParam, pageNumber, searchMode]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -163,7 +224,14 @@ const Contacts = () => {
   }, [socketManager]);
 
   const handleSearch = (event) => {
-    setSearchParam(event.target.value.toLowerCase());
+    setPageNumber(1);
+    setSearchParam(event.target.value);
+  };
+
+  const toggleSearchMode = () => {
+    setSearchMode(prevMode => prevMode === "contact" ? "code" : "contact");
+    setSearchParam("");
+    setPageNumber(1);
   };
 
   const handleOpenContactModal = () => {
@@ -263,7 +331,6 @@ const Contacts = () => {
     };
   }
 
-
   return (
     <MainContainer className={classes.mainContainer}>
       <NewTicketModal
@@ -301,21 +368,12 @@ const Contacts = () => {
       <MainHeader>
         <Title>{i18n.t("contacts.title")}</Title>
         <MainHeaderButtonsWrapper>
-          <TextField
-            placeholder={i18n.t("contacts.searchPlaceholder")}
-            type="search"
-            value={searchParam}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon style={{ color: "gray" }} />
-                </InputAdornment>
-              ),
-            }}
+          <SearchInput
+            searchParam={searchParam}
+            handleSearch={handleSearch}
+            searchMode={searchMode}
+            toggleSearchMode={toggleSearchMode}
           />
-
-
           <Button
             variant="contained"
             color="primary"

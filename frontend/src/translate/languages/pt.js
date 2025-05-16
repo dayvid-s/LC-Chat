@@ -128,7 +128,7 @@ const messages = {
         toasts: {
           deleted: "Contato excluído com sucesso!",
         },
-        searchPlaceholder: "Pesquisar...",
+        searchPlaceholder: "Buscar por nome ou telefone...",
         confirmationModal: {
           deleteTitle: "Deletar ",
           importTitlte: "Importar contatos",

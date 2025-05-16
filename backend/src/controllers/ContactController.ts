@@ -23,6 +23,7 @@ import GetMessagesByContact from "../services/ContactServices/GetMessagesByConta
 type IndexQuery = {
   searchParam: string;
   pageNumber: string;
+  salerCod: string;
 };
 
 type IndexGetContactQuery = {
@@ -44,12 +45,13 @@ interface ContactData {
 }
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { searchParam, pageNumber } = req.query as IndexQuery;
+  const { searchParam, pageNumber, salerCod } = req.query as IndexQuery;
   const { companyId } = req.user;
 
   const { contacts, count, hasMore } = await ListContactsService({
     searchParam,
     pageNumber,
+    salerCod,
     companyId
   });
 

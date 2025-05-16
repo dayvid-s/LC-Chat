@@ -5,6 +5,7 @@ interface Request {
   searchParam?: string;
   pageNumber?: string;
   companyId: number;
+  salerCod?: string;
 }
 
 interface Response {
@@ -16,11 +17,18 @@ interface Response {
 const ListContactsService = async ({
   searchParam = "",
   pageNumber = "1",
+  salerCod,
   companyId
 }: Request): Promise<Response> => {
-  const normalizedSearchParam = searchParam.toLowerCase().trim();
-  const whereCondition = {
-    [Op.or]: [
+  const whereCondition: any = {
+    companyId: { [Op.eq]: companyId }
+  };
+
+  if (salerCod) {
+    whereCondition.salerId = { [Op.eq]: Number(salerCod) };
+  } else if (searchParam) {
+    const normalizedSearchParam = searchParam.toLowerCase().trim();
+    whereCondition[Op.or] = [
       {
         name: Sequelize.where(
           Sequelize.fn(
@@ -35,11 +43,8 @@ const ListContactsService = async ({
         )
       },
       { number: { [Op.like]: `%${normalizedSearchParam}%` } }
-    ],
-    companyId: {
-      [Op.eq]: companyId
-    }
-  };
+    ];
+  }
   const limit = 20;
   const offset = limit * (+pageNumber - 1);
 
